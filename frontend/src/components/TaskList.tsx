@@ -19,6 +19,7 @@ type TaskListProps = {
   onAddTask: (status: TaskStatus) => void;
   onEditTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
+  isSearching: boolean;
 };
 
 const sections: TaskStatus[] = [
@@ -33,6 +34,7 @@ export default function TaskList({
   onAddTask,
   onEditTask,
   onDeleteTask,
+  isSearching,
 }: TaskListProps) {
   const [collapsed, setCollapsed] = useState<
     Record<string, boolean>
@@ -72,7 +74,8 @@ export default function TaskList({
         const sectionTasks = tasks.filter(
           (task) => task.status === status
         );
-        if (sectionTasks.length === 0) {
+
+        if (isSearching && sectionTasks.length === 0) {
           return null;
         }
 
