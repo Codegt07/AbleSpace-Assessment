@@ -237,9 +237,13 @@ const resetTaskForm = () => {
     return <p className="text-[13px] text-[#777]">Loading tasks...</p>;
   }
 
+  const filteredTasks = tasks.filter((task) =>
+  task.title.toLowerCase().includes(searchQuery.trim().toLowerCase())
+);
 
   return (
     <>
+    
       <div className="mb-4 flex items-center justify-between">
   <h1 className="text-[16px] font-semibold text-[#171717]">
     Tasks
@@ -385,9 +389,13 @@ const resetTaskForm = () => {
       {viewMode === "board" ? (
   <div className="grid w-full grid-cols-4 items-start gap-3">
     {statuses.map((status) => {
-      const columnTasks = tasks.filter(
-        (task) => task.status === status
-      );
+     const columnTasks = filteredTasks.filter(
+      (task) => task.status === status
+    );
+
+    if (searchQuery.trim() && columnTasks.length === 0) {
+      return null;
+    }
 
       return (
         <BoardColumn
@@ -414,7 +422,7 @@ const resetTaskForm = () => {
   </div>
 ) : (
   <TaskList
-  tasks={tasks}
+  tasks={filteredTasks}
   onAddTask={openAddTask}
   onEditTask={openEditTask}
   onDeleteTask={handleDeleteTask}

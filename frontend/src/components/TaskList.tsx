@@ -72,6 +72,9 @@ export default function TaskList({
         const sectionTasks = tasks.filter(
           (task) => task.status === status
         );
+        if (sectionTasks.length === 0) {
+          return null;
+        }
 
         const isCollapsed = collapsed[status];
 
