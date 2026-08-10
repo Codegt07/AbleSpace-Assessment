@@ -1,8 +1,14 @@
+"use client";
+
+import { useState } from "react";
+
 type TaskCardProps = {
   title: string;
   assignee: string;
   dueDate: string;
   labels: string[];
+  onEdit: () => void;
+  onDelete: () => void;
 };
 
 export default function TaskCard({
@@ -10,17 +16,53 @@ export default function TaskCard({
   assignee,
   dueDate,
   labels,
+  onEdit,
+  onDelete,
 }: TaskCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+
   return (
-    <div className="rounded-lg border border-[#e4e4e4] bg-white p-3">
+    <div className="relative rounded-lg border border-[#e4e4e4] bg-white p-3">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[13px] font-medium text-[#171717]">
           {title}
         </h3>
 
-        <button type="button" className="text-[#777]">
-          •••
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowMenu((prev) => !prev)}
+            className="cursor-pointer text-[#777]"
+          >
+            •••
+          </button>
+
+          {showMenu && (
+            <div className="absolute right-0 top-6 z-20 w-[100px] rounded-lg border border-[#e5e5e5] bg-white p-1 shadow-md">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false);
+                  onEdit();
+                }}
+                className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[#333] hover:bg-[#f3f3f3]"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false);
+                  onDelete();
+                }}
+                className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-red-500 hover:bg-[#fff2f2]"
+              >
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between">
@@ -35,48 +77,48 @@ export default function TaskCard({
         </div>
 
         <span className="flex items-center gap-[4px] rounded-full bg-[#fff0f0] px-[7px] py-[3px] text-[10px] font-medium text-[#ff4d4f]">
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="5" width="18" height="16" rx="2" />
+            <path d="M16 3v4M8 3v4M3 10h18" />
+          </svg>
+
+          {dueDate}
+        </span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-[6px]">
+        {labels.map((label, index) => (
+          <span
+            key={`${label}-${index}`}
+            className="flex items-center gap-[4px] rounded-full bg-[#f1f1f1] px-[7px] py-[3px] text-[10px] font-medium leading-none text-[#333333]"
+          >
             <svg
               width="11"
               height="11"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <rect x="3" y="5" width="18" height="16" rx="2" />
-              <path d="M16 3v4M8 3v4M3 10h18" />
+              <path d="M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82Z" />
+              <circle cx="7.5" cy="6.5" r="1" />
             </svg>
 
-            {dueDate}
+            {label}
           </span>
+        ))}
       </div>
-
-      <div className="mt-3 flex flex-wrap gap-[6px]">
-  {labels.map((label, index) => (
-    <span
-      key={`${label}-${index}`}
-      className="flex items-center gap-[4px] rounded-full bg-[#f1f1f1] px-[7px] py-[3px] text-[10px] font-medium leading-none text-[#333333]"
-    >
-      <svg
-        width="11"
-        height="11"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82Z" />
-        <circle cx="7.5" cy="6.5" r="1" />
-      </svg>
-
-      {label}
-    </span>
-  ))}
-</div>
     </div>
   );
 }
