@@ -10,11 +10,7 @@ export default function TasksPage() {
         <div className="h-[52px] border-b border-[#e8e8e8]" />
 
         <div className="px-6 pt-6">
-          <h1 className="text-[16px] font-semibold text-[#171717]">
-            Tasks
-          </h1>
-
-          <div className="mt-4">
+        <div className="mt-4">
             <TaskBoard />
           </div>
         </div>

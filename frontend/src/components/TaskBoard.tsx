@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BoardColumn from "./BoardColumn";
+import TaskList from "./TaskList";
 
 type Task = {
   _id: string;
@@ -29,6 +30,11 @@ export default function TaskBoard() {
   const [dueDate, setDueDate] = useState("");
   const [labels, setLabels] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+const [searchQuery, setSearchQuery] = useState("");
+const [showFields, setShowFields] = useState(false);
+const [showFilter, setShowFilter] = useState(false);
+const [viewMode, setViewMode] = useState<"board" | "list">("board");
 
   useEffect(() => {
     fetchTasks();
@@ -234,35 +240,186 @@ const resetTaskForm = () => {
 
   return (
     <>
-      <div className="grid w-full grid-cols-4 items-start gap-3">
-        {statuses.map((status) => {
-          const columnTasks = tasks.filter(
-            (task) => task.status === status
-          );
+      <div className="mb-4 flex items-center justify-between">
+  <h1 className="text-[16px] font-semibold text-[#171717]">
+    Tasks
+  </h1>
 
-          return (
-            <BoardColumn
-              key={status}
-              title={status}
-              tasks={columnTasks.map((task) => ({
-              _id: task._id,
-              title: task.title,
-              assignee: task.assignee || "Guest",
-              dueDate: task.dueDate
-                ? new Date(task.dueDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                  })
-                : "No date",
-              labels: task.labels || [],
-            }))}
-            onAddTask={() => openAddTask(status)}
-            onEditTask={openEditTask}
-            onDeleteTask={handleDeleteTask}
-            />
-          );
-        })}
+  <div className="flex items-center gap-2">
+    {searchOpen ? (
+      <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[#dedede] bg-white px-3">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+
+        <input
+          autoFocus
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search tasks..."
+          className="w-full bg-transparent text-[13px] outline-none"
+        />
       </div>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setSearchOpen(true)}
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[#dedede] bg-white hover:bg-[#f7f7f7]"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+      </button>
+    )}
+
+    <div className="flex h-9 overflow-hidden rounded-md border border-[#dedede] bg-white">
+  <button
+    type="button"
+    onClick={() => setViewMode("list")}
+    className={`flex cursor-pointer items-center gap-2 px-3 text-[12px] font-medium ${
+      viewMode === "list"
+        ? "bg-[#f1f1f1] text-[#171717]"
+        : "bg-white text-[#555] hover:bg-[#f7f7f7]"
+    }`}
+  >
+    <span>☰</span>
+    List
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setViewMode("board")}
+    className={`flex cursor-pointer items-center gap-2 border-l border-[#dedede] px-3 text-[12px] font-medium ${
+      viewMode === "board"
+        ? "bg-[#f1f1f1] text-[#171717]"
+        : "bg-white text-[#555] hover:bg-[#f7f7f7]"
+    }`}
+  >
+    <span>▦</span>
+    Board
+  </button>
+</div>
+
+    <div className="relative">
+  <button
+    type="button"
+    onClick={() => {
+      setShowFields((prev) => !prev);
+      setShowFilter(false);
+    }}
+    className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[#dedede] bg-white px-3 text-[12px] font-medium hover:bg-[#f7f7f7]"
+  >
+    <span className="text-[14px]">▥</span>
+    Fields
+  </button>
+
+  {showFields && (
+    <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[#dedede] bg-white p-2 shadow-lg">
+      
+
+      <div className="mt-3 space-y-1">
+        {[
+          "Priority",
+          "Members",
+          "Due Date",
+          "Labels",
+          "Status",
+          "Reporter",
+        ].map((field) => (
+          <div
+            key={field}
+            className="flex h-7 items-center justify-between px-2 text-[11px] text-[#333]"
+          >
+            <span>{field}</span>
+
+            <div className="h-3.5 w-3.5 rounded-[4px] bg-[#e5e5e5]" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+    <button
+      type="button"
+      onClick={() => setShowFilter((prev) => !prev)}
+      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[#dedede] bg-white hover:bg-[#f7f7f7]"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      onClick={() => openAddTask("To Do")}
+      className="h-9 cursor-pointer rounded-md bg-[#171717] px-4 text-[12px] font-medium text-white hover:opacity-90"
+    >
+      + Add Task
+    </button>
+  </div>
+</div>
+      {viewMode === "board" ? (
+  <div className="grid w-full grid-cols-4 items-start gap-3">
+    {statuses.map((status) => {
+      const columnTasks = tasks.filter(
+        (task) => task.status === status
+      );
+
+      return (
+        <BoardColumn
+          key={status}
+          title={status}
+          tasks={columnTasks.map((task) => ({
+            _id: task._id,
+            title: task.title,
+            assignee: task.assignee || "Guest",
+            dueDate: task.dueDate
+              ? new Date(task.dueDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                })
+              : "No date",
+            labels: task.labels || [],
+          }))}
+          onAddTask={() => openAddTask(status)}
+          onEditTask={openEditTask}
+          onDeleteTask={handleDeleteTask}
+        />
+      );
+    })}
+  </div>
+) : (
+  <TaskList
+  tasks={tasks}
+  onAddTask={openAddTask}
+  onEditTask={openEditTask}
+  onDeleteTask={handleDeleteTask}
+/>
+)}
 
       {showAddTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
