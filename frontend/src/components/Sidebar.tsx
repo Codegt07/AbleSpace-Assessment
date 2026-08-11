@@ -6,10 +6,16 @@ import { usePathname } from "next/navigation";
 export default function Sidebar() {
   const pathname = usePathname();
 
+  const isTasksActive = pathname.startsWith("/tasks");
+  const isProjectsActive = pathname.startsWith("/projects");
+  const isProfileActive = pathname.startsWith("/profile");
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[240px] border-r border-[#e8e8e8] bg-[#fafafa] px-[8px] py-[14px]">
-      
-      <div className="flex items-center justify-between px-[8px]">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-[240px] border-r border-[#e8e8e8] bg-[#fafafa] px-[8px] py-[14px]">
+\      <Link
+        href="/profile"
+        className="flex cursor-pointer items-center justify-between rounded-[8px] px-[8px] py-[4px] hover:bg-[#f1f1f1]"
+      >
         <div className="flex items-center gap-[7px]">
           <div className="flex h-[25px] w-[25px] items-center justify-center rounded-full bg-[#171717] text-[10px] font-semibold text-white">
             G
@@ -21,12 +27,7 @@ export default function Sidebar() {
         </div>
 
         <div className="flex flex-col items-center justify-center gap-[2px]">
-          <svg
-            width="9"
-            height="5"
-            viewBox="0 0 9 5"
-            fill="none"
-          >
+          <svg width="9" height="5" viewBox="0 0 9 5" fill="none">
             <path
               d="M1.5 3.8L4.5 1L7.5 3.8"
               stroke="#171717"
@@ -36,12 +37,7 @@ export default function Sidebar() {
             />
           </svg>
 
-          <svg
-            width="9"
-            height="5"
-            viewBox="0 0 9 5"
-            fill="none"
-          >
+          <svg width="9" height="5" viewBox="0 0 9 5" fill="none">
             <path
               d="M1.5 1.2L4.5 4L7.5 1.2"
               stroke="#171717"
@@ -51,20 +47,14 @@ export default function Sidebar() {
             />
           </svg>
         </div>
-      </div>
-
+      </Link>
       <div className="mt-[24px]">
         <div className="flex items-center justify-between px-[8px]">
           <span className="text-[12px] font-medium text-[#171717]">
             Workspace
           </span>
 
-          <svg
-            width="10"
-            height="6"
-            viewBox="0 0 10 6"
-            fill="none"
-          >
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
             <path
               d="M2 2L5 5L8 2"
               stroke="#171717"
@@ -78,8 +68,8 @@ export default function Sidebar() {
         <nav className="mt-[5px] space-y-[2px]">
           <Link
             href="/tasks"
-            className={`flex h-[31px] items-center gap-[8px] rounded-[8px] px-[8px] text-[12px] font-medium ${
-              pathname.startsWith("/tasks")
+            className={`flex h-[31px] cursor-pointer items-center gap-[8px] rounded-[8px] px-[8px] text-[12px] font-medium ${
+              isTasksActive
                 ? "bg-[#eeeeee] text-[#171717]"
                 : "text-[#292929] hover:bg-[#f1f1f1]"
             }`}
@@ -103,8 +93,8 @@ export default function Sidebar() {
 
           <Link
             href="/projects"
-            className={`flex h-[31px] items-center gap-[8px] rounded-[8px] px-[8px] text-[12px] font-medium ${
-              pathname.startsWith("/projects")
+            className={`flex h-[31px] cursor-pointer items-center gap-[8px] rounded-[8px] px-[8px] text-[12px] font-medium ${
+              isProjectsActive
                 ? "bg-[#eeeeee] text-[#171717]"
                 : "text-[#292929] hover:bg-[#f1f1f1]"
             }`}
@@ -128,6 +118,17 @@ export default function Sidebar() {
           </Link>
         </nav>
       </div>
+      <Link
+        href="/profile"
+        aria-label="Open profile"
+        className={`absolute bottom-[20px] left-[16px] z-50 flex h-[36px] w-[36px] cursor-pointer items-center justify-center rounded-full border text-[12px] font-medium transition-colors ${
+          isProfileActive
+            ? "border-[#171717] bg-[#171717] text-white"
+            : "border-[#d8d8d8] bg-[#2b2b2b] text-white hover:bg-[#171717]"
+        }`}
+      >
+        G
+      </Link>
     </aside>
   );
 }
