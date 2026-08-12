@@ -22,10 +22,13 @@ export class TasksController {
     return this.tasksService.create(createTaskDto);
   }
 
-  @Get()
-  findAll(@Query('workspaceId') workspaceId: string) {
-    return this.tasksService.findAll(workspaceId);
-  }
+ @Get()
+findAll(
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.findAll(workspaceId, userId);
+}
 
   @Get(':id')
   findOne(

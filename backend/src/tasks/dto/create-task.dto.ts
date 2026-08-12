@@ -16,6 +16,14 @@ export class CreateTaskDto {
   @IsOptional()
   description?: string;
 
+  @IsIn(['main', 'subtask'])
+  @IsOptional()
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  parentTaskId?: string;
+
   @IsIn(['To Do', 'Doing', 'Completed', 'On Hold'])
   @IsOptional()
   status?: string;

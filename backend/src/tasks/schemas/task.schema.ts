@@ -11,6 +11,19 @@ export class Task {
   @Prop({ default: '' })
   description: string;
 
+@Prop({
+  type: String,
+  enum: ['main', 'subtask'],
+  default: 'main',
+})
+type: string;
+
+@Prop({
+  type: String,
+  default: null,
+})
+parentTaskId?: string | null;
+
   @Prop({
     enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
     default: 'To Do',

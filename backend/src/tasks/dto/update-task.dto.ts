@@ -28,10 +28,6 @@ export class UpdateTaskDto {
   @IsOptional()
   members?: string[];
 
-  @IsString()
-  @IsOptional()
-  projectId?: string;
-
   @IsDateString()
   @IsOptional()
   dueDate?: string;
@@ -45,4 +41,8 @@ export class UpdateTaskDto {
   @IsString({ each: true })
   @IsOptional()
   resources?: string[];
+
+  @IsString()
+  @IsOptional()
+  projectId?: string;
 }
