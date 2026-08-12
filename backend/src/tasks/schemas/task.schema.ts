@@ -23,8 +23,17 @@ export class Task {
   })
   priority: string;
 
-  @Prop({ default: '' })
-  assignee: string;
+  @Prop({ type: [String], default: [] })
+  members: string[];
+
+  @Prop({ required: true })
+  createdBy: string;
+
+  @Prop({ required: true })
+  workspaceId: string;
+
+  @Prop()
+  projectId?: string;
 
   @Prop()
   dueDate?: Date;
@@ -32,8 +41,8 @@ export class Task {
   @Prop({ type: [String], default: [] })
   labels: string[];
 
-  @Prop({ required: true })
-  guestId: string;
+  @Prop({ type: [String], default: [] })
+  resources: string[];
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

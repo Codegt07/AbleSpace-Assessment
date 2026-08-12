@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
@@ -22,32 +23,36 @@ export class TasksController {
   }
 
   @Get()
-  findAll(@Query('guestId') guestId: string) {
-    return this.tasksService.findAll(guestId);
+  findAll(@Query('workspaceId') workspaceId: string) {
+    return this.tasksService.findAll(workspaceId);
   }
 
   @Get(':id')
   findOne(
     @Param('id') id: string,
-    @Query('guestId') guestId: string,
+    @Query('workspaceId') workspaceId: string,
   ) {
-    return this.tasksService.findOne(id, guestId);
+    return this.tasksService.findOne(id, workspaceId);
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Query('guestId') guestId: string,
+    @Query('workspaceId') workspaceId: string,
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
-    return this.tasksService.update(id, guestId, updateTaskDto);
+    return this.tasksService.update(
+      id,
+      workspaceId,
+      updateTaskDto,
+    );
   }
 
   @Delete(':id')
   remove(
     @Param('id') id: string,
-    @Query('guestId') guestId: string,
+    @Query('workspaceId') workspaceId: string,
   ) {
-    return this.tasksService.remove(id, guestId);
+    return this.tasksService.remove(id, workspaceId);
   }
 }

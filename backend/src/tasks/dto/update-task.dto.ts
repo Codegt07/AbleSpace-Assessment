@@ -23,9 +23,14 @@ export class UpdateTaskDto {
   @IsOptional()
   priority?: string;
 
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  members?: string[];
+
   @IsString()
   @IsOptional()
-  assignee?: string;
+  projectId?: string;
 
   @IsDateString()
   @IsOptional()
@@ -35,4 +40,9 @@ export class UpdateTaskDto {
   @IsString({ each: true })
   @IsOptional()
   labels?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  resources?: string[];
 }

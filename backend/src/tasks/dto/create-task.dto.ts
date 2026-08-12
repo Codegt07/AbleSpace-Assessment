@@ -24,9 +24,22 @@ export class CreateTaskDto {
   @IsOptional()
   priority?: string;
 
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  members?: string[];
+
+  @IsString()
+  @IsNotEmpty()
+  createdBy: string;
+
+  @IsString()
+  @IsNotEmpty()
+  workspaceId: string;
+
   @IsString()
   @IsOptional()
-  assignee?: string;
+  projectId?: string;
 
   @IsDateString()
   @IsOptional()
@@ -37,7 +50,8 @@ export class CreateTaskDto {
   @IsOptional()
   labels?: string[];
 
-  @IsString()
-  @IsNotEmpty()
-  guestId: string;
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  resources?: string[];
 }
