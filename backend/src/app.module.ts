@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
+import { WorkspaceMembersModule } from './workspace-members/workspace-members.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { TasksModule } from './tasks/tasks.module';
     AuthModule,
 
     TasksModule,
+    WorkspacesModule,
+    WorkspaceMembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

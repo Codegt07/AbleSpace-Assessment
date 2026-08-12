@@ -8,8 +8,23 @@ export class Guest {
   @Prop({ required: true, unique: true })
   guestId: string;
 
-  @Prop({ default: 'Guest' })
+  @Prop({ default: 'Guest', trim: true })
   name: string;
+
+  @Prop({ default: '' })
+  email: string;
+
+  @Prop({ default: '' })
+  username: string;
+
+  @Prop({ default: '' })
+  title: string;
+
+  @Prop({ default: '' })
+  avatar: string;
+
+  @Prop({ default: true })
+  isGuest: boolean;
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest);
