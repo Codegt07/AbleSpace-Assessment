@@ -12,6 +12,10 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { Task, TaskDocument } from './schemas/task.schema';
 
 import { WorkspaceMembersService } from '../workspace-members/workspace-members.service';
+import {
+  TaskUpdate,
+  TaskUpdateDocument,
+} from './schemas/task-update.schema';
 
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
 
@@ -20,6 +24,9 @@ export class TasksService {
   constructor(
     @InjectModel(Task.name)
     private readonly taskModel: Model<TaskDocument>,
+
+    @InjectModel(TaskUpdate.name)
+    private readonly taskUpdateModel: Model<TaskUpdateDocument>,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
   ) {}
@@ -51,6 +58,20 @@ export class TasksService {
       task.members.map((member) => member.status as TaskStatus),
     );
   }
+
+  private async createUpdate(
+  taskId: string,
+  userId: string,
+  message: string,
+  metadata: Record<string, any> | null = null,
+) {
+  return this.taskUpdateModel.create({
+    taskId,
+    userId,
+    message,
+    metadata,
+  });
+}
 
   async create(createTaskDto: CreateTaskDto) {
     const {
@@ -164,36 +185,42 @@ export class TasksService {
   }
 
   async updateMemberStatus(
-    id: string,
-    workspaceId: string,
-    userId: string,
-    status: TaskStatus,
-  ) {
-    const task = await this.taskModel.findOne({
-      _id: id,
-      workspaceId,
-    });
+  id: string,
+  workspaceId: string,
+  userId: string,
+  status: TaskStatus,
+) {
+  const task = await this.taskModel.findOne({
+    _id: id,
+    workspaceId,
+  });
 
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    const member = task.members.find(
-      (item) => item.userId === userId,
-    );
-
-    if (!member) {
-      throw new ForbiddenException(
-        'You are not assigned to this task',
-      );
-    }
-
-    member.status = status;
-
-    this.updateOverallStatus(task);
-
-    return task.save();
+  if (!task) {
+    throw new NotFoundException('Task not found');
   }
+
+  const member = task.members.find(
+    (item) => item.userId === userId,
+  );
+
+  if (!member) {
+    throw new ForbiddenException(
+      'You are not assigned to this task',
+    );
+  }
+
+  member.status = status;
+
+  this.updateOverallStatus(task);
+
+  await this.createUpdate(
+    id,
+    userId,
+    `Changed status to ${status}`,
+  );
+
+  return task.save();
+}
 
  async addMember(
   id: string,
