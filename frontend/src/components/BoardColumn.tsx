@@ -12,6 +12,7 @@ type BoardColumnProps = {
   title: string;
   tasks: Task[];
   onAddTask: () => void;
+  onOpenTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
 };
@@ -20,6 +21,7 @@ export default function BoardColumn({
   title,
   tasks,
   onAddTask,
+  onOpenTask,
   onEditTask,
   onDeleteTask,
 }: BoardColumnProps) {
@@ -53,17 +55,19 @@ export default function BoardColumn({
       </div>
 
       <div className="mt-1 space-y-2">
-        {tasks.map((task, index) => (
-         <TaskCard
-            key={task._id}
-            title={task.title}
-            assignee={task.assignee}
-            dueDate={task.dueDate}
-            labels={task.labels}
-            onEdit={() => onEditTask(task._id)}
-            onDelete={() => onDeleteTask(task._id)}
-          />
-        ))}
+        {tasks.map((task) => (
+       <TaskCard
+          key={task._id}
+          taskId={task._id}
+          title={task.title}
+          assignee={task.assignee}
+          dueDate={task.dueDate}
+          labels={task.labels}
+          onOpen={() => onOpenTask(task._id)}
+          onEdit={() => onEditTask(task._id)}
+          onDelete={() => onDeleteTask(task._id)}
+        />
+    ))}
       </div>
 
       <button

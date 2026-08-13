@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import BoardColumn from "./BoardColumn";
 import TaskList from "./TaskList";
+import { useRouter } from "next/navigation";
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 type ViewMode = "board" | "list";
@@ -40,6 +41,7 @@ const fieldOptions = [
   "Reporter",
 ];
 
+
 export default function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,13 @@ export default function TaskBoard() {
   const [filterMember, setFilterMember] = useState("All");
   const [filterDueDate, setFilterDueDate] = useState("");
   const [filterLabel, setFilterLabel] = useState("All");
+  
+  const router = useRouter();
+
+  const openTask = (taskId: string) => {
+  router.push(`/tasks/${taskId}`);
+};
+
 
   useEffect(() => {
     fetchTasks();
@@ -598,9 +607,7 @@ export default function TaskBoard() {
                   title: task.title,
                   assignee: task.assignee || "Guest",
                   dueDate: task.dueDate
-                    ? new Date(
-                        task.dueDate
-                      ).toLocaleDateString("en-GB", {
+                    ? new Date(task.dueDate).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "short",
                       })
@@ -608,6 +615,7 @@ export default function TaskBoard() {
                   labels: task.labels || [],
                 }))}
                 onAddTask={() => openAddTask(status)}
+                onOpenTask={openTask}
                 onEditTask={openEditTask}
                 onDeleteTask={handleDeleteTask}
               />

@@ -1,67 +1,77 @@
 "use client";
 
-import { useState } from "react";
-
 type TaskCardProps = {
+  taskId: string;
   title: string;
   assignee: string;
   dueDate: string;
   labels: string[];
+  onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
 };
 
 export default function TaskCard({
+  taskId,
   title,
   assignee,
   dueDate,
   labels,
+  onOpen,
   onEdit,
   onDelete,
 }: TaskCardProps) {
-  const [showMenu, setShowMenu] = useState(false);
-
   return (
-    <div className="relative rounded-lg border border-[#e4e4e4] bg-white p-3">
+    <div
+      onClick={onOpen}
+      className="relative cursor-pointer rounded-lg border border-[#e4e4e4] bg-white p-3 hover:border-[#cfcfcf]"
+    >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[13px] font-medium text-[#171717]">
           {title}
         </h3>
 
-        <div className="relative">
+        <div
+          className="relative"
+          onClick={(event) => event.stopPropagation()}
+        >
           <button
             type="button"
-            onClick={() => setShowMenu((prev) => !prev)}
             className="cursor-pointer text-[#777]"
+            onClick={(event) => {
+              event.stopPropagation();
+
+              const menu = event.currentTarget.nextElementSibling;
+
+              if (menu) {
+                menu.classList.toggle("hidden");
+              }
+            }}
           >
             •••
           </button>
 
-          {showMenu && (
-            <div className="absolute right-0 top-6 z-20 w-[100px] rounded-lg border border-[#e5e5e5] bg-white p-1 shadow-md">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenu(false);
-                  onEdit();
-                }}
-                className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[#333] hover:bg-[#f3f3f3]"
-              >
-                Edit
-              </button>
+          <div className="absolute right-0 top-6 z-20 hidden w-[100px] rounded-lg border border-[#e5e5e5] bg-white p-1 shadow-md">
+            <button
+              type="button"
+              onClick={() => {
+                onEdit();
+              }}
+              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[#333] hover:bg-[#f3f3f3]"
+            >
+              Edit
+            </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setShowMenu(false);
-                  onDelete();
-                }}
-                className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-red-500 hover:bg-[#fff2f2]"
-              >
-                Delete
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                onDelete();
+              }}
+              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-red-500 hover:bg-[#fff2f2]"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
@@ -111,7 +121,7 @@ export default function TaskCard({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82Z" />
+              <path d="M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82l-3.36-3.36a2 2 0 0 0-2.82 0Z" />
               <circle cx="7.5" cy="6.5" r="1" />
             </svg>
 
