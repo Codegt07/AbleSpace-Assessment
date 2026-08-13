@@ -21,3 +21,8 @@ export class WorkspaceMember {
 
 export const WorkspaceMemberSchema =
   SchemaFactory.createForClass(WorkspaceMember);
+
+WorkspaceMemberSchema.index(
+  { workspaceId: 1, userId: 1 },
+  { unique: true },
+);

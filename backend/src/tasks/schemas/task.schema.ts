@@ -3,6 +3,21 @@ import { HydratedDocument } from 'mongoose';
 
 export type TaskDocument = HydratedDocument<Task>;
 
+@Schema({ _id: false })
+export class TaskMember {
+  @Prop({ required: true })
+  userId: string;
+
+  @Prop({
+    enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
+    default: 'To Do',
+  })
+  status: string;
+}
+
+export const TaskMemberSchema =
+  SchemaFactory.createForClass(TaskMember);
+
 @Schema({ timestamps: true })
 export class Task {
   @Prop({ required: true, trim: true })
@@ -11,18 +26,14 @@ export class Task {
   @Prop({ default: '' })
   description: string;
 
-@Prop({
-  type: String,
-  enum: ['main', 'subtask'],
-  default: 'main',
-})
-type: string;
+  @Prop({
+    enum: ['main', 'subtask'],
+    default: 'main',
+  })
+  type: string;
 
-@Prop({
-  type: String,
-  default: null,
-})
-parentTaskId?: string | null;
+  @Prop({ type: String, default: null })
+  parentTaskId?: string | null;  
 
   @Prop({
     enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
@@ -36,8 +47,20 @@ parentTaskId?: string | null;
   })
   priority: string;
 
-  @Prop({ type: [String], default: [] })
-  members: string[];
+@Prop({
+  type: [
+    {
+      userId: { type: String, required: true },
+      status: {
+        type: String,
+        enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
+        default: 'To Do',
+      },
+    },
+  ],
+  default: [],
+})
+members: TaskMember[];
 
   @Prop({ required: true })
   createdBy: string;

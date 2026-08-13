@@ -13,17 +13,26 @@ export class WorkspaceMembersService {
     private readonly memberModel: Model<WorkspaceMemberDocument>,
   ) {}
 
-  async addMember(
-    workspaceId: string,
-    userId: string,
-    role: string = 'member',
-  ) {
-    return this.memberModel.create({
-      workspaceId,
-      userId,
-      role,
-    });
+ async addMember(
+  workspaceId: string,
+  userId: string,
+  role: string = 'member',
+) {
+  const existingMember = await this.memberModel.findOne({
+    workspaceId,
+    userId,
+  });
+
+  if (existingMember) {
+    return existingMember;
   }
+
+  return this.memberModel.create({
+    workspaceId,
+    userId,
+    role,
+  });
+}
 
   async findByUser(userId: string) {
     return this.memberModel

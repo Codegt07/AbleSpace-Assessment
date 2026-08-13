@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+
 import {
   WorkspaceMember,
   WorkspaceMemberSchema,
 } from './schemas/workspace-member.schema';
+
 import { WorkspaceMembersService } from './workspace-members.service';
+import { WorkspaceMembersController } from './workspace-members.controller';
 
 @Module({
   imports: [
@@ -15,6 +18,7 @@ import { WorkspaceMembersService } from './workspace-members.service';
       },
     ]),
   ],
+  controllers: [WorkspaceMembersController],
   providers: [WorkspaceMembersService],
   exports: [WorkspaceMembersService],
 })
