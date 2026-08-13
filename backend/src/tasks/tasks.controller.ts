@@ -137,4 +137,19 @@ export class TasksController {
       userId,
     );
   }
+
+  @Patch(':id/settings/member-add')
+updateMemberAddPermission(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+  @Body('enabled') enabled: boolean,
+) {
+  return this.tasksService.updateMemberAddPermission(
+    id,
+    workspaceId,
+    userId,
+    enabled,
+  );
+}
 }

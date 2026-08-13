@@ -61,6 +61,8 @@ export class Task {
   default: [],
 })
 members: TaskMember[];
+  @Prop({ default: false })
+allowMembersToAddMembers: boolean;
 
   @Prop({ required: true })
   createdBy: string;
@@ -79,6 +81,8 @@ members: TaskMember[];
 
   @Prop({ type: [String], default: [] })
   resources: string[];
+  
 }
+
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

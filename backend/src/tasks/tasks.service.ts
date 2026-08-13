@@ -195,69 +195,105 @@ export class TasksService {
     return task.save();
   }
 
-  async addMember(
-    id: string,
-    workspaceId: string,
-    userId: string,
-    memberId: string,
-  ) {
-    const task = await this.taskModel.findOne({
-      _id: id,
-      workspaceId,
-    });
+ async addMember(
+  id: string,
+  workspaceId: string,
+  userId: string,
+  memberId: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: id,
+    workspaceId,
+  });
 
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    // For now creator controls adding members.
-    // The workspace setting can later allow assigned members too.
-    if (task.createdBy !== userId) {
-      throw new ForbiddenException(
-        'Only the task creator can add members',
-      );
-    }
-
-    if (task.createdBy === memberId) {
-      throw new BadRequestException(
-        'Task creator is already the owner of this task',
-      );
-    }
-
-    const workspaceMembers =
-      await this.workspaceMembersService.findByWorkspace(
-        workspaceId,
-      );
-
-    const isWorkspaceMember = workspaceMembers.some(
-      (member) => member.userId === memberId,
-    );
-
-    if (!isWorkspaceMember) {
-      throw new BadRequestException(
-        'User is not a member of this workspace',
-      );
-    }
-
-    const alreadyAssigned = task.members.some(
-      (member) => member.userId === memberId,
-    );
-
-    if (alreadyAssigned) {
-      throw new BadRequestException(
-        'User is already assigned to this task',
-      );
-    }
-
-    task.members.push({
-      userId: memberId,
-      status: 'To Do',
-    } as any);
-
-    this.updateOverallStatus(task);
-
-    return task.save();
+  if (!task) {
+    throw new NotFoundException('Task not found');
   }
+
+  const isCreator = task.createdBy === userId;
+
+  const isTaskMember = task.members.some(
+    (member) => member.userId === userId,
+  );
+
+  if (!isCreator && !isTaskMember) {
+    throw new ForbiddenException(
+      'You are not part of this task',
+    );
+  }
+
+  if (!isCreator && !task.allowMembersToAddMembers) {
+    throw new ForbiddenException(
+      'Members are not allowed to add other members to this task',
+    );
+  }
+
+  if (task.createdBy === memberId) {
+    throw new BadRequestException(
+      'Task creator is already the owner of this task',
+    );
+  }
+
+  const workspaceMembers =
+    await this.workspaceMembersService.findByWorkspace(
+      workspaceId,
+    );
+
+  const isWorkspaceMember = workspaceMembers.some(
+    (member) => member.userId === memberId,
+  );
+
+  if (!isWorkspaceMember) {
+    throw new BadRequestException(
+      'User is not a member of this workspace',
+    );
+  }
+
+  const alreadyAssigned = task.members.some(
+    (member) => member.userId === memberId,
+  );
+
+  if (alreadyAssigned) {
+    throw new BadRequestException(
+      'User is already assigned to this task',
+    );
+  }
+
+  task.members.push({
+    userId: memberId,
+    status: 'To Do',
+  } as any);
+
+  this.updateOverallStatus(task);
+
+  return task.save();
+}
+
+async updateMemberAddPermission(
+  id: string,
+  workspaceId: string,
+  userId: string,
+  enabled: boolean,
+) {
+  const task = await this.taskModel.findOne({
+    _id: id,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  if (task.createdBy !== userId) {
+    throw new ForbiddenException(
+      'Only the task creator can change task settings',
+    );
+  }
+
+  task.allowMembersToAddMembers = enabled;
+
+  return task.save();
+}
 
   async removeMember(
     id: string,
