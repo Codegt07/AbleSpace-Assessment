@@ -112,6 +112,104 @@ export class TasksService {
     return task;
   }
 
+  async createSubtask(
+  parentTaskId: string,
+  workspaceId: string,
+  userId: string,
+  createTaskDto: CreateTaskDto,
+) {
+  const parentTask = await this.taskModel.findOne({
+    _id: parentTaskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
+
+  if (!parentTask) {
+    throw new NotFoundException('Parent task not found');
+  }
+
+  const {
+    members = [],
+    ...taskData
+  } = createTaskDto;
+
+  const workspaceMembers =
+    await this.workspaceMembersService.findByWorkspace(
+      workspaceId,
+    );
+
+  const validMemberIds = new Set(
+    workspaceMembers.map((member) => member.userId),
+  );
+
+  const invalidMembers = members.filter(
+    (memberId) => !validMemberIds.has(memberId),
+  );
+
+  if (invalidMembers.length > 0) {
+    throw new BadRequestException(
+      'One or more selected users are not members of this workspace',
+    );
+  }
+
+  const subtask = await this.taskModel.create({
+    ...taskData,
+    type: 'subtask',
+    parentTaskId,
+    workspaceId,
+    createdBy: userId,
+    members: members.map((memberId) => ({
+      userId: memberId,
+      status: 'To Do',
+    })),
+  });
+
+  this.updateOverallStatus(subtask);
+  await subtask.save();
+
+  await this.createUpdate(
+    parentTaskId,
+    userId,
+    `Created subtask "${subtask.title}"`,
+    {
+      subtaskId: subtask._id,
+    },
+  );
+
+  return subtask;
+}
+
+async getSubtasks(
+  parentTaskId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  const parentTask = await this.taskModel.findOne({
+    _id: parentTaskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
+
+  if (!parentTask) {
+    throw new NotFoundException('Parent task not found');
+  }
+
+  return this.taskModel
+    .find({
+      parentTaskId,
+      workspaceId,
+      type: 'subtask',
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
   async findAll(workspaceId: string, userId: string) {
     return this.taskModel
       .find({

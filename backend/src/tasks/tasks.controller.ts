@@ -35,6 +35,34 @@ export class TasksController {
     );
   }
 
+  @Post(':id/subtasks')
+createSubtask(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+  @Body() createTaskDto: CreateTaskDto,
+) {
+  return this.tasksService.createSubtask(
+    id,
+    workspaceId,
+    userId,
+    createTaskDto,
+  );
+}
+
+@Get(':id/subtasks')
+getSubtasks(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.getSubtasks(
+    id,
+    workspaceId,
+    userId,
+  );
+}
+
   @Get(':id/updates')
 getUpdates(
   @Param('id') id: string,

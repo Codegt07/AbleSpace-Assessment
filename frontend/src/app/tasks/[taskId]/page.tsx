@@ -1,40 +1,168 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 
-const subtasks = [
-  {
-    id: 1,
-    title: "Create API endpoint documentation",
-    priority: "High",
-    member: "G",
-    dueDate: "12 Sep 2026",
-  },
-  {
-    id: 2,
-    title: "Add request and response examples",
-    priority: "Low",
-    member: "G",
-    dueDate: "15 Sep 2026",
-  },
-  {
-    id: 3,
-    title: "Review authentication documentation",
-    priority: "Medium",
-    member: "G",
-    dueDate: "18 Sep 2026",
-  },
-];
+type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
-const labels = ["Research", "Design", "Development"];
+type TaskMember = {
+  _id: string;
+  userId: string;
+  status: TaskStatus;
+};
+
+type Task = {
+  _id: string;
+  title: string;
+  description?: string;
+  type?: string;
+  parentTaskId?: string | null;
+  status: TaskStatus;
+  priority?: string;
+  members?: TaskMember[];
+  createdBy: string;
+  workspaceId: string;
+  labels?: string[];
+  resources?: any[];
+  dueDate?: string;
+  allowMembersToAddMembers?: boolean;
+};
+
+type TaskUpdate = {
+  _id: string;
+  taskId: string;
+  userId: string;
+  message: string;
+  metadata?: Record<string, any> | null;
+  createdAt: string;
+};
 
 export default function TaskDetailsPage() {
+  const params = useParams();
+  const taskId = params.taskId as string;
+
+  const [task, setTask] = useState<Task | null>(null);
+  const [updates, setUpdates] = useState<TaskUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTaskData = async () => {
+      try {
+        const storedGuest = localStorage.getItem("guest");
+
+        if (!storedGuest) {
+          console.error("Guest not found");
+          return;
+        }
+
+        const guest = JSON.parse(storedGuest);
+
+        const workspaceId = guest.workspaceId;
+        const userId = guest.guestId;
+
+        console.log("GUEST:", guest);
+        console.log("workspaceId:", workspaceId);
+        console.log("userId:", userId);
+        console.log("taskId:", taskId);
+
+        if (!workspaceId || !userId || !taskId) {
+          console.error("Missing task information");
+          return;
+        }
+
+       const taskUrl =
+  `http://localhost:5000/tasks/${taskId}` +
+  `?workspaceId=${workspaceId}&userId=${userId}`;
+
+const updatesUrl =
+  `http://localhost:5000/tasks/${taskId}/updates` +
+  `?workspaceId=${workspaceId}&userId=${userId}`;
+
+console.log("TASK URL:", taskUrl);
+console.log("UPDATES URL:", updatesUrl);
+
+const [taskResponse, updatesResponse] =
+  await Promise.all([
+    fetch(taskUrl),
+    fetch(updatesUrl),
+  ]);
+
+        if (!taskResponse.ok) {
+  const errorText = await taskResponse.text();
+
+  console.error(
+    "TASK API ERROR:",
+    taskResponse.status,
+    errorText,
+  );
+
+  throw new Error("Failed to fetch task");
+}
+
+if (!updatesResponse.ok) {
+  const errorText = await updatesResponse.text();
+
+  console.error(
+    "UPDATES API ERROR:",
+    updatesResponse.status,
+    errorText,
+  );
+
+  throw new Error("Failed to fetch updates");
+}
+        const taskData = await taskResponse.json();
+        const updatesData = await updatesResponse.json();
+
+        setTask(taskData);
+        setUpdates(updatesData);
+      } catch (error) {
+        console.error("Task Details Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTaskData();
+  }, [taskId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Sidebar />
+
+        <main className="ml-[240px] min-h-screen">
+          <div className="flex items-center justify-center px-6 py-10">
+            <p className="text-[12px] text-[#888]">
+              Loading task...
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Sidebar />
+
+        <main className="ml-[240px] min-h-screen">
+          <div className="flex items-center justify-center px-6 py-10">
+            <p className="text-[12px] text-[#888]">
+              Task not found
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
 
       <main className="ml-[240px] min-h-screen">
-        {/* Top bar */}
         <div className="h-[54px] border-b border-[#e8e8e8]" />
 
         <div className="flex gap-5 px-6 py-5">
@@ -42,22 +170,30 @@ export default function TaskDetailsPage() {
           <section className="min-w-0 flex-1">
             {/* Task title */}
             <h1 className="text-[22px] font-semibold text-[#171717]">
-              Write API Documentation
+              {task.title}
             </h1>
 
             <p className="mt-1 max-w-[700px] text-[12px] leading-5 text-[#777]">
-              Create clear and detailed API documentation to guide developers
-              in using the inventory and sales metrics features effectively.
+              {task.description || "No description provided."}
             </p>
 
-            {/* Basic properties */}
+            {/* Due Date */}
             <div className="mt-5 flex items-center gap-3">
               <span className="text-[12px] font-medium text-[#333]">
                 Due Date
               </span>
 
               <span className="rounded-md bg-[#fff0f0] px-2 py-1 text-[11px] text-[#ff4d4f]">
-                31 Jul
+                {task.dueDate
+                  ? new Date(task.dueDate).toLocaleDateString(
+                      "en-GB",
+                      {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      },
+                    )
+                  : "No date"}
               </span>
             </div>
 
@@ -68,14 +204,20 @@ export default function TaskDetailsPage() {
               </span>
 
               <div className="flex flex-wrap gap-2">
-                {labels.map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-[#e5e5e5] bg-[#f7f7f7] px-2 py-[3px] text-[10px] text-[#444]"
-                  >
-                    {label}
+                {task.labels?.length ? (
+                  task.labels.map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full border border-[#e5e5e5] bg-[#f7f7f7] px-2 py-[3px] text-[10px] text-[#444]"
+                    >
+                      {label}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[11px] text-[#999]">
+                    No labels
                   </span>
-                ))}
+                )}
               </div>
             </div>
 
@@ -85,12 +227,16 @@ export default function TaskDetailsPage() {
                 Resources
               </span>
 
-              <button
-                type="button"
-                className="cursor-pointer text-[11px] text-[#888] hover:text-[#171717]"
-              >
-                + Add document or link...
-              </button>
+              {task.resources?.length ? (
+                <span className="text-[11px] text-[#555]">
+                  {task.resources.length} resource
+                  {task.resources.length > 1 ? "s" : ""}
+                </span>
+              ) : (
+                <span className="text-[11px] text-[#999]">
+                  No resources
+                </span>
+              )}
             </div>
 
             {/* SUBTASKS */}
@@ -103,51 +249,12 @@ export default function TaskDetailsPage() {
                 </h2>
               </div>
 
-              <div className="overflow-hidden rounded-lg border border-[#dedede]">
-                {/* Header */}
-                <div className="grid grid-cols-[1fr_110px_110px_130px_70px] bg-[#f7f7f7] px-3 py-[10px] text-[11px] font-medium text-[#333]">
-                  <span>Task</span>
-                  <span>Priority</span>
-                  <span>Members</span>
-                  <span>Due Date</span>
-                  <span className="text-right">Actions</span>
+              <div className="rounded-lg border border-[#dedede]">
+                <div className="flex h-[50px] items-center justify-center">
+                  <span className="text-[11px] text-[#999]">
+                    No subtasks yet
+                  </span>
                 </div>
-
-                {subtasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="grid grid-cols-[1fr_110px_110px_130px_70px] items-center border-t border-[#e8e8e8] px-3 py-[10px] text-[11px]"
-                  >
-                    <span className="text-[#333]">{task.title}</span>
-
-                    <span
-                      className={
-                        task.priority === "High"
-                          ? "text-red-500"
-                          : task.priority === "Medium"
-                            ? "text-orange-500"
-                            : "text-[#999]"
-                      }
-                    >
-                      {task.priority}
-                    </span>
-
-                    <div className="flex">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#eeeeee] text-[9px]">
-                        {task.member}
-                      </span>
-                    </div>
-
-                    <span>{task.dueDate}</span>
-
-                    <button
-                      type="button"
-                      className="cursor-pointer text-right text-[15px]"
-                    >
-                      ⋯
-                    </button>
-                  </div>
-                ))}
 
                 <button
                   type="button"
@@ -165,26 +272,16 @@ export default function TaskDetailsPage() {
               </h2>
 
               <div className="rounded-lg border border-[#dedede]">
-                <div className="p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
-                      G
-                    </div>
-
-                    <span className="text-[11px] font-medium">Guest</span>
-
-                    <span className="text-[10px] text-[#999]">just now</span>
-                  </div>
-
-                  <p className="ml-8 mt-2 text-[11px] text-[#333]">
-                    API documentation needs final review.
-                  </p>
+                <div className="flex h-[80px] items-center justify-center">
+                  <span className="text-[11px] text-[#999]">
+                    No comments yet
+                  </span>
                 </div>
 
                 <div className="flex items-center border-t border-[#e8e8e8] px-3">
                   <input
-                    placeholder="Leave a reply..."
-                    className="h-[40px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
+                    placeholder="Add a comment..."
+                    className="h-[42px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
                   />
 
                   <button
@@ -194,20 +291,6 @@ export default function TaskDetailsPage() {
                     Send
                   </button>
                 </div>
-              </div>
-
-              <div className="mt-3 flex items-center rounded-lg border border-[#dedede] px-3">
-                <input
-                  placeholder="Add a comment..."
-                  className="h-[42px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
-                />
-
-                <button
-                  type="button"
-                  className="cursor-pointer text-[13px]"
-                >
-                  Send
-                </button>
               </div>
             </div>
           </section>
@@ -221,7 +304,10 @@ export default function TaskDetailsPage() {
                   Details
                 </h2>
 
-                <button type="button" className="cursor-pointer text-lg">
+                <button
+                  type="button"
+                  className="cursor-pointer text-lg"
+                >
                   +
                 </button>
               </div>
@@ -229,60 +315,102 @@ export default function TaskDetailsPage() {
               <div className="mt-5 space-y-5">
                 {/* Status */}
                 <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">Status</span>
+                  <span className="text-[11px] text-[#333]">
+                    Status
+                  </span>
 
-                  <button
-                    type="button"
-                    className="w-fit cursor-pointer rounded-md bg-[#fff5e6] px-2 py-1 text-[11px] text-orange-600"
-                  >
-                    To Do
-                  </button>
+                  <span className="w-fit rounded-md bg-[#fff5e6] px-2 py-1 text-[11px] text-orange-600">
+                    {task.status}
+                  </span>
                 </div>
 
                 {/* Priority */}
                 <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">Priority</span>
+                  <span className="text-[11px] text-[#333]">
+                    Priority
+                  </span>
 
-                  <button
-                    type="button"
-                    className="w-fit cursor-pointer text-[11px] text-red-500"
-                  >
-                    ↗ High
-                  </button>
+                  <span className="w-fit text-[11px] text-red-500">
+                    ↗ {task.priority || "Medium"}
+                  </span>
                 </div>
 
-                {/* Member */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">Member</span>
+                {/* Members */}
+                <div className="grid grid-cols-[80px_1fr] items-start">
+                  <span className="text-[11px] text-[#333]">
+                    Members
+                  </span>
 
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
-                      G
-                    </div>
+                  <div className="space-y-2">
+                    {task.members?.length ? (
+                      task.members.map((member) => (
+                        <div
+                          key={member._id}
+                          className="flex items-center gap-2"
+                        >
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
+                            G
+                          </div>
 
-                    <span className="text-[11px]">Guest</span>
+                          <div>
+                            <p className="max-w-[150px] truncate text-[10px] text-[#333]">
+                              {member.userId}
+                            </p>
+
+                            <p className="text-[9px] text-[#999]">
+                              {member.status}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-[#999]">
+                        No members
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Due date */}
+                {/* Due Date */}
                 <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">Due Date</span>
+                  <span className="text-[11px] text-[#333]">
+                    Due Date
+                  </span>
 
-                  <span className="text-[11px] text-[#555]">31 Jul 2026</span>
+                  <span className="text-[11px] text-[#555]">
+                    {task.dueDate
+                      ? new Date(
+                          task.dueDate,
+                        ).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "No date"}
+                  </span>
                 </div>
 
                 {/* Labels */}
                 <div className="grid grid-cols-[80px_1fr] items-start">
-                  <span className="pt-1 text-[11px] text-[#333]">Labels</span>
+                  <span className="pt-1 text-[11px] text-[#333]">
+                    Labels
+                  </span>
 
                   <div className="flex flex-wrap gap-1">
-                    <span className="rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]">
-                      Research
-                    </span>
-
-                    <span className="rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]">
-                      Design
-                    </span>
+                    {task.labels?.length ? (
+                      task.labels.map((label) => (
+                        <span
+                          key={label}
+                          className="rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]"
+                        >
+                          {label}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-[#999]">
+                        None
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -295,21 +423,37 @@ export default function TaskDetailsPage() {
               </h2>
 
               <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-[11px] font-medium text-[#333]">Guest</p>
-
-                  <p className="mt-1 text-[10px] leading-4 text-[#888]">
-                    changed priority from Medium to High
+                {updates.length === 0 ? (
+                  <p className="text-[10px] text-[#999]">
+                    No updates yet.
                   </p>
-                </div>
+                ) : (
+                  updates.map((update) => (
+                    <div
+                      key={update._id}
+                      className="border-b border-[#f0f0f0] pb-3 last:border-0 last:pb-0"
+                    >
+                      <p className="text-[10px] font-medium text-[#333]">
+                        {update.userId}
+                      </p>
 
-                <div>
-                  <p className="text-[11px] font-medium text-[#333]">Guest</p>
+                      <p className="mt-1 text-[10px] leading-4 text-[#777]">
+                        {update.message}
+                      </p>
 
-                  <p className="mt-1 text-[10px] leading-4 text-[#888]">
-                    created this task
-                  </p>
-                </div>
+                      <p className="mt-1 text-[9px] text-[#aaa]">
+                        {new Date(
+                          update.createdAt,
+                        ).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </aside>

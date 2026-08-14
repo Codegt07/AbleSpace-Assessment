@@ -22,6 +22,7 @@ type Task = {
 
 type Guest = {
   guestId: string;
+  workspaceId: string;
   name?: string;
 };
 
@@ -118,8 +119,8 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks?guestId=${guest.guestId}`
-      );
+      `http://localhost:5000/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`
+    );
 
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
@@ -185,14 +186,17 @@ export default function TaskBoard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: title.trim(),
-          status: selectedStatus,
-          priority,
-          assignee: "Guest",
-          dueDate: dueDate || undefined,
-          labels: parseLabels(),
-          guestId: guest.guestId,
-        }),
+        title: title.trim(),
+        description: "",
+        type: "main",
+        parentTaskId: null,
+        priority,
+        members: [guest.guestId],
+        createdBy: guest.guestId,
+        workspaceId: guest.workspaceId,
+        labels: parseLabels(),
+        resources: [],
+      }),
       });
 
       if (!response.ok) {
@@ -227,7 +231,7 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks/${editingTaskId}?guestId=${guest.guestId}`,
+        `http://localhost:5000/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
         {
           method: "PATCH",
           headers: {
@@ -274,7 +278,7 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks/${taskId}?guestId=${guest.guestId}`,
+        `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
         {
           method: "DELETE",
         }
