@@ -6,6 +6,11 @@ import {
   WorkspaceMemberSchema,
 } from './schemas/workspace-member.schema';
 
+import {
+  Guest,
+  GuestSchema,
+} from '../auth/schemas/guest.schema';
+
 import { WorkspaceMembersService } from './workspace-members.service';
 import { WorkspaceMembersController } from './workspace-members.controller';
 
@@ -15,6 +20,10 @@ import { WorkspaceMembersController } from './workspace-members.controller';
       {
         name: WorkspaceMember.name,
         schema: WorkspaceMemberSchema,
+      },
+      {
+        name: Guest.name,
+        schema: GuestSchema,
       },
     ]),
   ],

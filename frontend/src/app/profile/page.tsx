@@ -1,8 +1,88 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 
 export default function ProfilePage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [title, setTitle] = useState("");
+  const [username, setUsername] = useState("");
+
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) {
+      return;
+    }
+
+    const guest = JSON.parse(storedGuest);
+
+    setName(guest.name || "");
+    setEmail(guest.email || "");
+    setTitle(guest.title || "");
+    setUsername(guest.username || "");
+  }, []);
+
+  const handleSaveChanges = async () => {
+    try {
+      const storedGuest = localStorage.getItem("guest");
+
+      if (!storedGuest) {
+        return;
+      }
+
+      const guest = JSON.parse(storedGuest);
+
+      if (!guest.guestId) {
+        return;
+      }
+
+      setSaving(true);
+      setMessage("");
+
+      const response = await fetch(
+        `http://localhost:5000/auth/profile?guestId=${guest.guestId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim(),
+            username: username.trim(),
+            title: title.trim(),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedGuest = await response.json();
+
+      localStorage.setItem(
+        "guest",
+        JSON.stringify({
+          ...guest,
+          ...updatedGuest,
+        })
+      );
+
+      setMessage("Changes saved");
+    } catch (error) {
+      console.error("Update Profile Error:", error);
+      setMessage("Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
@@ -14,6 +94,7 @@ export default function ProfilePage() {
           </h1>
 
           <div className="mt-7 rounded-xl border border-[#e5e5e5] bg-white px-5">
+
             {/* Profile picture */}
             <div className="flex min-h-[62px] items-center justify-between border-b border-[#eeeeee]">
               <span className="text-[12px] font-medium text-[#333]">
@@ -21,7 +102,7 @@ export default function ProfilePage() {
               </span>
 
               <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#171717] text-[10px] font-medium text-white">
-                G
+                {name?.charAt(0)?.toUpperCase() || "G"}
               </div>
             </div>
 
@@ -31,18 +112,11 @@ export default function ProfilePage() {
                 Email
               </span>
 
-              <div className="flex items-center gap-3">
-                <span className="text-[12px] text-[#171717]">
-                  guest@example.com
-                </span>
-
-                <button
-                  type="button"
-                  className="cursor-pointer text-[#777]"
-                >
-                  ✎
-                </button>
-              </div>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
+              />
             </div>
 
             {/* Full name */}
@@ -52,7 +126,8 @@ export default function ProfilePage() {
               </span>
 
               <input
-                defaultValue="Guest"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
               />
             </div>
@@ -70,7 +145,8 @@ export default function ProfilePage() {
               </div>
 
               <input
-                defaultValue="Designer"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
               />
             </div>
@@ -88,7 +164,8 @@ export default function ProfilePage() {
               </div>
 
               <input
-                defaultValue="guest"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
               />
             </div>
@@ -110,12 +187,21 @@ export default function ProfilePage() {
               Leave Workspace
             </button>
           </div>
-            <div className="mt-6 flex justify-center">
+
+          <div className="mt-6 flex items-center justify-center gap-3">
+            {message && (
+              <span className="text-[11px] text-[#777]">
+                {message}
+              </span>
+            )}
+
             <button
               type="button"
-              className="h-[36px] cursor-pointer rounded-lg bg-[#171717] px-5 text-[12px] font-medium text-white transition-opacity hover:opacity-90"
+              onClick={handleSaveChanges}
+              disabled={saving}
+              className="h-[36px] cursor-pointer rounded-lg bg-[#171717] px-5 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Save Changes
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>

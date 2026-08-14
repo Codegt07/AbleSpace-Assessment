@@ -44,7 +44,257 @@ export default function TaskDetailsPage() {
 
   const [task, setTask] = useState<Task | null>(null);
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
+  const [subtasks, setSubtasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSubtaskModal, setShowSubtaskModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+const [memberId, setMemberId] = useState("");
+const [addingMember, setAddingMember] = useState(false);
+
+const [subtaskTitle, setSubtaskTitle] = useState("");
+const [subtaskDescription, setSubtaskDescription] = useState("");
+const [subtaskStatus, setSubtaskStatus] =
+  useState<TaskStatus>("To Do");
+const [subtaskPriority, setSubtaskPriority] = useState("Medium");
+const [subtaskDueDate, setSubtaskDueDate] = useState("");
+const [subtaskLabels, setSubtaskLabels] = useState("");
+const [creatingSubtask, setCreatingSubtask] = useState(false);
+const [workspaceUsers, setWorkspaceUsers] = useState<
+  {
+    userId: string;
+    name: string;
+    username: string;
+    avatar: string;
+    title: string;
+  }[]
+>([]);
+
+const [memberSearch, setMemberSearch] = useState("");
+const [addingMemberId, setAddingMemberId] = useState<string | null>(null);
+
+const handleCreateSubtask = async () => {
+  if (!subtaskTitle.trim()) {
+    return;
+  }
+
+  try {
+    setCreatingSubtask(true);
+
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) {
+      console.error("Guest not found");
+      return;
+    }
+
+    const guest = JSON.parse(storedGuest);
+
+    const workspaceId = guest.workspaceId;
+    const userId = guest.guestId;
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/subtasks` +
+        `?workspaceId=${workspaceId}&userId=${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: subtaskTitle.trim(),
+          description: subtaskDescription.trim(),
+          type: "subtask",
+          parentTaskId: taskId,
+          status: subtaskStatus,
+          priority: subtaskPriority,
+          members: [],
+          createdBy: userId,
+          workspaceId,
+          dueDate: subtaskDueDate || undefined,
+          labels: subtaskLabels
+            .split(",")
+            .map((label: string) => label.trim())
+            .filter(Boolean),
+          resources: [],
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "CREATE SUBTASK ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to create subtask");
+    }
+
+    const newSubtask = await response.json();
+
+    setSubtasks((previous) => [
+      newSubtask,
+      ...previous,
+    ]);
+
+    setSubtaskTitle("");
+    setSubtaskDescription("");
+    setSubtaskStatus("To Do");
+    setSubtaskPriority("Medium");
+    setSubtaskDueDate("");
+    setSubtaskLabels("");
+
+    setShowSubtaskModal(false);
+  } catch (error) {
+    console.error("Create Subtask Error:", error);
+  } finally {
+    setCreatingSubtask(false);
+  }
+};
+
+const handleAddWorkspaceMember = async (userId: string) => {
+  try {
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    if (!guest.workspaceId || !task?._id) return;
+
+    setAddingMemberId(userId);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${task._id}/members` +
+        `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memberId: userId,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "ADD MEMBER ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to add member");
+    }
+
+    const updatedTask = await response.json();
+
+    // Task ko immediately update karo
+    setTask(updatedTask);
+
+  } catch (error) {
+    console.error("Add Member Error:", error);
+  } finally {
+    setAddingMemberId(null);
+  }
+};
+
+const handleAddMember = async () => {
+  if (!memberId.trim()) {
+    return;
+  }
+
+  try {
+    setAddingMember(true);
+
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) {
+      console.error("Guest not found");
+      return;
+    }
+
+    const guest = JSON.parse(storedGuest);
+
+    const workspaceId = guest.workspaceId;
+    const userId = guest.guestId;
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/members` +
+        `?workspaceId=${workspaceId}&userId=${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memberId: memberId.trim(),
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "ADD MEMBER ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to add member");
+    }
+
+    const updatedTask = await response.json();
+
+    setTask(updatedTask);
+
+    setMemberId("");
+    setShowMemberModal(false);
+  } catch (error) {
+    console.error("Add Member Error:", error);
+  } finally {
+    setAddingMember(false);
+  }
+};
+
+useEffect(() => {
+  if (!showMemberModal) return;
+
+  const loadWorkspaceUsers = async () => {
+    try {
+      const storedGuest = localStorage.getItem("guest");
+
+      if (!storedGuest) return;
+
+      const guest = JSON.parse(storedGuest);
+
+      if (!guest.workspaceId) return;
+
+      const response = await fetch(
+        `http://localhost:5000/workspace-members/users?workspaceId=${guest.workspaceId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch workspace users");
+      }
+
+      const users = await response.json();
+
+      setWorkspaceUsers(users);
+    } catch (error) {
+      console.error("Load Workspace Users Error:", error);
+    }
+  };
+
+  loadWorkspaceUsers();
+}, [showMemberModal]);
+
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -82,10 +332,17 @@ const updatesUrl =
 console.log("TASK URL:", taskUrl);
 console.log("UPDATES URL:", updatesUrl);
 
-const [taskResponse, updatesResponse] =
+const subtasksUrl =
+  `http://localhost:5000/tasks/${taskId}/subtasks` +
+  `?workspaceId=${workspaceId}&userId=${userId}`;
+
+console.log("SUBTASKS URL:", subtasksUrl);
+
+const [taskResponse, updatesResponse, subtasksResponse] =
   await Promise.all([
     fetch(taskUrl),
     fetch(updatesUrl),
+    fetch(subtasksUrl),
   ]);
 
         if (!taskResponse.ok) {
@@ -111,11 +368,25 @@ if (!updatesResponse.ok) {
 
   throw new Error("Failed to fetch updates");
 }
+
+if (!subtasksResponse.ok) {
+  const errorText = await subtasksResponse.text();
+
+  console.error(
+    "SUBTASKS API ERROR:",
+    subtasksResponse.status,
+    errorText,
+  );
+
+  throw new Error("Failed to fetch subtasks");
+}
         const taskData = await taskResponse.json();
         const updatesData = await updatesResponse.json();
+        const subtasksData = await subtasksResponse.json();
 
         setTask(taskData);
         setUpdates(updatesData);
+        setSubtasks(subtasksData);
       } catch (error) {
         console.error("Task Details Error:", error);
       } finally {
@@ -250,15 +521,43 @@ if (!updatesResponse.ok) {
               </div>
 
               <div className="rounded-lg border border-[#dedede]">
-                <div className="flex h-[50px] items-center justify-center">
-                  <span className="text-[11px] text-[#999]">
-                    No subtasks yet
-                  </span>
-                </div>
+                <div>
+                {subtasks.length === 0 ? (
+                  <div className="flex h-[50px] items-center justify-center">
+                    <span className="text-[11px] text-[#999]">
+                      No subtasks yet
+                    </span>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[#e8e8e8]">
+                    {subtasks.map((subtask) => (
+                      <div
+                        key={subtask._id}
+                        className="flex items-center justify-between px-3 py-3"
+                      >
+                        <div>
+                          <p className="text-[11px] font-medium text-[#333]">
+                            {subtask.title}
+                          </p>
+
+                          <p className="mt-1 text-[9px] text-[#999]">
+                            {subtask.status} · {subtask.priority}
+                          </p>
+                        </div>
+
+                        <span className="text-[9px] text-[#999]">
+                          {subtask.members?.length || 0} member
+                          {subtask.members?.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
                 <button
                   type="button"
-                  className="flex h-[36px] w-full cursor-pointer items-center border-t border-[#e8e8e8] px-3 text-[11px] hover:bg-[#fafafa]"
+                  onClick={() => setShowSubtaskModal(true)}
                 >
                   + Add Subtask
                 </button>
@@ -337,9 +636,19 @@ if (!updatesResponse.ok) {
 
                 {/* Members */}
                 <div className="grid grid-cols-[80px_1fr] items-start">
-                  <span className="text-[11px] text-[#333]">
-                    Members
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-[#333]">
+                      Members
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowMemberModal(true)}
+                      className="text-[15px] leading-none text-[#333]"
+                    >
+                      +
+                    </button>
+                  </div>
 
                   <div className="space-y-2">
                     {task.members?.length ? (
@@ -458,6 +767,300 @@ if (!updatesResponse.ok) {
             </div>
           </aside>
         </div>
+        {showSubtaskModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
+    <div className="w-full max-w-[430px] rounded-[22px] border border-[#dedede] bg-white p-6 shadow-xl">
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-[18px] font-semibold text-[#171717]">
+          Add Subtask
+        </h2>
+
+        <button
+          type="button"
+          onClick={() => setShowSubtaskModal(false)}
+          className="text-[20px] text-[#888]"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="mt-5 space-y-4">
+
+        {/* Title */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Title
+          </label>
+
+          <input
+            value={subtaskTitle}
+            onChange={(e) =>
+              setSubtaskTitle(e.target.value)
+            }
+            placeholder="Enter subtask title"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none focus:border-[#999]"
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Description
+          </label>
+
+          <textarea
+            value={subtaskDescription}
+            onChange={(e) =>
+              setSubtaskDescription(e.target.value)
+            }
+            placeholder="Add a description"
+            rows={3}
+            className="mt-1.5 w-full resize-none rounded-[10px] border border-[#dedede] px-3 py-2.5 text-[13px] outline-none focus:border-[#999]"
+          />
+        </div>
+
+        {/* Status */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Status
+          </label>
+
+          <select
+            value={subtaskStatus}
+            onChange={(e) =>
+              setSubtaskStatus(
+                e.target.value as TaskStatus
+              )
+            }
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+          >
+            <option>To Do</option>
+            <option>Doing</option>
+            <option>Completed</option>
+            <option>On Hold</option>
+          </select>
+        </div>
+
+        {/* Priority */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Priority
+          </label>
+
+          <select
+            value={subtaskPriority}
+            onChange={(e) =>
+              setSubtaskPriority(e.target.value)
+            }
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+          >
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+
+        {/* Due Date */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Due Date
+          </label>
+
+          <input
+            type="date"
+            value={subtaskDueDate}
+            onChange={(e) =>
+              setSubtaskDueDate(e.target.value)
+            }
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+          />
+        </div>
+
+        {/* Labels */}
+        <div>
+          <label className="text-[12px] font-medium text-[#444]">
+            Labels
+          </label>
+
+          <input
+            value={subtaskLabels}
+            onChange={(e) =>
+              setSubtaskLabels(e.target.value)
+            }
+            placeholder="Design, Frontend"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+          />
+
+          <p className="mt-1 text-[10px] text-[#999]">
+            Separate multiple labels with commas.
+          </p>
+        </div>
+
+      </div>
+
+      {/* Actions */}
+      <div className="mt-6 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            setShowSubtaskModal(false)
+          }
+          className="h-[38px] rounded-full border border-[#dedede] px-5 text-[12px] font-medium text-[#555]"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCreateSubtask}
+          disabled={creatingSubtask}
+          className="h-[38px] rounded-full bg-[#171717] px-5 text-[12px] font-medium text-white disabled:opacity-50"
+        >
+          {creatingSubtask
+            ? "Creating..."
+            : "Add Subtask"}
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+{showMemberModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
+    <div className="w-full max-w-[400px] rounded-[20px] border border-[#dedede] bg-white p-6 shadow-xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-[17px] font-semibold text-[#171717]">
+          Add Member
+        </h2>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowMemberModal(false);
+            setMemberSearch("");
+          }}
+          className="text-[20px] text-[#888]"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Search */}
+      <div className="mt-5">
+        <input
+          value={memberSearch}
+          onChange={(e) => setMemberSearch(e.target.value)}
+          placeholder="Search members..."
+          className="h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[12px] outline-none focus:border-[#999]"
+        />
+      </div>
+
+      {/* Users */}
+      <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[10px] border border-[#eeeeee]">
+        {workspaceUsers
+          .filter((user) => {
+            const search = memberSearch.toLowerCase().trim();
+
+            if (!search) return true;
+
+            return (
+              user.name?.toLowerCase().includes(search) ||
+              user.username?.toLowerCase().includes(search)
+            );
+          })
+          .map((user) => {
+            const alreadyMember =
+              task.members?.some(
+                (member) => member.userId === user.userId
+              ) ?? false;
+
+            return (
+              <div
+                key={user.userId}
+                className="flex items-center justify-between border-b border-[#eeeeee] px-3 py-3 last:border-b-0"
+              >
+                {/* User */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#171717] text-[10px] font-medium text-white">
+                    {user.name?.charAt(0)?.toUpperCase() || "G"}
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-medium text-[#333]">
+                      {user.name || "Guest"}
+                    </p>
+
+                    {user.username && (
+                      <p className="mt-0.5 text-[9px] text-[#999]">
+                        @{user.username}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Add / Already Added */}
+                {alreadyMember ? (
+                  <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#f3f3f3] text-[14px] font-medium text-[#777]">
+                    ✓
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleAddWorkspaceMember(user.userId)
+                    }
+                    disabled={addingMemberId === user.userId}
+                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#dedede] text-[16px] text-[#555] transition-colors hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {addingMemberId === user.userId
+                      ? "..."
+                      : "+"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+        {/* No users */}
+        {workspaceUsers.filter((user) => {
+          const search = memberSearch.toLowerCase().trim();
+
+          if (!search) return true;
+
+          return (
+            user.name?.toLowerCase().includes(search) ||
+            user.username?.toLowerCase().includes(search)
+          );
+        }).length === 0 && (
+          <div className="flex h-[70px] items-center justify-center">
+            <span className="text-[11px] text-[#999]">
+              No members found
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Done */}
+      <div className="mt-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => {
+            setShowMemberModal(false);
+            setMemberSearch("");
+          }}
+          className="h-[36px] rounded-full border border-[#dedede] px-5 text-[12px] font-medium text-[#555]"
+        >
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
       </main>
     </div>
   );

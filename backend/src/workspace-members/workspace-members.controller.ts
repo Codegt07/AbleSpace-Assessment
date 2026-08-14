@@ -7,6 +7,8 @@ export class WorkspaceMembersController {
     private readonly workspaceMembersService: WorkspaceMembersService,
   ) {}
 
+
+
   @Get()
   findByWorkspace(
     @Query('workspaceId') workspaceId: string,
@@ -15,6 +17,15 @@ export class WorkspaceMembersController {
       workspaceId,
     );
   }
+
+  @Get('users')
+findWorkspaceUsers(
+  @Query('workspaceId') workspaceId: string,
+) {
+  return this.workspaceMembersService.findWorkspaceUsers(
+    workspaceId,
+  );
+}
 
   @Post()
 addMember(
@@ -28,4 +39,5 @@ addMember(
     role || 'member',
   );
 }
+
 }
