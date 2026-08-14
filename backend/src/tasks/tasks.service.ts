@@ -129,7 +129,7 @@ export class TasksService {
     id: string,
     workspaceId: string,
     userId: string,
-  ) {
+   ) {
     const task = await this.taskModel.findOne({
       _id: id,
       workspaceId,
@@ -146,45 +146,98 @@ export class TasksService {
     return task;
   }
 
-  async update(
-    id: string,
-    workspaceId: string,
-    userId: string,
-    updateTaskDto: UpdateTaskDto,
-  ) {
-    const task = await this.taskModel.findOne({
-      _id: id,
-      workspaceId,
-    });
+  async getUpdates(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
 
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    if (task.createdBy !== userId) {
-      throw new ForbiddenException(
-        'Only the task creator can edit task details',
-      );
-    }
-
-    // Members/status are handled by dedicated actions.
-    const {
-      members,
-      status,
-      ...allowedTaskUpdates
-    } = updateTaskDto as UpdateTaskDto & {
-      members?: unknown;
-      status?: unknown;
-    };
-
-    Object.assign(task, allowedTaskUpdates);
-
-    this.updateOverallStatus(task);
-
-    return task.save();
+  if (!task) {
+    throw new NotFoundException('Task not found');
   }
 
-  async updateMemberStatus(
+  return this.taskUpdateModel
+    .find({ taskId })
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
+async update(
+  id: string,
+  workspaceId: string,
+  userId: string,
+  updateTaskDto: UpdateTaskDto,
+) {
+  const task = await this.taskModel.findOne({
+    _id: id,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  if (task.createdBy !== userId) {
+    throw new ForbiddenException(
+      'Only the task creator can edit task details',
+    );
+  }
+
+  // Members/status are handled by dedicated actions.
+  const {
+    members,
+    status,
+    ...allowedTaskUpdates
+  } = updateTaskDto as UpdateTaskDto & {
+    members?: unknown;
+    status?: unknown;
+  };
+
+  const changes: Record<string, any> = {};
+
+  for (const [key, newValue] of Object.entries(
+    allowedTaskUpdates,
+  )) {
+    const oldValue = (task as any)[key];
+
+    if (
+      String(oldValue ?? '') !==
+      String(newValue ?? '')
+    ) {
+      changes[key] = {
+        oldValue,
+        newValue,
+      };
+    }
+  }
+
+  Object.assign(task, allowedTaskUpdates);
+
+  this.updateOverallStatus(task);
+
+  const savedTask = await task.save();
+
+  if (Object.keys(changes).length > 0) {
+    await this.createUpdate(
+      id,
+      userId,
+      'Updated task details',
+      changes,
+    );
+  }
+
+  return savedTask;
+}
+
+async updateMemberStatus(
   id: string,
   workspaceId: string,
   userId: string,
@@ -293,6 +346,13 @@ export class TasksService {
 
   this.updateOverallStatus(task);
 
+  await this.createUpdate(
+  id,
+  userId,
+  'Added a member to this task',
+  { memberId },
+);
+
   return task.save();
 }
 
@@ -318,6 +378,13 @@ async updateMemberAddPermission(
   }
 
   task.allowMembersToAddMembers = enabled;
+  await this.createUpdate(
+  id,
+  userId,
+  enabled
+    ? 'Enabled member adding'
+    : 'Disabled member adding',
+);
 
   return task.save();
 }
@@ -369,6 +436,13 @@ async updateMemberAddPermission(
 
     this.updateOverallStatus(task);
 
+    await this.createUpdate(
+  id,
+  userId,
+  'Removed a member from this task',
+  { memberId },
+);
+
     return task.save();
   }
 
@@ -407,6 +481,11 @@ async updateMemberAddPermission(
     );
 
     this.updateOverallStatus(task);
+    await this.createUpdate(
+  id,
+  userId,
+  'Declined to work on this task',
+);
 
     return task.save();
   }

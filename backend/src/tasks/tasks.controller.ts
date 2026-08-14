@@ -35,6 +35,19 @@ export class TasksController {
     );
   }
 
+  @Get(':id/updates')
+getUpdates(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.getUpdates(
+    id,
+    workspaceId,
+    userId,
+  );
+}
+
   @Get(':id')
   findOne(
     @Param('id') id: string,
