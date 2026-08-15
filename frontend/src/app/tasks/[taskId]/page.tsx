@@ -47,6 +47,71 @@ type TaskComment = {
   createdAt: string;
 };
 
+
+function PriorityIcon({ priority }: { priority?: string }) {
+  const className =
+    priority === "Urgent" || priority === "High"
+      ? "text-[#ff5b5b]"
+      : priority === "Low" || !priority
+        ? "text-[#aab2bd]"
+        : "text-[#f59e0b]";
+
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className={className}>
+      <path d="M2 10.5V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M5.5 10.5V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M9 10.5V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TagIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M2 3.2V7.1L6.7 11.5L11.2 7L6.8 2.5H2V3.2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <circle cx="4.1" cy="4.4" r="0.8" fill="currentColor" />
+    </svg>
+  );
+}
+
+function PaperclipIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M4.2 6.7L7.8 3.1C8.8 2.1 10.4 2.1 11.3 3C12.2 3.9 12.2 5.4 11.3 6.4L6.2 11.5C4.9 12.8 2.8 12.8 1.5 11.5C0.2 10.2 0.2 8.1 1.5 6.8L6.4 1.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+      <rect x="1.7" y="2.7" width="9.6" height="8.1" rx="1.4" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M4 1.5V4M9 1.5V4M1.8 5.2H11.2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PeopleIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+      <circle cx="5" cy="4.3" r="2" stroke="currentColor" strokeWidth="1.1" />
+      <path d="M1.8 10.8C1.8 8.8 3.1 7.5 5 7.5C6.9 7.5 8.2 8.8 8.2 10.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M8.4 3.1C9.8 3.3 10.7 4.4 10.7 5.8M9 8C10.5 8.4 11.2 9.3 11.3 10.8" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function formatShortDate(date?: string) {
+  if (!date) return "No date";
+  return new Date(date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function priorityTextClass(priority?: string) {
+  if (priority === "Urgent" || priority === "High") return "text-[#ff5b5b]";
+  if (priority === "Low" || !priority) return "text-[#aab2bd]";
+  return "text-[#f59e0b]";
+}
+
 export default function TaskDetailsPage() {
   const params = useParams();
   const taskId = params.taskId as string;
@@ -77,10 +142,6 @@ const [workspaceUsers, setWorkspaceUsers] = useState<
     title: string;
   }[]
 >([]);
-
-const [memberSearch, setMemberSearch] = useState("");
-const [addingMemberId, setAddingMemberId] = useState<string | null>(null);
-
 const [comments, setComments] = useState<TaskComment[]>([]);
 const [commentText, setCommentText] = useState("");
 const [addingComment, setAddingComment] = useState(false);
@@ -88,72 +149,85 @@ const [replyingTo, setReplyingTo] = useState<string | null>(null);
 const [replyText, setReplyText] = useState("");
 const [addingReply, setAddingReply] = useState(false);
 
+const [memberSearch, setMemberSearch] = useState("");
+const [addingMemberId, setAddingMemberId] = useState<string | null>(null);
+const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+const [showAllComments, setShowAllComments] = useState(false);
+const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+const [openSubtaskAction, setOpenSubtaskAction] = useState<string | null>(null);
+const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+
 const handleCreateSubtask = async () => {
-  if (!subtaskTitle.trim()) {
-    return;
-  }
+  if (!subtaskTitle.trim()) return;
 
   try {
     setCreatingSubtask(true);
 
     const storedGuest = localStorage.getItem("guest");
-
-    if (!storedGuest) {
-      console.error("Guest not found");
-      return;
-    }
+    if (!storedGuest) return;
 
     const guest = JSON.parse(storedGuest);
-
     const workspaceId = guest.workspaceId;
     const userId = guest.guestId;
 
-    const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/subtasks` +
-        `?workspaceId=${workspaceId}&userId=${userId}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: subtaskTitle.trim(),
-          description: subtaskDescription.trim(),
-          type: "subtask",
-          parentTaskId: taskId,
-          status: subtaskStatus,
-          priority: subtaskPriority,
-          members: [],
-          createdBy: userId,
-          workspaceId,
-          dueDate: subtaskDueDate || undefined,
-          labels: subtaskLabels
-            .split(",")
-            .map((label: string) => label.trim())
-            .filter(Boolean),
-          resources: [],
-        }),
+    const isEditing = Boolean(editingSubtaskId);
+    const url = isEditing
+      ? `http://localhost:5000/tasks/${editingSubtaskId}?workspaceId=${workspaceId}&userId=${userId}`
+      : `http://localhost:5000/tasks/${taskId}/subtasks?workspaceId=${workspaceId}&userId=${userId}`;
+
+    const response = await fetch(url, {
+      method: isEditing ? "PATCH" : "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify(
+        isEditing
+          ? {
+              title: subtaskTitle.trim(),
+              description: subtaskDescription.trim(),
+              status: subtaskStatus,
+              priority: subtaskPriority,
+              dueDate: subtaskDueDate || undefined,
+              labels: subtaskLabels
+                .split(",")
+                .map((label: string) => label.trim())
+                .filter(Boolean),
+            }
+          : {
+              title: subtaskTitle.trim(),
+              description: subtaskDescription.trim(),
+              type: "subtask",
+              parentTaskId: taskId,
+              status: subtaskStatus,
+              priority: subtaskPriority,
+              members: [],
+              createdBy: userId,
+              workspaceId,
+              dueDate: subtaskDueDate || undefined,
+              labels: subtaskLabels
+                .split(",")
+                .map((label: string) => label.trim())
+                .filter(Boolean),
+              resources: [],
+            },
+      ),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-
-      console.error(
-        "CREATE SUBTASK ERROR:",
-        response.status,
-        errorText,
-      );
-
-      throw new Error("Failed to create subtask");
+      console.error("SUBTASK SAVE ERROR:", response.status, errorText);
+      throw new Error("Failed to save subtask");
     }
 
-    const newSubtask = await response.json();
+    const savedSubtask = await response.json();
 
-    setSubtasks((previous) => [
-      newSubtask,
-      ...previous,
-    ]);
+    setSubtasks((previous) =>
+      isEditing
+        ? previous.map((item) =>
+            item._id === editingSubtaskId ? savedSubtask : item,
+          )
+        : [savedSubtask, ...previous],
+    );
 
     setSubtaskTitle("");
     setSubtaskDescription("");
@@ -161,14 +235,55 @@ const handleCreateSubtask = async () => {
     setSubtaskPriority("Medium");
     setSubtaskDueDate("");
     setSubtaskLabels("");
-
+    setEditingSubtaskId(null);
     setShowSubtaskModal(false);
   } catch (error) {
-    console.error("Create Subtask Error:", error);
+    console.error("Subtask Save Error:", error);
   } finally {
     setCreatingSubtask(false);
   }
 };
+
+const handleEditSubtask = (subtask: Task) => {
+  setEditingSubtaskId(subtask._id);
+  setSubtaskTitle(subtask.title || "");
+  setSubtaskDescription(subtask.description || "");
+  setSubtaskStatus(subtask.status || "To Do");
+  setSubtaskPriority(subtask.priority || "Medium");
+  setSubtaskDueDate(
+    subtask.dueDate ? new Date(subtask.dueDate).toISOString().slice(0, 10) : "",
+  );
+  setSubtaskLabels((subtask.labels || []).join(", "));
+  setOpenSubtaskAction(null);
+  setShowSubtaskModal(true);
+};
+
+const handleDeleteSubtask = async (subtaskId: string) => {
+  if (!window.confirm("Delete this subtask?")) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+    const response = await fetch(
+      `http://localhost:5000/tasks/${subtaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      { method: "DELETE" },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete subtask");
+    }
+
+    setSubtasks((previous) =>
+      previous.filter((item) => item._id !== subtaskId),
+    );
+    setOpenSubtaskAction(null);
+  } catch (error) {
+    console.error("Delete Subtask Error:", error);
+  }
+};
+
 
 const handleAddWorkspaceMember = async (userId: string) => {
   try {
@@ -279,38 +394,6 @@ const handleAddMember = async () => {
   }
 };
 
-useEffect(() => {
-  if (!showMemberModal) return;
-
-  const loadWorkspaceUsers = async () => {
-    try {
-      const storedGuest = localStorage.getItem("guest");
-
-      if (!storedGuest) return;
-
-      const guest = JSON.parse(storedGuest);
-
-      if (!guest.workspaceId) return;
-
-      const response = await fetch(
-        `http://localhost:5000/workspace-members/users?workspaceId=${guest.workspaceId}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch workspace users");
-      }
-
-      const users = await response.json();
-
-      setWorkspaceUsers(users);
-    } catch (error) {
-      console.error("Load Workspace Users Error:", error);
-    }
-  };
-
-  loadWorkspaceUsers();
-}, [showMemberModal]);
-
 const handleAddComment = async (
   parentCommentId: string | null = null,
   messageOverride?: string,
@@ -394,6 +477,38 @@ const handleAddComment = async (
   }
 };
 
+useEffect(() => {
+  if (!showMemberModal) return;
+
+  const loadWorkspaceUsers = async () => {
+    try {
+      const storedGuest = localStorage.getItem("guest");
+
+      if (!storedGuest) return;
+
+      const guest = JSON.parse(storedGuest);
+
+      if (!guest.workspaceId) return;
+
+      const response = await fetch(
+        `http://localhost:5000/workspace-members/users?workspaceId=${guest.workspaceId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch workspace users");
+      }
+
+      const users = await response.json();
+
+      setWorkspaceUsers(users);
+    } catch (error) {
+      console.error("Load Workspace Users Error:", error);
+    }
+  };
+
+  loadWorkspaceUsers();
+}, [showMemberModal]);
+
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -452,7 +567,6 @@ const [
   fetch(subtasksUrl),
   fetch(commentsUrl),
 ]);
-
         if (!taskResponse.ok) {
   const errorText = await taskResponse.text();
 
@@ -488,7 +602,6 @@ if (!subtasksResponse.ok) {
 
   throw new Error("Failed to fetch subtasks");
 }
-
 if (!commentsResponse.ok) {
   const errorText = await commentsResponse.text();
 
@@ -550,6 +663,91 @@ setComments(commentsData);
     );
   }
 
+  const getUser = (userId: string) =>
+    workspaceUsers.find((user) => user.userId === userId);
+
+  const userInitial = (userId: string) =>
+    getUser(userId)?.name?.charAt(0)?.toUpperCase() || "G";
+
+  const formatUserName = (userId: string) =>
+    getUser(userId)?.name || userId;
+
+  const rootComments = comments.filter((comment) => !comment.parentCommentId);
+  const visibleComments = showAllComments ? rootComments : rootComments.slice(0, 2);
+
+  const toggleReplies = (commentId: string) => {
+    setExpandedReplies((previous) => {
+      const next = new Set(previous);
+      if (next.has(commentId)) next.delete(commentId);
+      else next.add(commentId);
+      return next;
+    });
+  };
+
+  const priorityOptions = ["No Priority", "Urgent", "High", "Medium", "Low"];
+
+  const priorityUpdateText = (update: TaskUpdate) => {
+    const metadata = update.metadata || {};
+    const oldPriority =
+      metadata.fromPriority ??
+      metadata.previousPriority ??
+      metadata.oldPriority ??
+      metadata.from;
+    const newPriority =
+      metadata.toPriority ??
+      metadata.nextPriority ??
+      metadata.newPriority ??
+      metadata.to;
+
+    if (
+      (metadata.type === "priority" || metadata.field === "priority") &&
+      oldPriority !== undefined &&
+      newPriority !== undefined
+    ) {
+      return `changed priority from ${oldPriority || "No priority"} to ${newPriority}`;
+    }
+
+    return update.message;
+  };
+
+  const handlePriorityChange = async (nextPriority: string) => {
+    setShowPriorityMenu(false);
+
+    const previousPriority = task.priority || "No priority";
+    if (nextPriority === previousPriority) return;
+
+    try {
+      const storedGuest = localStorage.getItem("guest");
+      if (!storedGuest) return;
+
+      const guest = JSON.parse(storedGuest);
+
+      const response = await fetch(
+        `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            priority: nextPriority === "No Priority" ? undefined : nextPriority,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("PRIORITY UPDATE ERROR:", response.status, errorText);
+        throw new Error("Failed to update priority");
+      }
+
+      const updatedTask = await response.json();
+      setTask(updatedTask);
+    } catch (error) {
+      console.error("Priority Update Error:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Sidebar />
@@ -557,510 +755,570 @@ setComments(commentsData);
       <main className="ml-[240px] min-h-screen">
         <div className="h-[54px] border-b border-[#e8e8e8]" />
 
-        <div className="flex gap-5 px-6 py-5">
-          {/* LEFT / MAIN CONTENT */}
+        <div className="flex gap-7 px-7 py-6">
           <section className="min-w-0 flex-1">
-            {/* Task title */}
-            <h1 className="text-[22px] font-semibold text-[#171717]">
-              {task.title}
-            </h1>
-
-            <p className="mt-1 max-w-[700px] text-[12px] leading-5 text-[#777]">
-              {task.description || "No description provided."}
-            </p>
-
-            {/* Due Date */}
-            <div className="mt-5 flex items-center gap-3">
-              <span className="text-[12px] font-medium text-[#333]">
-                Due Date
-              </span>
-
-              <span className="rounded-md bg-[#fff0f0] px-2 py-1 text-[11px] text-[#ff4d4f]">
-                {task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString(
-                      "en-GB",
-                      {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      },
-                    )
-                  : "No date"}
-              </span>
-            </div>
-
-            {/* Labels */}
-            <div className="mt-4 flex items-start gap-6">
-              <span className="w-[62px] pt-[3px] text-[12px] font-medium text-[#333]">
-                Labels
-              </span>
-
-              <div className="flex flex-wrap gap-2">
-                {task.labels?.length ? (
-                  task.labels.map((label) => (
-                    <span
-                      key={label}
-                      className="rounded-full border border-[#e5e5e5] bg-[#f7f7f7] px-2 py-[3px] text-[10px] text-[#444]"
-                    >
-                      {label}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-[11px] text-[#999]">
-                    No labels
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Resources */}
-            <div className="mt-4 flex items-center gap-6">
-              <span className="w-[62px] text-[12px] font-medium text-[#333]">
-                Resources
-              </span>
-
-              {task.resources?.length ? (
-                <span className="text-[11px] text-[#555]">
-                  {task.resources.length} resource
-                  {task.resources.length > 1 ? "s" : ""}
-                </span>
-              ) : (
-                <span className="text-[11px] text-[#999]">
-                  No resources
-                </span>
-              )}
-            </div>
-
-            {/* SUBTASKS */}
-            <div className="mt-6">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="text-[10px]">⌄</span>
-
-                <h2 className="text-[13px] font-medium text-[#333]">
-                  Subtasks
-                </h2>
+            <div className="flex items-start justify-between gap-6">
+              <div className="min-w-0">
+                <h1 className="text-[25px] font-semibold leading-8 text-[#151515]">
+                  {task.title}
+                </h1>
+                <p className="mt-1.5 max-w-[720px] text-[14px] leading-5.5 text-[#666]">
+                  {task.description || "No description provided."}
+                </p>
               </div>
 
-              <div className="rounded-lg border border-[#dedede]">
-                <div>
-                {subtasks.length === 0 ? (
-                  <div className="flex h-[50px] items-center justify-center">
-                    <span className="text-[11px] text-[#999]">
-                      No subtasks yet
-                    </span>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#e8e8e8]">
-                    {subtasks.map((subtask) => (
-                      <div
-                        key={subtask._id}
-                        className="flex items-center justify-between px-3 py-3"
-                      >
-                        <div>
-                          <p className="text-[11px] font-medium text-[#333]">
-                            {subtask.title}
-                          </p>
-
-                          <p className="mt-1 text-[9px] text-[#999]">
-                            {subtask.status} · {subtask.priority}
-                          </p>
-                        </div>
-
-                        <span className="text-[9px] text-[#999]">
-                          {subtask.members?.length || 0} member
-                          {subtask.members?.length === 1 ? "" : "s"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowSubtaskModal(true)}
-                >
-                  + Add Subtask
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button type="button" title="Lock" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[#444] hover:bg-[#f8f8f8]">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <rect x="3" y="6" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                    <path d="M4.5 6V4.5C4.5 2.57 9.5 2.57 9.5 4.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                  </svg>
+                </button>
+                <button type="button" title="Views" className="flex h-[30px] items-center gap-1 rounded-md border border-[#dedede] bg-white px-2 text-[#666] hover:bg-[#f8f8f8]">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M1.5 7C2.8 4.8 4.6 3.7 7 3.7C9.4 3.7 11.2 4.8 12.5 7C11.2 9.2 9.4 10.3 7 10.3C4.6 10.3 2.8 9.2 1.5 7Z" stroke="currentColor" strokeWidth="1.1" />
+                    <circle cx="7" cy="7" r="1.7" stroke="currentColor" strokeWidth="1.1" />
+                  </svg>
+                  <span className="text-[10px]">1</span>
+                </button>
+                <button type="button" title="Share" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[#555] hover:bg-[#f8f8f8]">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="4" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                    <circle cx="10" cy="3.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                    <circle cx="10" cy="10.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                    <path d="M5.3 6.3L8.7 4.2M5.3 7.7L8.7 9.8" stroke="currentColor" strokeWidth="1.1" />
+                  </svg>
+                </button>
+                <button type="button" title="More" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[11px] text-[#555] hover:bg-[#f8f8f8]">
+                  •••
                 </button>
               </div>
             </div>
 
-            {/* COMMENTS */}
-<div className="mt-6">
-  <h2 className="mb-2 text-[13px] font-medium text-[#333]">
-    Comments
-  </h2>
+            <div className="mt-5 flex items-center gap-3">
+              <span className="text-[14px] font-medium text-[#2b2b2b]">Properties</span>
+              <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[9px] font-medium text-white">
+                {getUser(task.createdBy)?.avatar ? (
+                  <img src={getUser(task.createdBy)?.avatar} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  userInitial(task.createdBy)
+                )}
+              </div>
+              <span className="flex items-center gap-1.5 rounded-md bg-[#fff0f0] px-2.5 py-1 text-[11px] font-medium text-[#ff4d4f]">
+                <span>▣</span>
+                {formatShortDate(task.dueDate)}
+              </span>
+            </div>
 
-  <div className="rounded-lg border border-[#dedede]">
+            <div className="mt-4 flex items-start gap-7">
+              <span className="w-[58px] pt-[3px] text-[14px] font-medium text-[#2b2b2b]">Labels</span>
+              <div className="flex flex-wrap gap-1.5">
+                {task.labels?.length ? task.labels.map((label) => (
+                  <span key={label} className="flex items-center gap-1 rounded-full bg-[#f5f5f5] px-2.5 py-1 text-[10px] font-medium text-[#444]">
+                    <TagIcon />
+                    {label}
+                  </span>
+                )) : (
+                  <span className="text-[13px] text-[#888]">No labels</span>
+                )}
+              </div>
+            </div>
 
-    <div className="max-h-[360px] overflow-y-auto">
-      {comments.length === 0 ? (
-        <div className="flex h-[80px] items-center justify-center">
-          <span className="text-[11px] text-[#999]">
-            No comments yet
-          </span>
-        </div>
-      ) : (
-        <div className="divide-y divide-[#eeeeee]">
-          {comments
-            .filter(
-              (comment) =>
-                !comment.parentCommentId,
-            )
-            .map((comment) => {
-              const replies = comments.filter(
-                (reply) =>
-                  reply.parentCommentId ===
-                  comment._id,
-              );
+            <div className="mt-4 flex items-center gap-7">
+              <span className="w-[58px] text-[14px] font-medium text-[#2b2b2b]">Resources</span>
+              <button type="button" className="flex items-center gap-1.5 text-[13px] text-[#888] hover:text-[#555]">
+                <PaperclipIcon />
+                Add document or link...
+              </button>
+            </div>
 
-              return (
-                <div
-                  key={comment._id}
-                  className="px-3 py-3"
-                >
-                  {/* Main comment */}
-                  <div className="flex gap-2">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
-                      G
+            <div className="mt-7">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-[12px] text-[#333]">▾</span>
+                <h2 className="text-[14px] font-medium text-[#2b2b2b]">Subtasks</h2>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-[#dedede]">
+                <div className="grid grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] border-b border-[#e8e8e8] px-3">
+                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Task</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Priority</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Members</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Due Date</div>
+                  <div />
+                </div>
+
+                {subtasks.length === 0 ? (
+                  <div className="flex h-[62px] items-center justify-center">
+                    <span className="text-[13px] text-[#888]">No subtasks yet</span>
+                  </div>
+                ) : subtasks.map((subtask) => {
+                  const members = subtask.members || [];
+                  const visible = members.slice(0, 3);
+                  const remaining = Math.max(members.length - 3, 0);
+
+                  return (
+                    <div key={subtask._id} className="grid min-h-[55px] grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] items-center border-b border-[#e8e8e8] px-3 last:border-b-0 hover:bg-[#fcfcfc]">
+                      <span className="block truncate text-[13px] font-medium text-[#222]">{subtask.title}</span>
+
+                      <div className={`flex items-center gap-1.5 text-[12px] font-medium ${priorityTextClass(subtask.priority)}`}>
+                        <PriorityIcon priority={subtask.priority} />
+                        {subtask.priority || "Medium"}
+                      </div>
+
+                      <div className="flex items-center">
+                        {members.length === 0 ? (
+                          <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[#e1e1e1] bg-white text-[15px] text-[#777]">+</button>
+                        ) : (
+                          <>
+                            {visible.map((member, index) => (
+                              <div key={member._id} className={`flex h-[25px] w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#171717] text-[8px] font-medium text-white ${index > 0 ? "-ml-1.5" : ""}`}>
+                                {getUser(member.userId)?.avatar ? (
+                                  <img src={getUser(member.userId)?.avatar} alt="" className="h-full w-full object-cover" />
+                                ) : (
+                                  userInitial(member.userId)
+                                )}
+                              </div>
+                            ))}
+                            {remaining > 0 && (
+                              <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#f1f1f1] px-1 text-[9px] font-medium text-[#666]">+{remaining}</div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      <div className="text-[12px] text-[#444]">{formatShortDate(subtask.dueDate)}</div>
+
+                      <div className="relative flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenSubtaskAction((previous) =>
+                              previous === subtask._id ? null : subtask._id,
+                            )
+                          }
+                          className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-[14px] text-[#777] hover:bg-[#f2f2f2]"
+                        >
+                          ···
+                        </button>
+
+                        {openSubtaskAction === subtask._id && (
+                          <div className="absolute right-0 top-[32px] z-20 w-[112px] overflow-hidden rounded-lg border border-[#dedede] bg-white py-1 shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => handleEditSubtask(subtask)}
+                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#333] hover:bg-[#f6f6f6]"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSubtask(subtask._id)}
+                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#ef4444] hover:bg-[#fff5f5]"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  );
+                })}
 
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-medium text-[#333]">
-                        {comment.userId}
-                      </p>
+                <button type="button" onClick={() => setShowSubtaskModal(true)} className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[#333] hover:bg-[#fafafa]">
+                  <span className="text-[18px] leading-none">+</span>
+                  Add Subtasks
+                </button>
+              </div>
+            </div>
 
-                      <p className="mt-1 text-[11px] leading-4 text-[#555]">
-                        {comment.message}
-                      </p>
+            <div className="mt-9">
+              <div className="mb-3.5 flex items-center justify-between">
+                <h2 className="text-[14px] font-semibold text-[#222]">Comments</h2>
+                {rootComments.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllComments((previous) => !previous)}
+                    className="rounded-md px-2 py-1 text-[11px] font-medium text-[#777] transition-colors hover:bg-[#f5f7fb] hover:text-[#2563eb]"
+                  >
+                    {showAllComments ? "Show less" : `View more (${rootComments.length - 2})`}
+                  </button>
+                )}
+              </div>
 
-                      <div className="mt-1.5 flex items-center gap-3">
-                        <span className="text-[8px] text-[#aaa]">
-                          {new Date(
-                            comment.createdAt,
-                          ).toLocaleString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+              {visibleComments.map((comment) => {
+                const replies = comments.filter(
+                  (reply) => reply.parentCommentId === comment._id,
+                );
+                const repliesOpen = expandedReplies.has(comment._id);
+
+                return (
+                  <div
+                    key={comment._id}
+                    className="mb-3.5 overflow-hidden rounded-lg border border-[#dedede] bg-white"
+                  >
+                    <div className="px-4 py-3.5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[9px] font-medium text-white">
+                          {getUser(comment.userId)?.avatar ? (
+                            <img
+                              src={getUser(comment.userId)?.avatar}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            userInitial(comment.userId)
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-semibold text-[#222]">
+                              {formatUserName(comment.userId)}
+                            </span>
+                            <span className="text-[10px] text-[#999]">
+                              {new Date(comment.createdAt).toLocaleString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-[13px] leading-5 text-[#303030]">
+                            {comment.message}
+                          </p>
+                        </div>
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setReplyingTo(
-                              replyingTo === comment._id
-                                ? null
-                                : comment._id,
-                            );
-                            setReplyText("");
-                          }}
-                          className="text-[9px] font-medium text-[#666] hover:text-[#171717]"
+                          className="rounded-md px-1.5 py-1 text-[13px] text-[#777] hover:bg-[#f5f5f5]"
                         >
-                          Reply
+                          ···
                         </button>
                       </div>
-
-                      {/* Reply input */}
-                      {replyingTo === comment._id && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <input
-                            autoFocus
-                            value={replyText}
-                            onChange={(e) =>
-                              setReplyText(
-                                e.target.value,
-                              )
-                            }
-                            onKeyDown={(e) => {
-                              if (
-                                e.key === "Enter"
-                              ) {
-                                handleAddComment(
-                                  comment._id,
-                                );
-                              }
-
-                              if (
-                                e.key === "Escape"
-                              ) {
-                                setReplyingTo(null);
-                                setReplyText("");
-                              }
-                            }}
-                            placeholder="Write a reply..."
-                            className="h-[34px] flex-1 rounded-md border border-[#dedede] px-2.5 text-[10px] outline-none focus:border-[#999]"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleAddComment(
-                                comment._id,
-                              )
-                            }
-                            disabled={
-                              addingReply ||
-                              !replyText.trim()
-                            }
-                            className="text-[10px] font-medium text-[#333] disabled:opacity-40"
-                          >
-                            {addingReply
-                              ? "..."
-                              : "Reply"}
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Replies */}
-                      {replies.length > 0 && (
-                        <div className="mt-3 space-y-3 border-l border-[#e5e5e5] pl-3">
-                          {replies.map((reply) => (
-                            <div
-                              key={reply._id}
-                              className="flex gap-2"
-                            >
-                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f0f0f0] text-[8px] text-[#555]">
-                                G
-                              </div>
-
-                              <div>
-                                <p className="text-[9px] font-medium text-[#444]">
-                                  {reply.userId}
-                                </p>
-
-                                <p className="mt-0.5 text-[10px] leading-4 text-[#666]">
-                                  {reply.message}
-                                </p>
-
-                                <p className="mt-1 text-[8px] text-[#aaa]">
-                                  {new Date(
-                                    reply.createdAt,
-                                  ).toLocaleString(
-                                    "en-GB",
-                                    {
-                                      day: "2-digit",
-                                      month: "short",
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                    },
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
+
+                    <div className="flex h-[43px] items-center gap-2.5 border-t border-[#eeeeee] px-4">
+                      <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] text-white">
+                        {getUser(task.createdBy)?.avatar ? (
+                          <img
+                            src={getUser(task.createdBy)?.avatar}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          userInitial(task.createdBy)
+                        )}
+                      </div>
+                      <input
+                        value={replyingTo === comment._id ? replyText : ""}
+                        onFocus={() => setReplyingTo(comment._id)}
+                        onChange={(e) => {
+                          setReplyingTo(comment._id);
+                          setReplyText(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleAddComment(comment._id);
+                        }}
+                        placeholder="Leave a reply..."
+                        className="h-full flex-1 bg-transparent text-[12px] text-[#333] outline-none placeholder:text-[#aaa]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAddComment(comment._id)}
+                        disabled={
+                          addingReply ||
+                          !replyText.trim() ||
+                          replyingTo !== comment._id
+                        }
+                        className="text-[14px] text-[#555] transition-colors hover:text-[#2563eb] disabled:opacity-40"
+                      >
+                        ➤
+                      </button>
+                    </div>
+
+                    {replies.length > 0 && (
+                      <div className="border-t border-[#eeeeee] px-4 py-2.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleReplies(comment._id)}
+                          className="ml-[40px] text-[11px] font-medium text-[#777] transition-colors hover:text-[#2563eb]"
+                        >
+                          {repliesOpen
+                            ? "Hide replies"
+                            : `View ${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
+                        </button>
+
+                        {repliesOpen && (
+                          <div className="mt-2.5 ml-[40px] border-l border-[#e5e5e5] pl-3.5">
+                            {replies.map((reply) => (
+                              <div key={reply._id} className="flex gap-2.5 py-2">
+                                <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[7px] text-white">
+                                  {getUser(reply.userId)?.avatar ? (
+                                    <img
+                                      src={getUser(reply.userId)?.avatar}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    userInitial(reply.userId)
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] font-semibold text-[#444]">
+                                      {formatUserName(reply.userId)}
+                                    </span>
+                                    <span className="text-[9px] text-[#aaa]">
+                                      {new Date(reply.createdAt).toLocaleString("en-GB", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  </div>
+                                  <p className="mt-0.5 text-[11px] leading-4 text-[#555]">
+                                    {reply.message}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+
+              <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[#dedede] px-4">
+                <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] text-white">
+                  {getUser(task.createdBy)?.avatar ? (
+                    <img
+                      src={getUser(task.createdBy)?.avatar}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    userInitial(task.createdBy)
+                  )}
                 </div>
-              );
-            })}
-        </div>
-      )}
-    </div>
-
-    {/* New comment */}
-    <div className="flex items-center border-t border-[#e8e8e8] px-3">
-      <input
-        value={commentText}
-        onChange={(e) =>
-          setCommentText(e.target.value)
-        }
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleAddComment(null);
-          }
-        }}
-        placeholder="Add a comment..."
-        className="h-[42px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
-      />
-
-      <button
-        type="button"
-        onClick={() => handleAddComment(null)}
-        disabled={
-          addingComment ||
-          !commentText.trim()
-        }
-        className="cursor-pointer text-[13px] disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {addingComment ? "..." : "Send"}
-      </button>
-    </div>
-  </div>
-</div>
-          </section>
-
-          {/* RIGHT PANEL */}
-          <aside className="w-[280px] shrink-0">
-            {/* Details */}
-            <div className="rounded-xl border border-[#dedede] bg-white p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold text-[#222]">
-                  Details
-                </h2>
-
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddComment(null);
+                  }}
+                  placeholder="Add a comment..."
+                  className="h-full flex-1 bg-transparent text-[12px] text-[#333] outline-none placeholder:text-[#aaa]"
+                />
                 <button
                   type="button"
-                  className="cursor-pointer text-lg"
+                  onClick={() => handleAddComment(null)}
+                  disabled={addingComment || !commentText.trim()}
+                  className="text-[14px] text-[#555] transition-colors hover:text-[#2563eb] disabled:opacity-40"
                 >
-                  +
+                  ➤
                 </button>
+              </div>
+            </div>
+          </section>
+
+          <aside className="w-[285px] shrink-0">
+            <div className="rounded-xl border border-[#dedede] bg-white p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px]">▾</span>
+                  <h2 className="text-[13px] font-semibold text-[#222]">Details</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button type="button" className="text-[17px] text-[#333]">+</button>
+                  <button type="button" className="text-[14px] text-[#777]">⚙</button>
+                </div>
               </div>
 
               <div className="mt-5 space-y-5">
-                {/* Status */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">
-                    Status
-                  </span>
-
-                  <span className="w-fit rounded-md bg-[#fff5e6] px-2 py-1 text-[11px] text-orange-600">
+                <div className="grid grid-cols-[65px_1fr] items-center">
+                  <span className="text-[11px] text-[#555]">Status</span>
+                  <span className="flex w-fit items-center gap-1.5 rounded-md bg-[#fff5e6] px-2.5 py-1.5 text-[12px] font-medium text-orange-600">
+                    <span className="h-[6px] w-[6px] rounded-full bg-orange-500" />
                     {task.status}
                   </span>
                 </div>
 
-                {/* Priority */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">
-                    Priority
-                  </span>
-
-                  <span className="w-fit text-[11px] text-red-500">
-                    ↗ {task.priority || "Medium"}
-                  </span>
-                </div>
-
-                {/* Members */}
-                <div className="grid grid-cols-[80px_1fr] items-start">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-[#333]">
-                      Members
-                    </span>
-
+                <div className="grid grid-cols-[65px_1fr] items-start">
+                  <span className="pt-1 text-[12px] font-medium text-[#555]">Priority</span>
+                  <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setShowMemberModal(true)}
-                      className="text-[15px] leading-none text-[#333]"
+                      onClick={() => setShowPriorityMenu((previous) => !previous)}
+                      className={`flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[12px] font-medium transition-colors hover:bg-[#f7f7f7] ${priorityTextClass(task.priority)}`}
                     >
-                      +
+                      <PriorityIcon priority={task.priority} />
+                      {task.priority || "No Priority"}
+                      <span className="text-[9px] text-[#888]">⌄</span>
                     </button>
-                  </div>
 
-                  <div className="space-y-2">
+                    {showPriorityMenu && (
+                      <div className="absolute left-0 top-[30px] z-30 w-[150px] overflow-hidden rounded-lg border border-[#dedede] bg-white py-1.5 shadow-lg">
+                        <p className="px-3 py-1.5 text-[9px] font-medium text-[#999]">
+                          Priority
+                        </p>
+                        {priorityOptions.map((option) => {
+                          const isSelected =
+                            option === (task.priority || "No Priority");
+
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => handlePriorityChange(option)}
+                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-[#f7f7f7] ${
+                                isSelected
+                                  ? priorityTextClass(
+                                      option === "No Priority" ? undefined : option,
+                                    )
+                                  : "text-[#555]"
+                              }`}
+                            >
+                              <span className="flex items-center gap-2">
+                                <PriorityIcon
+                                  priority={option === "No Priority" ? undefined : option}
+                                />
+                                {option}
+                              </span>
+                              {isSelected && <span className="text-[11px]">✓</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[65px_1fr] items-start">
+                  <span className="pt-1 text-[12px] font-medium text-[#555]">Members</span>
+                  <div>
                     {task.members?.length ? (
-                      task.members.map((member) => (
-                        <div
-                          key={member._id}
-                          className="flex items-center gap-2"
+                      <div className="flex items-center gap-1.5">
+                        {task.members.slice(0, 3).map((member, index) => (
+                          <div
+                            key={member._id}
+                            className={`flex h-[25px] w-[25px] items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#171717] text-[8px] text-white ${index > 0 ? "-ml-2" : ""}`}
+                          >
+                            {getUser(member.userId)?.avatar ? (
+                              <img
+                                src={getUser(member.userId)?.avatar}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              userInitial(member.userId)
+                            )}
+                          </div>
+                        ))}
+                        {task.members.length > 3 && (
+                          <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#f1f1f1] px-1 text-[9px] font-medium text-[#666]">
+                            +{task.members.length - 3}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowMemberModal(true)}
+                          className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[#555] hover:text-[#222]"
                         >
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
-                            G
-                          </div>
-
-                          <div>
-                            <p className="max-w-[150px] truncate text-[10px] text-[#333]">
-                              {member.userId}
-                            </p>
-
-                            <p className="text-[9px] text-[#999]">
-                              {member.status}
-                            </p>
-                          </div>
-                        </div>
-                      ))
+                          <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[#dedede] text-[14px]">
+                            +
+                          </span>
+                          <PeopleIcon />
+                          Add members
+                        </button>
+                      </div>
                     ) : (
-                      <span className="text-[11px] text-[#999]">
-                        No members
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowMemberModal(true)}
+                        className="flex items-center gap-1.5 text-[11px] font-medium text-[#555] hover:text-[#222]"
+                      >
+                        <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[#dedede] text-[14px]">
+                          +
+                        </span>
+                        <PeopleIcon />
+                        Add members
+                      </button>
                     )}
                   </div>
                 </div>
 
-                {/* Due Date */}
-                <div className="grid grid-cols-[80px_1fr] items-center">
-                  <span className="text-[11px] text-[#333]">
-                    Due Date
-                  </span>
-
-                  <span className="text-[11px] text-[#555]">
-                    {task.dueDate
-                      ? new Date(
-                          task.dueDate,
-                        ).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "No date"}
-                  </span>
+                <div className="grid grid-cols-[65px_1fr] items-center">
+                  <span className="text-[11px] text-[#555]">Dates</span>
+                  <span className="text-[11px] text-[#777]">{formatShortDate(task.dueDate)}</span>
                 </div>
 
-                {/* Labels */}
-                <div className="grid grid-cols-[80px_1fr] items-start">
-                  <span className="pt-1 text-[11px] text-[#333]">
-                    Labels
-                  </span>
-
+                <div className="grid grid-cols-[65px_1fr] items-start">
+                  <span className="pt-1 text-[12px] font-medium text-[#555]">Labels</span>
                   <div className="flex flex-wrap gap-1">
-                    {task.labels?.length ? (
-                      task.labels.map((label) => (
-                        <span
-                          key={label}
-                          className="rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]"
-                        >
-                          {label}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[10px] text-[#999]">
-                        None
+                    {task.labels?.length ? task.labels.map((label) => (
+                      <span key={label} className="flex items-center gap-1 rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]">
+                        <TagIcon />
+                        {label}
                       </span>
-                    )}
+                    )) : <span className="text-[10px] text-[#999]">None</span>}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Updates */}
             <div className="mt-4 rounded-xl border border-[#dedede] bg-white p-4">
-              <h2 className="text-[13px] font-semibold text-[#222]">
-                Updates
-              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px]">▾</span>
+                <h2 className="text-[13px] font-semibold text-[#222]">Updates</h2>
+              </div>
 
-              <div className="mt-4 space-y-4">
-                {updates.length === 0 ? (
-                  <p className="text-[10px] text-[#999]">
-                    No updates yet.
-                  </p>
+              <div className="mt-4 space-y-3.5">
+                {updates.filter((update) => !/posted an update/i.test(update.message)).length === 0 ? (
+                  <p className="text-[11px] text-[#999]">No updates yet.</p>
                 ) : (
-                  updates.map((update) => (
-                    <div
-                      key={update._id}
-                      className="border-b border-[#f0f0f0] pb-3 last:border-0 last:pb-0"
-                    >
-                      <p className="text-[10px] font-medium text-[#333]">
-                        {update.userId}
-                      </p>
-
-                      <p className="mt-1 text-[10px] leading-4 text-[#777]">
-                        {update.message}
-                      </p>
-
-                      <p className="mt-1 text-[9px] text-[#aaa]">
-                        {new Date(
-                          update.createdAt,
-                        ).toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  ))
+                  updates
+                    .filter((update) => !/posted an update/i.test(update.message))
+                    .slice(0, 5)
+                    .map((update) => (
+                      <div
+                        key={update._id}
+                        className="border-b border-[#f0f0f0] pb-3.5 last:border-0 last:pb-0"
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] font-medium text-white">
+                            {getUser(update.userId)?.avatar ? (
+                              <img
+                                src={getUser(update.userId)?.avatar}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              userInitial(update.userId)
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-semibold leading-4 text-[#2b2b2b]">
+                              {formatUserName(update.userId)}
+                            </p>
+                            <p className="mt-0.5 text-[10px] leading-4 text-[#777]">
+                              {priorityUpdateText(update)}
+                            </p>
+                            <p className="mt-1 text-[9px] text-[#aaa]">
+                              {new Date(update.createdAt).toLocaleString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
                 )}
               </div>
             </div>
@@ -1072,12 +1330,21 @@ setComments(commentsData);
 
       <div className="flex items-center justify-between">
         <h2 className="text-[18px] font-semibold text-[#171717]">
-          Add Subtask
+          {editingSubtaskId ? "Edit Subtask" : "Add Subtask"}
         </h2>
 
         <button
           type="button"
-          onClick={() => setShowSubtaskModal(false)}
+          onClick={() => {
+            setShowSubtaskModal(false);
+            setEditingSubtaskId(null);
+            setSubtaskTitle("");
+            setSubtaskDescription("");
+            setSubtaskStatus("To Do");
+            setSubtaskPriority("Medium");
+            setSubtaskDueDate("");
+            setSubtaskLabels("");
+          }}
           className="text-[20px] text-[#888]"
         >
           ×
@@ -1217,8 +1484,12 @@ setComments(commentsData);
           className="h-[38px] rounded-full bg-[#171717] px-5 text-[12px] font-medium text-white disabled:opacity-50"
         >
           {creatingSubtask
-            ? "Creating..."
-            : "Add Subtask"}
+            ? editingSubtaskId
+              ? "Saving..."
+              : "Creating..."
+            : editingSubtaskId
+              ? "Save Changes"
+              : "Add Subtask"}
         </button>
       </div>
 

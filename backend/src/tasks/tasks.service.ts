@@ -22,7 +22,10 @@ import {
   TaskCommentDocument,
 } from './schemas/task-comment.schema';
 
+
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
+
+
 
 @Injectable()
 export class TasksService {
@@ -332,12 +335,44 @@ async update(
   const savedTask = await task.save();
 
   if (Object.keys(changes).length > 0) {
-    await this.createUpdate(
-      id,
-      userId,
-      'Updated task details',
-      changes,
-    );
+    const fieldLabels: Record<string, string> = {
+      title: 'title',
+      description: 'description',
+      priority: 'priority',
+      dueDate: 'due date',
+      labels: 'labels',
+      resources: 'resources',
+      projectId: 'project',
+      type: 'type',
+      parentTaskId: 'parent task',
+      allowMembersToAddMembers: 'member adding permission',
+    };
+
+    for (const [field, change] of Object.entries(changes)) {
+      const label = fieldLabels[field] ?? field;
+      const oldValue =
+        change.oldValue === null ||
+        change.oldValue === undefined ||
+        change.oldValue === ''
+          ? 'No value'
+          : String(change.oldValue);
+
+      const newValue =
+        change.newValue === null ||
+        change.newValue === undefined ||
+        change.newValue === ''
+          ? 'No value'
+          : String(change.newValue);
+
+      await this.createUpdate(
+        id,
+        userId,
+        `Changed ${label} from ${oldValue} to ${newValue}`,
+        {
+          [field]: change,
+        },
+      );
+    }
   }
 
   return savedTask;
