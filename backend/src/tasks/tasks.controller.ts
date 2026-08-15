@@ -193,4 +193,33 @@ updateMemberAddPermission(
     enabled,
   );
 }
+@Get(':id/comments')
+getComments(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.getComments(
+    id,
+    workspaceId,
+    userId,
+  );
+}
+
+@Post(':id/comments')
+addComment(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+  @Body('message') message: string,
+  @Body('parentCommentId') parentCommentId?: string | null,
+) {
+  return this.tasksService.addComment(
+    id,
+    workspaceId,
+    userId,
+    message,
+    parentCommentId,
+  );
+}
 }

@@ -17,6 +17,11 @@ import {
   TaskUpdateDocument,
 } from './schemas/task-update.schema';
 
+import {
+  TaskComment,
+  TaskCommentDocument,
+} from './schemas/task-comment.schema';
+
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
 
 @Injectable()
@@ -27,6 +32,9 @@ export class TasksService {
 
     @InjectModel(TaskUpdate.name)
     private readonly taskUpdateModel: Model<TaskUpdateDocument>,
+
+    @InjectModel(TaskComment.name)
+    private readonly taskCommentModel: Model<TaskCommentDocument>,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
   ) {}
@@ -614,4 +622,80 @@ async updateMemberAddPermission(
       message: 'Task deleted successfully',
     };
   }
+async getComments(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  return this.taskCommentModel
+    .find({ taskId })
+    .sort({ createdAt: 1 })
+    .lean()
+    .exec();
+}
+
+async addComment(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+  message: string,
+  parentCommentId?: string | null,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  if (!message?.trim()) {
+    throw new BadRequestException(
+      'Comment cannot be empty',
+    );
+  }
+
+  let validParentCommentId: string | null = null;
+
+  if (parentCommentId) {
+    const parentComment =
+      await this.taskCommentModel.findOne({
+        _id: parentCommentId,
+        taskId,
+      });
+
+    if (!parentComment) {
+      throw new BadRequestException(
+        'Parent comment not found',
+      );
+    }
+
+    validParentCommentId = parentComment._id.toString();
+  }
+
+  return this.taskCommentModel.create({
+    taskId,
+    userId,
+    message: message.trim(),
+    parentCommentId: validParentCommentId,
+  });
+}
 }

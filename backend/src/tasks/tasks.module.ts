@@ -10,6 +10,10 @@ import {
   TaskUpdate,
   TaskUpdateSchema,
 } from './schemas/task-update.schema';
+import {
+  TaskComment,
+  TaskCommentSchema,
+} from './schemas/task-comment.schema';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import {
     name: TaskUpdate.name,
     schema: TaskUpdateSchema,
   },
+  {
+  name: TaskComment.name,
+  schema: TaskCommentSchema,
+}
 ]),
     WorkspaceMembersModule,
   ],

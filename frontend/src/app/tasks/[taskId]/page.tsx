@@ -38,6 +38,15 @@ type TaskUpdate = {
   createdAt: string;
 };
 
+type TaskComment = {
+  _id: string;
+  taskId: string;
+  userId: string;
+  message: string;
+  parentCommentId?: string | null;
+  createdAt: string;
+};
+
 export default function TaskDetailsPage() {
   const params = useParams();
   const taskId = params.taskId as string;
@@ -71,6 +80,13 @@ const [workspaceUsers, setWorkspaceUsers] = useState<
 
 const [memberSearch, setMemberSearch] = useState("");
 const [addingMemberId, setAddingMemberId] = useState<string | null>(null);
+
+const [comments, setComments] = useState<TaskComment[]>([]);
+const [commentText, setCommentText] = useState("");
+const [addingComment, setAddingComment] = useState(false);
+const [replyingTo, setReplyingTo] = useState<string | null>(null);
+const [replyText, setReplyText] = useState("");
+const [addingReply, setAddingReply] = useState(false);
 
 const handleCreateSubtask = async () => {
   if (!subtaskTitle.trim()) {
@@ -295,6 +311,89 @@ useEffect(() => {
   loadWorkspaceUsers();
 }, [showMemberModal]);
 
+const handleAddComment = async (
+  parentCommentId: string | null = null,
+  messageOverride?: string,
+) => {
+  const message = (
+    messageOverride ??
+    (parentCommentId ? replyText : commentText)
+  ).trim();
+
+  if (!message) {
+    return;
+  }
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) {
+      return;
+    }
+
+    const guest = JSON.parse(storedGuest);
+
+    const workspaceId = guest.workspaceId;
+    const userId = guest.guestId;
+
+    if (!workspaceId || !userId || !taskId) {
+      return;
+    }
+
+    if (parentCommentId) {
+      setAddingReply(true);
+    } else {
+      setAddingComment(true);
+    }
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/comments` +
+        `?workspaceId=${workspaceId}&userId=${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          parentCommentId,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "ADD COMMENT ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to add comment");
+    }
+
+    const newComment = await response.json();
+
+    setComments((previous) => [
+      ...previous,
+      newComment,
+    ]);
+
+    if (parentCommentId) {
+      setReplyText("");
+      setReplyingTo(null);
+    } else {
+      setCommentText("");
+    }
+  } catch (error) {
+    console.error("Add Comment Error:", error);
+  } finally {
+    setAddingComment(false);
+    setAddingReply(false);
+  }
+};
+
 
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -336,14 +435,23 @@ const subtasksUrl =
   `http://localhost:5000/tasks/${taskId}/subtasks` +
   `?workspaceId=${workspaceId}&userId=${userId}`;
 
+  const commentsUrl =
+  `http://localhost:5000/tasks/${taskId}/comments` +
+  `?workspaceId=${workspaceId}&userId=${userId}`;
+
 console.log("SUBTASKS URL:", subtasksUrl);
 
-const [taskResponse, updatesResponse, subtasksResponse] =
-  await Promise.all([
-    fetch(taskUrl),
-    fetch(updatesUrl),
-    fetch(subtasksUrl),
-  ]);
+const [
+  taskResponse,
+  updatesResponse,
+  subtasksResponse,
+  commentsResponse,
+] = await Promise.all([
+  fetch(taskUrl),
+  fetch(updatesUrl),
+  fetch(subtasksUrl),
+  fetch(commentsUrl),
+]);
 
         if (!taskResponse.ok) {
   const errorText = await taskResponse.text();
@@ -380,13 +488,26 @@ if (!subtasksResponse.ok) {
 
   throw new Error("Failed to fetch subtasks");
 }
-        const taskData = await taskResponse.json();
-        const updatesData = await updatesResponse.json();
-        const subtasksData = await subtasksResponse.json();
 
-        setTask(taskData);
-        setUpdates(updatesData);
-        setSubtasks(subtasksData);
+if (!commentsResponse.ok) {
+  const errorText = await commentsResponse.text();
+
+  console.error(
+    "COMMENTS API ERROR:",
+    commentsResponse.status,
+    errorText,
+  );
+
+  throw new Error("Failed to fetch comments");
+}
+const taskData = await taskResponse.json();
+const updatesData = await updatesResponse.json();
+const subtasksData = await subtasksResponse.json();
+const commentsData = await commentsResponse.json();
+setTask(taskData);
+setUpdates(updatesData);
+setSubtasks(subtasksData);
+setComments(commentsData);
       } catch (error) {
         console.error("Task Details Error:", error);
       } finally {
@@ -565,33 +686,211 @@ if (!subtasksResponse.ok) {
             </div>
 
             {/* COMMENTS */}
-            <div className="mt-6">
-              <h2 className="mb-2 text-[13px] font-medium text-[#333]">
-                Comments
-              </h2>
+<div className="mt-6">
+  <h2 className="mb-2 text-[13px] font-medium text-[#333]">
+    Comments
+  </h2>
 
-              <div className="rounded-lg border border-[#dedede]">
-                <div className="flex h-[80px] items-center justify-center">
-                  <span className="text-[11px] text-[#999]">
-                    No comments yet
-                  </span>
+  <div className="rounded-lg border border-[#dedede]">
+
+    <div className="max-h-[360px] overflow-y-auto">
+      {comments.length === 0 ? (
+        <div className="flex h-[80px] items-center justify-center">
+          <span className="text-[11px] text-[#999]">
+            No comments yet
+          </span>
+        </div>
+      ) : (
+        <div className="divide-y divide-[#eeeeee]">
+          {comments
+            .filter(
+              (comment) =>
+                !comment.parentCommentId,
+            )
+            .map((comment) => {
+              const replies = comments.filter(
+                (reply) =>
+                  reply.parentCommentId ===
+                  comment._id,
+              );
+
+              return (
+                <div
+                  key={comment._id}
+                  className="px-3 py-3"
+                >
+                  {/* Main comment */}
+                  <div className="flex gap-2">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#171717] text-[9px] text-white">
+                      G
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-medium text-[#333]">
+                        {comment.userId}
+                      </p>
+
+                      <p className="mt-1 text-[11px] leading-4 text-[#555]">
+                        {comment.message}
+                      </p>
+
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <span className="text-[8px] text-[#aaa]">
+                          {new Date(
+                            comment.createdAt,
+                          ).toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(
+                              replyingTo === comment._id
+                                ? null
+                                : comment._id,
+                            );
+                            setReplyText("");
+                          }}
+                          className="text-[9px] font-medium text-[#666] hover:text-[#171717]"
+                        >
+                          Reply
+                        </button>
+                      </div>
+
+                      {/* Reply input */}
+                      {replyingTo === comment._id && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <input
+                            autoFocus
+                            value={replyText}
+                            onChange={(e) =>
+                              setReplyText(
+                                e.target.value,
+                              )
+                            }
+                            onKeyDown={(e) => {
+                              if (
+                                e.key === "Enter"
+                              ) {
+                                handleAddComment(
+                                  comment._id,
+                                );
+                              }
+
+                              if (
+                                e.key === "Escape"
+                              ) {
+                                setReplyingTo(null);
+                                setReplyText("");
+                              }
+                            }}
+                            placeholder="Write a reply..."
+                            className="h-[34px] flex-1 rounded-md border border-[#dedede] px-2.5 text-[10px] outline-none focus:border-[#999]"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleAddComment(
+                                comment._id,
+                              )
+                            }
+                            disabled={
+                              addingReply ||
+                              !replyText.trim()
+                            }
+                            className="text-[10px] font-medium text-[#333] disabled:opacity-40"
+                          >
+                            {addingReply
+                              ? "..."
+                              : "Reply"}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Replies */}
+                      {replies.length > 0 && (
+                        <div className="mt-3 space-y-3 border-l border-[#e5e5e5] pl-3">
+                          {replies.map((reply) => (
+                            <div
+                              key={reply._id}
+                              className="flex gap-2"
+                            >
+                              <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#f0f0f0] text-[8px] text-[#555]">
+                                G
+                              </div>
+
+                              <div>
+                                <p className="text-[9px] font-medium text-[#444]">
+                                  {reply.userId}
+                                </p>
+
+                                <p className="mt-0.5 text-[10px] leading-4 text-[#666]">
+                                  {reply.message}
+                                </p>
+
+                                <p className="mt-1 text-[8px] text-[#aaa]">
+                                  {new Date(
+                                    reply.createdAt,
+                                  ).toLocaleString(
+                                    "en-GB",
+                                    {
+                                      day: "2-digit",
+                                      month: "short",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+        </div>
+      )}
+    </div>
 
-                <div className="flex items-center border-t border-[#e8e8e8] px-3">
-                  <input
-                    placeholder="Add a comment..."
-                    className="h-[42px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
-                  />
+    {/* New comment */}
+    <div className="flex items-center border-t border-[#e8e8e8] px-3">
+      <input
+        value={commentText}
+        onChange={(e) =>
+          setCommentText(e.target.value)
+        }
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleAddComment(null);
+          }
+        }}
+        placeholder="Add a comment..."
+        className="h-[42px] flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#999]"
+      />
 
-                  <button
-                    type="button"
-                    className="cursor-pointer text-[13px]"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            </div>
+      <button
+        type="button"
+        onClick={() => handleAddComment(null)}
+        disabled={
+          addingComment ||
+          !commentText.trim()
+        }
+        className="cursor-pointer text-[13px] disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {addingComment ? "..." : "Send"}
+      </button>
+    </div>
+  </div>
+</div>
           </section>
 
           {/* RIGHT PANEL */}
