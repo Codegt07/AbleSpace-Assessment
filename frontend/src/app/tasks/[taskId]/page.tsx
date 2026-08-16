@@ -633,12 +633,12 @@ setComments(commentsData);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[var(--background)]">
         <Sidebar />
 
         <main className="ml-[240px] min-h-screen">
           <div className="flex items-center justify-center px-6 py-10">
-            <p className="text-[12px] text-[#888]">
+            <p className="text-[12px] text-[var(--muted)]">
               Loading task...
             </p>
           </div>
@@ -649,12 +649,12 @@ setComments(commentsData);
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-[var(--background)]">
         <Sidebar />
 
         <main className="ml-[240px] min-h-screen">
           <div className="flex items-center justify-center px-6 py-10">
-            <p className="text-[12px] text-[#888]">
+            <p className="text-[12px] text-[var(--muted)]">
               Task not found
             </p>
           </div>
@@ -663,8 +663,38 @@ setComments(commentsData);
     );
   }
 
-  const getUser = (userId: string) =>
-    workspaceUsers.find((user) => user.userId === userId);
+    const getUser = (userId: string) => {
+    const workspaceUser = workspaceUsers.find(
+      (user) => user.userId === userId
+    );
+
+    if (workspaceUser) {
+      return workspaceUser;
+    }
+
+    // Current logged-in user fallback
+    try {
+      const storedGuest = localStorage.getItem("guest");
+
+      if (storedGuest) {
+        const guest = JSON.parse(storedGuest);
+
+        if (guest.guestId === userId) {
+          return {
+            userId: guest.guestId,
+            name: guest.name || "Guest",
+            username: guest.username || "",
+            avatar: guest.avatar || "",
+            title: guest.title || "",
+          };
+        }
+      }
+    } catch (error) {
+      console.error("User fallback error:", error);
+    }
+
+    return undefined;
+  };
 
   const userInitial = (userId: string) =>
     getUser(userId)?.name?.charAt(0)?.toUpperCase() || "G";
@@ -749,39 +779,39 @@ setComments(commentsData);
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
       <main className="ml-[240px] min-h-screen">
-        <div className="h-[54px] border-b border-[#e8e8e8]" />
+        <div className="h-[54px] border-b border-[var(--border)]" />
 
         <div className="flex gap-7 px-7 py-6">
           <section className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-6">
               <div className="min-w-0">
-                <h1 className="text-[25px] font-semibold leading-8 text-[#151515]">
+                <h1 className="text-[25px] font-semibold leading-8 text-[var(--text)]">
                   {task.title}
                 </h1>
-                <p className="mt-1.5 max-w-[720px] text-[14px] leading-5.5 text-[#666]">
+                <p className="mt-1.5 max-w-[720px] text-[14px] leading-5.5 text-[var(--muted)]">
                   {task.description || "No description provided."}
                 </p>
               </div>
 
               <div className="flex shrink-0 items-center gap-1.5">
-                <button type="button" title="Lock" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[#444] hover:bg-[#f8f8f8]">
+                <button type="button" title="Lock" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="3" y="6" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M4.5 6V4.5C4.5 2.57 9.5 2.57 9.5 4.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
                 </button>
-                <button type="button" title="Views" className="flex h-[30px] items-center gap-1 rounded-md border border-[#dedede] bg-white px-2 text-[#666] hover:bg-[#f8f8f8]">
+                <button type="button" title="Views" className="flex h-[30px] items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[var(--accent)] hover:bg-[var(--hover)]">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M1.5 7C2.8 4.8 4.6 3.7 7 3.7C9.4 3.7 11.2 4.8 12.5 7C11.2 9.2 9.4 10.3 7 10.3C4.6 10.3 2.8 9.2 1.5 7Z" stroke="currentColor" strokeWidth="1.1" />
                     <circle cx="7" cy="7" r="1.7" stroke="currentColor" strokeWidth="1.1" />
                   </svg>
                   <span className="text-[10px]">1</span>
                 </button>
-                <button type="button" title="Share" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[#555] hover:bg-[#f8f8f8]">
+                <button type="button" title="Share" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="4" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.1" />
                     <circle cx="10" cy="3.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
@@ -789,15 +819,15 @@ setComments(commentsData);
                     <path d="M5.3 6.3L8.7 4.2M5.3 7.7L8.7 9.8" stroke="currentColor" strokeWidth="1.1" />
                   </svg>
                 </button>
-                <button type="button" title="More" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[#dedede] bg-white text-[11px] text-[#555] hover:bg-[#f8f8f8]">
+                <button type="button" title="More" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]">
                   •••
                 </button>
               </div>
             </div>
 
             <div className="mt-5 flex items-center gap-3">
-              <span className="text-[14px] font-medium text-[#2b2b2b]">Properties</span>
-              <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[9px] font-medium text-white">
+              <span className="text-[14px] font-medium text-[var(--text)]">Properties</span>
+              <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[9px] font-medium text-white">
                 {getUser(task.createdBy)?.avatar ? (
                   <img src={getUser(task.createdBy)?.avatar} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -811,22 +841,22 @@ setComments(commentsData);
             </div>
 
             <div className="mt-4 flex items-start gap-7">
-              <span className="w-[58px] pt-[3px] text-[14px] font-medium text-[#2b2b2b]">Labels</span>
+              <span className="w-[58px] pt-[3px] text-[14px] font-medium text-[var(--text)]">Labels</span>
               <div className="flex flex-wrap gap-1.5">
                 {task.labels?.length ? task.labels.map((label) => (
-                  <span key={label} className="flex items-center gap-1 rounded-full bg-[#f5f5f5] px-2.5 py-1 text-[10px] font-medium text-[#444]">
+                  <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2.5 py-1 text-[10px] font-medium text-[var(--text)]">
                     <TagIcon />
                     {label}
                   </span>
                 )) : (
-                  <span className="text-[13px] text-[#888]">No labels</span>
+                  <span className="text-[13px] text-[var(--muted)]">No labels</span>
                 )}
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-7">
-              <span className="w-[58px] text-[14px] font-medium text-[#2b2b2b]">Resources</span>
-              <button type="button" className="flex items-center gap-1.5 text-[13px] text-[#888] hover:text-[#555]">
+              <span className="w-[58px] text-[14px] font-medium text-[var(--text)]">Resources</span>
+              <button type="button" className="flex items-center gap-1.5 text-[13px] text-[var(--muted)] hover:text-[var(--muted)]">
                 <PaperclipIcon />
                 Add document or link...
               </button>
@@ -834,22 +864,24 @@ setComments(commentsData);
 
             <div className="mt-7">
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-[12px] text-[#333]">▾</span>
-                <h2 className="text-[14px] font-medium text-[#2b2b2b]">Subtasks</h2>
-              </div>
+                <span className="text-[12px] text-[var(--text)]">▾</span>
+                  <h2 className="text-[14px] font-medium text-[var(--accent)]">
+                    Subtasks
+                  </h2>
+                                </div>
 
-              <div className="overflow-hidden rounded-lg border border-[#dedede]">
-                <div className="grid grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] border-b border-[#e8e8e8] px-3">
-                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Task</div>
-                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Priority</div>
-                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Members</div>
-                  <div className="py-3.5 text-[13px] font-semibold text-[#2b2b2b]">Due Date</div>
+              <div className="overflow-hidden rounded-lg border border-[var(--border)]">
+                <div className="grid grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] border-b border-[var(--border)] px-3">
+                  <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Task</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Priority</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Members</div>
+                  <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Due Date</div>
                   <div />
                 </div>
 
                 {subtasks.length === 0 ? (
                   <div className="flex h-[62px] items-center justify-center">
-                    <span className="text-[13px] text-[#888]">No subtasks yet</span>
+                    <span className="text-[13px] text-[var(--muted)]">No subtasks yet</span>
                   </div>
                 ) : subtasks.map((subtask) => {
                   const members = subtask.members || [];
@@ -857,8 +889,8 @@ setComments(commentsData);
                   const remaining = Math.max(members.length - 3, 0);
 
                   return (
-                    <div key={subtask._id} className="grid min-h-[55px] grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] items-center border-b border-[#e8e8e8] px-3 last:border-b-0 hover:bg-[#fcfcfc]">
-                      <span className="block truncate text-[13px] font-medium text-[#222]">{subtask.title}</span>
+                    <div key={subtask._id} className="grid min-h-[55px] grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] items-center border-b border-[var(--border)] px-3 last:border-b-0 hover:bg-[var(--hover)]">
+                      <span className="block truncate text-[13px] font-medium text-[var(--text)]">{subtask.title}</span>
 
                       <div className={`flex items-center gap-1.5 text-[12px] font-medium ${priorityTextClass(subtask.priority)}`}>
                         <PriorityIcon priority={subtask.priority} />
@@ -867,11 +899,11 @@ setComments(commentsData);
 
                       <div className="flex items-center">
                         {members.length === 0 ? (
-                          <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[#e1e1e1] bg-white text-[15px] text-[#777]">+</button>
+                          <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[15px] text-[var(--muted)]">+</button>
                         ) : (
                           <>
                             {visible.map((member, index) => (
-                              <div key={member._id} className={`flex h-[25px] w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#171717] text-[8px] font-medium text-white ${index > 0 ? "-ml-1.5" : ""}`}>
+                              <div key={member._id} className={`flex h-[25px] w-[25px] items-center justify-center rounded-full border-2 border-white bg-[var(--surface-strong)] text-[8px] font-medium text-white ${index > 0 ? "-ml-1.5" : ""}`}>
                                 {getUser(member.userId)?.avatar ? (
                                   <img src={getUser(member.userId)?.avatar} alt="" className="h-full w-full object-cover" />
                                 ) : (
@@ -880,13 +912,13 @@ setComments(commentsData);
                               </div>
                             ))}
                             {remaining > 0 && (
-                              <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#f1f1f1] px-1 text-[9px] font-medium text-[#666]">+{remaining}</div>
+                              <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[var(--hover)] px-1 text-[9px] font-medium text-[var(--muted)]">+{remaining}</div>
                             )}
                           </>
                         )}
                       </div>
 
-                      <div className="text-[12px] text-[#444]">{formatShortDate(subtask.dueDate)}</div>
+                      <div className="text-[12px] text-[var(--text)]">{formatShortDate(subtask.dueDate)}</div>
 
                       <div className="relative flex justify-end">
                         <button
@@ -896,17 +928,17 @@ setComments(commentsData);
                               previous === subtask._id ? null : subtask._id,
                             )
                           }
-                          className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-[14px] text-[#777] hover:bg-[#f2f2f2]"
+                          className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-[14px] text-[var(--muted)] hover:bg-[var(--hover)]"
                         >
                           ···
                         </button>
 
                         {openSubtaskAction === subtask._id && (
-                          <div className="absolute right-0 top-[32px] z-20 w-[112px] overflow-hidden rounded-lg border border-[#dedede] bg-white py-1 shadow-lg">
+                          <div className="absolute right-0 top-[32px] z-20 w-[112px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-lg">
                             <button
                               type="button"
                               onClick={() => handleEditSubtask(subtask)}
-                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#333] hover:bg-[#f6f6f6]"
+                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
                             >
                               Edit
                             </button>
@@ -924,7 +956,7 @@ setComments(commentsData);
                   );
                 })}
 
-                <button type="button" onClick={() => setShowSubtaskModal(true)} className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[#333] hover:bg-[#fafafa]">
+                <button type="button" onClick={() => setShowSubtaskModal(true)} className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]">
                   <span className="text-[18px] leading-none">+</span>
                   Add Subtasks
                 </button>
@@ -933,12 +965,14 @@ setComments(commentsData);
 
             <div className="mt-9">
               <div className="mb-3.5 flex items-center justify-between">
-                <h2 className="text-[14px] font-semibold text-[#222]">Comments</h2>
+                <h2 className="text-[14px] font-semibold text-[var(--accent)]">
+                  Comments
+                </h2>
                 {rootComments.length > 2 && (
                   <button
                     type="button"
                     onClick={() => setShowAllComments((previous) => !previous)}
-                    className="rounded-md px-2 py-1 text-[11px] font-medium text-[#777] transition-colors hover:bg-[#f5f7fb] hover:text-[#2563eb]"
+                    className="rounded-md px-2 py-1 text-[11px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
                   >
                     {showAllComments ? "Show less" : `View more (${rootComments.length - 2})`}
                   </button>
@@ -954,11 +988,11 @@ setComments(commentsData);
                 return (
                   <div
                     key={comment._id}
-                    className="mb-3.5 overflow-hidden rounded-lg border border-[#dedede] bg-white"
+                    className="mb-3.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]"
                   >
                     <div className="px-4 py-3.5">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[9px] font-medium text-white">
+                        <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[9px] font-medium text-white">
                           {getUser(comment.userId)?.avatar ? (
                             <img
                               src={getUser(comment.userId)?.avatar}
@@ -972,10 +1006,10 @@ setComments(commentsData);
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-semibold text-[#222]">
+                            <span className="text-[12px] font-semibold text-[var(--text)]">
                               {formatUserName(comment.userId)}
                             </span>
-                            <span className="text-[10px] text-[#999]">
+                            <span className="text-[10px] text-[var(--muted)]">
                               {new Date(comment.createdAt).toLocaleString("en-GB", {
                                 day: "2-digit",
                                 month: "short",
@@ -984,22 +1018,22 @@ setComments(commentsData);
                               })}
                             </span>
                           </div>
-                          <p className="mt-2 text-[13px] leading-5 text-[#303030]">
+                          <p className="mt-2 text-[13px] leading-5 text-[var(--text)]">
                             {comment.message}
                           </p>
                         </div>
 
                         <button
                           type="button"
-                          className="rounded-md px-1.5 py-1 text-[13px] text-[#777] hover:bg-[#f5f5f5]"
+                          className="rounded-md px-1.5 py-1 text-[13px] text-[var(--muted)] hover:bg-[var(--hover)]"
                         >
                           ···
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex h-[43px] items-center gap-2.5 border-t border-[#eeeeee] px-4">
-                      <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] text-white">
+                    <div className="flex h-[43px] items-center gap-2.5 border-t border-[var(--border)] px-4">
+                      <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
                         {getUser(task.createdBy)?.avatar ? (
                           <img
                             src={getUser(task.createdBy)?.avatar}
@@ -1021,7 +1055,7 @@ setComments(commentsData);
                           if (e.key === "Enter") handleAddComment(comment._id);
                         }}
                         placeholder="Leave a reply..."
-                        className="h-full flex-1 bg-transparent text-[12px] text-[#333] outline-none placeholder:text-[#aaa]"
+                        className="h-full flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
                       />
                       <button
                         type="button"
@@ -1031,18 +1065,18 @@ setComments(commentsData);
                           !replyText.trim() ||
                           replyingTo !== comment._id
                         }
-                        className="text-[14px] text-[#555] transition-colors hover:text-[#2563eb] disabled:opacity-40"
+                        className="text-[14px] text-[var(--accent)] transition-colors hover:opacity-75 disabled:opacity-40"
                       >
                         ➤
                       </button>
                     </div>
 
                     {replies.length > 0 && (
-                      <div className="border-t border-[#eeeeee] px-4 py-2.5">
+                      <div className="border-t border-[var(--border)] px-4 py-2.5">
                         <button
                           type="button"
                           onClick={() => toggleReplies(comment._id)}
-                          className="ml-[40px] text-[11px] font-medium text-[#777] transition-colors hover:text-[#2563eb]"
+                          className="ml-[40px] text-[11px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
                         >
                           {repliesOpen
                             ? "Hide replies"
@@ -1050,10 +1084,10 @@ setComments(commentsData);
                         </button>
 
                         {repliesOpen && (
-                          <div className="mt-2.5 ml-[40px] border-l border-[#e5e5e5] pl-3.5">
+                          <div className="mt-2.5 ml-[40px] border-l border-[var(--border)] pl-3.5">
                             {replies.map((reply) => (
                               <div key={reply._id} className="flex gap-2.5 py-2">
-                                <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[7px] text-white">
+                                <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[7px] text-white">
                                   {getUser(reply.userId)?.avatar ? (
                                     <img
                                       src={getUser(reply.userId)?.avatar}
@@ -1066,10 +1100,10 @@ setComments(commentsData);
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-semibold text-[#444]">
+                                    <span className="text-[10px] font-semibold text-[var(--text)]">
                                       {formatUserName(reply.userId)}
                                     </span>
-                                    <span className="text-[9px] text-[#aaa]">
+                                    <span className="text-[9px] text-[var(--muted)]">
                                       {new Date(reply.createdAt).toLocaleString("en-GB", {
                                         day: "2-digit",
                                         month: "short",
@@ -1078,7 +1112,7 @@ setComments(commentsData);
                                       })}
                                     </span>
                                   </div>
-                                  <p className="mt-0.5 text-[11px] leading-4 text-[#555]">
+                                  <p className="mt-0.5 text-[11px] leading-4 text-[var(--muted)]">
                                     {reply.message}
                                   </p>
                                 </div>
@@ -1092,8 +1126,8 @@ setComments(commentsData);
                 );
               })}
 
-              <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[#dedede] px-4">
-                <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] text-white">
+              <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[var(--border)] px-4">
+                <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
                   {getUser(task.createdBy)?.avatar ? (
                     <img
                       src={getUser(task.createdBy)?.avatar}
@@ -1111,13 +1145,13 @@ setComments(commentsData);
                     if (e.key === "Enter") handleAddComment(null);
                   }}
                   placeholder="Add a comment..."
-                  className="h-full flex-1 bg-transparent text-[12px] text-[#333] outline-none placeholder:text-[#aaa]"
+                  className="h-full flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
                 />
                 <button
                   type="button"
                   onClick={() => handleAddComment(null)}
                   disabled={addingComment || !commentText.trim()}
-                  className="text-[14px] text-[#555] transition-colors hover:text-[#2563eb] disabled:opacity-40"
+                  className="text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
                 >
                   ➤
                 </button>
@@ -1126,21 +1160,23 @@ setComments(commentsData);
           </section>
 
           <aside className="w-[285px] shrink-0">
-            <div className="rounded-xl border border-[#dedede] bg-white p-4">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px]">▾</span>
-                  <h2 className="text-[13px] font-semibold text-[#222]">Details</h2>
+                  <h2 className="text-[13px] font-semibold text-[var(--accent)]">
+                    Details
+                  </h2>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="text-[17px] text-[#333]">+</button>
-                  <button type="button" className="text-[14px] text-[#777]">⚙</button>
+                  <button type="button" className="text-[17px] text-[var(--text)]">+</button>
+                  <button type="button" className="text-[14px] text-[var(--muted)]">⚙</button>
                 </div>
               </div>
 
               <div className="mt-5 space-y-5">
                 <div className="grid grid-cols-[65px_1fr] items-center">
-                  <span className="text-[11px] text-[#555]">Status</span>
+                  <span className="text-[11px] text-[var(--muted)]">Status</span>
                   <span className="flex w-fit items-center gap-1.5 rounded-md bg-[#fff5e6] px-2.5 py-1.5 text-[12px] font-medium text-orange-600">
                     <span className="h-[6px] w-[6px] rounded-full bg-orange-500" />
                     {task.status}
@@ -1148,21 +1184,21 @@ setComments(commentsData);
                 </div>
 
                 <div className="grid grid-cols-[65px_1fr] items-start">
-                  <span className="pt-1 text-[12px] font-medium text-[#555]">Priority</span>
+                  <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Priority</span>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowPriorityMenu((previous) => !previous)}
-                      className={`flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[12px] font-medium transition-colors hover:bg-[#f7f7f7] ${priorityTextClass(task.priority)}`}
+                      className={`flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[12px] font-medium transition-colors hover:bg-[var(--hover)] ${priorityTextClass(task.priority)}`}
                     >
                       <PriorityIcon priority={task.priority} />
                       {task.priority || "No Priority"}
-                      <span className="text-[9px] text-[#888]">⌄</span>
+                      <span className="text-[9px] text-[var(--muted)]">⌄</span>
                     </button>
 
                     {showPriorityMenu && (
-                      <div className="absolute left-0 top-[30px] z-30 w-[150px] overflow-hidden rounded-lg border border-[#dedede] bg-white py-1.5 shadow-lg">
-                        <p className="px-3 py-1.5 text-[9px] font-medium text-[#999]">
+                      <div className="absolute left-0 top-[30px] z-30 w-[150px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1.5 shadow-lg">
+                        <p className="px-3 py-1.5 text-[9px] font-medium text-[var(--muted)]">
                           Priority
                         </p>
                         {priorityOptions.map((option) => {
@@ -1174,12 +1210,12 @@ setComments(commentsData);
                               key={option}
                               type="button"
                               onClick={() => handlePriorityChange(option)}
-                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-[#f7f7f7] ${
+                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-[var(--hover)] ${
                                 isSelected
                                   ? priorityTextClass(
                                       option === "No Priority" ? undefined : option,
                                     )
-                                  : "text-[#555]"
+                                  : "text-[var(--muted)]"
                               }`}
                             >
                               <span className="flex items-center gap-2">
@@ -1198,14 +1234,14 @@ setComments(commentsData);
                 </div>
 
                 <div className="grid grid-cols-[65px_1fr] items-start">
-                  <span className="pt-1 text-[12px] font-medium text-[#555]">Members</span>
+                  <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Members</span>
                   <div>
                     {task.members?.length ? (
                       <div className="flex items-center gap-1.5">
                         {task.members.slice(0, 3).map((member, index) => (
                           <div
                             key={member._id}
-                            className={`flex h-[25px] w-[25px] items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#171717] text-[8px] text-white ${index > 0 ? "-ml-2" : ""}`}
+                            className={`flex h-[25px] w-[25px] items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[var(--surface-strong)] text-[8px] text-white ${index > 0 ? "-ml-2" : ""}`}
                           >
                             {getUser(member.userId)?.avatar ? (
                               <img
@@ -1219,16 +1255,16 @@ setComments(commentsData);
                           </div>
                         ))}
                         {task.members.length > 3 && (
-                          <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[#f1f1f1] px-1 text-[9px] font-medium text-[#666]">
+                          <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[var(--hover)] px-1 text-[9px] font-medium text-[var(--muted)]">
                             +{task.members.length - 3}
                           </div>
                         )}
                         <button
                           type="button"
                           onClick={() => setShowMemberModal(true)}
-                          className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[#555] hover:text-[#222]"
+                          className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
                         >
-                          <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[#dedede] text-[14px]">
+                          <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
                             +
                           </span>
                           <PeopleIcon />
@@ -1239,9 +1275,9 @@ setComments(commentsData);
                       <button
                         type="button"
                         onClick={() => setShowMemberModal(true)}
-                        className="flex items-center gap-1.5 text-[11px] font-medium text-[#555] hover:text-[#222]"
+                        className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
                       >
-                        <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[#dedede] text-[14px]">
+                        <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
                           +
                         </span>
                         <PeopleIcon />
@@ -1252,33 +1288,35 @@ setComments(commentsData);
                 </div>
 
                 <div className="grid grid-cols-[65px_1fr] items-center">
-                  <span className="text-[11px] text-[#555]">Dates</span>
-                  <span className="text-[11px] text-[#777]">{formatShortDate(task.dueDate)}</span>
+                  <span className="text-[11px] text-[var(--muted)]">Dates</span>
+                  <span className="text-[11px] text-[var(--muted)]">{formatShortDate(task.dueDate)}</span>
                 </div>
 
                 <div className="grid grid-cols-[65px_1fr] items-start">
-                  <span className="pt-1 text-[12px] font-medium text-[#555]">Labels</span>
+                  <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Labels</span>
                   <div className="flex flex-wrap gap-1">
                     {task.labels?.length ? task.labels.map((label) => (
-                      <span key={label} className="flex items-center gap-1 rounded-full bg-[#f3f3f3] px-2 py-1 text-[9px]">
+                      <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2 py-1 text-[9px]">
                         <TagIcon />
                         {label}
                       </span>
-                    )) : <span className="text-[10px] text-[#999]">None</span>}
+                    )) : <span className="text-[10px] text-[var(--muted)]">None</span>}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 rounded-xl border border-[#dedede] bg-white p-4">
+            <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
               <div className="flex items-center gap-2">
                 <span className="text-[11px]">▾</span>
-                <h2 className="text-[13px] font-semibold text-[#222]">Updates</h2>
+                <h2 className="text-[13px] font-semibold text-[var(--accent)]">
+                  Updates
+                </h2>
               </div>
 
               <div className="mt-4 space-y-3.5">
                 {updates.filter((update) => !/posted an update/i.test(update.message)).length === 0 ? (
-                  <p className="text-[11px] text-[#999]">No updates yet.</p>
+                  <p className="text-[11px] text-[var(--muted)]">No updates yet.</p>
                 ) : (
                   updates
                     .filter((update) => !/posted an update/i.test(update.message))
@@ -1286,10 +1324,10 @@ setComments(commentsData);
                     .map((update) => (
                       <div
                         key={update._id}
-                        className="border-b border-[#f0f0f0] pb-3.5 last:border-0 last:pb-0"
+                        className="border-b border-[var(--border)] pb-3.5 last:border-0 last:pb-0"
                       >
                         <div className="flex items-start gap-2.5">
-                          <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#171717] text-[8px] font-medium text-white">
+                          <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] font-medium text-white">
                             {getUser(update.userId)?.avatar ? (
                               <img
                                 src={getUser(update.userId)?.avatar}
@@ -1301,13 +1339,13 @@ setComments(commentsData);
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[12px] font-semibold leading-4 text-[#2b2b2b]">
+                            <p className="text-[12px] font-semibold leading-4 text-[var(--text)]">
                               {formatUserName(update.userId)}
                             </p>
-                            <p className="mt-0.5 text-[10px] leading-4 text-[#777]">
+                            <p className="mt-0.5 text-[10px] leading-4 text-[var(--muted)]">
                               {priorityUpdateText(update)}
                             </p>
-                            <p className="mt-1 text-[9px] text-[#aaa]">
+                            <p className="mt-1 text-[9px] text-[var(--muted)]">
                               {new Date(update.createdAt).toLocaleString("en-GB", {
                                 day: "2-digit",
                                 month: "short",
@@ -1326,10 +1364,10 @@ setComments(commentsData);
         </div>
         {showSubtaskModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-    <div className="w-full max-w-[430px] rounded-[22px] border border-[#dedede] bg-white p-6 shadow-xl">
+    <div className="w-full max-w-[430px] rounded-[22px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
 
       <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-[#171717]">
+        <h2 className="text-[18px] font-semibold text-[var(--text)]">
           {editingSubtaskId ? "Edit Subtask" : "Add Subtask"}
         </h2>
 
@@ -1345,7 +1383,7 @@ setComments(commentsData);
             setSubtaskDueDate("");
             setSubtaskLabels("");
           }}
-          className="text-[20px] text-[#888]"
+          className="text-[20px] text-[var(--muted)]"
         >
           ×
         </button>
@@ -1355,7 +1393,7 @@ setComments(commentsData);
 
         {/* Title */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Title
           </label>
 
@@ -1365,13 +1403,13 @@ setComments(commentsData);
               setSubtaskTitle(e.target.value)
             }
             placeholder="Enter subtask title"
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none focus:border-[#999]"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none focus:border-[var(--muted)]"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Description
           </label>
 
@@ -1382,13 +1420,13 @@ setComments(commentsData);
             }
             placeholder="Add a description"
             rows={3}
-            className="mt-1.5 w-full resize-none rounded-[10px] border border-[#dedede] px-3 py-2.5 text-[13px] outline-none focus:border-[#999]"
+            className="mt-1.5 w-full resize-none rounded-[10px] border border-[var(--border)] px-3 py-2.5 text-[13px] outline-none focus:border-[var(--muted)]"
           />
         </div>
 
         {/* Status */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Status
           </label>
 
@@ -1399,7 +1437,7 @@ setComments(commentsData);
                 e.target.value as TaskStatus
               )
             }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
           >
             <option>To Do</option>
             <option>Doing</option>
@@ -1410,7 +1448,7 @@ setComments(commentsData);
 
         {/* Priority */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Priority
           </label>
 
@@ -1419,7 +1457,7 @@ setComments(commentsData);
             onChange={(e) =>
               setSubtaskPriority(e.target.value)
             }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
           >
             <option>Low</option>
             <option>Medium</option>
@@ -1429,7 +1467,7 @@ setComments(commentsData);
 
         {/* Due Date */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Due Date
           </label>
 
@@ -1439,13 +1477,13 @@ setComments(commentsData);
             onChange={(e) =>
               setSubtaskDueDate(e.target.value)
             }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
           />
         </div>
 
         {/* Labels */}
         <div>
-          <label className="text-[12px] font-medium text-[#444]">
+          <label className="text-[12px] font-medium text-[var(--text)]">
             Labels
           </label>
 
@@ -1455,10 +1493,10 @@ setComments(commentsData);
               setSubtaskLabels(e.target.value)
             }
             placeholder="Design, Frontend"
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[13px] outline-none"
+            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
           />
 
-          <p className="mt-1 text-[10px] text-[#999]">
+          <p className="mt-1 text-[10px] text-[var(--muted)]">
             Separate multiple labels with commas.
           </p>
         </div>
@@ -1472,7 +1510,7 @@ setComments(commentsData);
           onClick={() =>
             setShowSubtaskModal(false)
           }
-          className="h-[38px] rounded-full border border-[#dedede] px-5 text-[12px] font-medium text-[#555]"
+          className="h-[38px] rounded-full border border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
         >
           Cancel
         </button>
@@ -1481,7 +1519,7 @@ setComments(commentsData);
           type="button"
           onClick={handleCreateSubtask}
           disabled={creatingSubtask}
-          className="h-[38px] rounded-full bg-[#171717] px-5 text-[12px] font-medium text-white disabled:opacity-50"
+          className="h-[38px] rounded-full bg-[var(--text)] px-5 text-[12px] font-medium text-white disabled:opacity-50"
         >
           {creatingSubtask
             ? editingSubtaskId
@@ -1499,11 +1537,11 @@ setComments(commentsData);
 
 {showMemberModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-    <div className="w-full max-w-[400px] rounded-[20px] border border-[#dedede] bg-white p-6 shadow-xl">
+    <div className="w-full max-w-[400px] rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[#171717]">
+        <h2 className="text-[17px] font-semibold text-[var(--text)]">
           Add Member
         </h2>
 
@@ -1513,7 +1551,7 @@ setComments(commentsData);
             setShowMemberModal(false);
             setMemberSearch("");
           }}
-          className="text-[20px] text-[#888]"
+          className="text-[20px] text-[var(--muted)]"
         >
           ×
         </button>
@@ -1525,12 +1563,12 @@ setComments(commentsData);
           value={memberSearch}
           onChange={(e) => setMemberSearch(e.target.value)}
           placeholder="Search members..."
-          className="h-[40px] w-full rounded-[10px] border border-[#dedede] px-3 text-[12px] outline-none focus:border-[#999]"
+          className="h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[12px] outline-none focus:border-[var(--muted)]"
         />
       </div>
 
       {/* Users */}
-      <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[10px] border border-[#eeeeee]">
+      <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[10px] border border-[var(--border)]">
         {workspaceUsers
           .filter((user) => {
             const search = memberSearch.toLowerCase().trim();
@@ -1551,21 +1589,21 @@ setComments(commentsData);
             return (
               <div
                 key={user.userId}
-                className="flex items-center justify-between border-b border-[#eeeeee] px-3 py-3 last:border-b-0"
+                className="flex items-center justify-between border-b border-[var(--border)] px-3 py-3 last:border-b-0"
               >
                 {/* User */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[#171717] text-[10px] font-medium text-white">
+                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--text)] text-[10px] font-medium text-white">
                     {user.name?.charAt(0)?.toUpperCase() || "G"}
                   </div>
 
                   <div>
-                    <p className="text-[11px] font-medium text-[#333]">
+                    <p className="text-[11px] font-medium text-[var(--text)]">
                       {user.name || "Guest"}
                     </p>
 
                     {user.username && (
-                      <p className="mt-0.5 text-[9px] text-[#999]">
+                      <p className="mt-0.5 text-[9px] text-[var(--muted)]">
                         @{user.username}
                       </p>
                     )}
@@ -1574,7 +1612,7 @@ setComments(commentsData);
 
                 {/* Add / Already Added */}
                 {alreadyMember ? (
-                  <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[#f3f3f3] text-[14px] font-medium text-[#777]">
+                  <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--hover)] text-[14px] font-medium text-[var(--muted)]">
                     ✓
                   </div>
                 ) : (
@@ -1584,7 +1622,7 @@ setComments(commentsData);
                       handleAddWorkspaceMember(user.userId)
                     }
                     disabled={addingMemberId === user.userId}
-                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[#dedede] text-[16px] text-[#555] transition-colors hover:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] text-[var(--muted)] transition-colors hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {addingMemberId === user.userId
                       ? "..."
@@ -1607,7 +1645,7 @@ setComments(commentsData);
           );
         }).length === 0 && (
           <div className="flex h-[70px] items-center justify-center">
-            <span className="text-[11px] text-[#999]">
+            <span className="text-[11px] text-[var(--muted)]">
               No members found
             </span>
           </div>
@@ -1622,7 +1660,7 @@ setComments(commentsData);
             setShowMemberModal(false);
             setMemberSearch("");
           }}
-          className="h-[36px] rounded-full border border-[#dedede] px-5 text-[12px] font-medium text-[#555]"
+          className="h-[36px] rounded-full border border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
         >
           Done
         </button>

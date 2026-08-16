@@ -26,12 +26,12 @@ export default function BoardColumn({
   onDeleteTask,
 }: BoardColumnProps) {
   return (
-    <section className="w-full min-w-0 self-start rounded-lg border border-[#e4e4e4] bg-[#f5f5f5] p-2">
+    <section className="w-full min-w-0 self-start rounded-lg border border-[var(--border)] bg-[var(--hover)] p-2 text-[var(--text)]">
       <div className="flex items-center justify-between px-1 py-1">
         <div className="flex items-center gap-2">
-          <span className="text-[#555]">⠿</span>
+          <span className="text-[var(--muted)]">⠿</span>
 
-          <h2 className="text-[12px] font-semibold text-[#222]">
+          <h2 className="text-[12px] font-semibold text-[var(--text)]">
             {title}
           </h2>
         </div>
@@ -40,14 +40,14 @@ export default function BoardColumn({
           <button
             type="button"
             onClick={onAddTask}
-            className="text-[16px] text-[#333] cursor-pointer"
+            className="cursor-pointer text-[16px] text-[var(--text)]"
           >
             +
           </button>
 
           <button
             type="button"
-            className="text-[14px] text-[#777] cursor-pointer"
+            className="cursor-pointer text-[14px] text-[var(--muted)]"
           >
             •••
           </button>
@@ -56,24 +56,24 @@ export default function BoardColumn({
 
       <div className="mt-1 space-y-2">
         {tasks.map((task) => (
-       <TaskCard
-          key={task._id}
-          taskId={task._id}
-          title={task.title}
-          assignee={task.assignee}
-          dueDate={task.dueDate}
-          labels={task.labels}
-          onOpen={() => onOpenTask(task._id)}
-          onEdit={() => onEditTask(task._id)}
-          onDelete={() => onDeleteTask(task._id)}
-        />
-    ))}
+          <TaskCard
+            key={task._id}
+            taskId={task._id}
+            title={task.title}
+            assignee={task.assignee}
+            dueDate={task.dueDate}
+            labels={task.labels}
+            onOpen={() => onOpenTask(task._id)}
+            onEdit={() => onEditTask(task._id)}
+            onDelete={() => onDeleteTask(task._id)}
+          />
+        ))}
       </div>
 
       <button
         type="button"
         onClick={onAddTask}
-        className="mt-2 flex h-8 w-full items-center px-2 text-left text-[11px] font-medium text-[#333] hover:bg-[#ebebeb] cursor-pointer"
+        className="mt-2 flex h-8 w-full cursor-pointer items-center px-2 text-left text-[11px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
       >
         + Add Task
       </button>

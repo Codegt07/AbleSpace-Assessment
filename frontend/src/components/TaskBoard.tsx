@@ -338,13 +338,13 @@ export default function TaskBoard() {
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-[16px] font-semibold text-[#171717]">
+        <h1 className="text-[16px] font-semibold text-[var(--accent)]">
           Tasks
         </h1>
 
         <div className="flex items-center gap-2">
           {searchOpen ? (
-            <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[#dedede] bg-white px-3">
+            <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3" >
               <svg
                 width="15"
                 height="15"
@@ -352,6 +352,7 @@ export default function TaskBoard() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                
               >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
@@ -371,7 +372,7 @@ export default function TaskBoard() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[#dedede] bg-white hover:bg-[#f7f7f7]"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--accent)]"
             >
               <svg
                 width="16"
@@ -387,14 +388,14 @@ export default function TaskBoard() {
             </button>
           )}
 
-          <div className="flex h-9 overflow-hidden rounded-md border border-[#dedede] bg-white">
+          <div className="flex h-9 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
             <button
               type="button"
               onClick={() => setViewMode("list")}
               className={`flex cursor-pointer items-center gap-2 px-3 text-[12px] font-medium ${
                 viewMode === "list"
-                  ? "bg-[#f1f1f1] text-[#171717]"
-                  : "bg-white text-[#555] hover:bg-[#f7f7f7]"
+                  ? "bg-[var(--active-bg)] text-[var(--accent)]"
+                  : "bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
               }`}
             >
               <span>☰</span>
@@ -404,10 +405,10 @@ export default function TaskBoard() {
             <button
               type="button"
               onClick={() => setViewMode("board")}
-              className={`flex cursor-pointer items-center gap-2 border-l border-[#dedede] px-3 text-[12px] font-medium ${
+              className={`flex cursor-pointer items-center  text-[var(--accent)]gap-2 border-l border-[var(--border)] px-3 text-[12px] font-medium ${
                 viewMode === "board"
-                  ? "bg-[#f1f1f1] text-[#171717]"
-                  : "bg-white text-[#555] hover:bg-[#f7f7f7]"
+                  ? "bg-[var(--active-bg)] text-[var(--accent)]"
+                  : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)]"
               }`}
             >
               <span>▦</span>
@@ -422,23 +423,23 @@ export default function TaskBoard() {
                 setShowFields((previous) => !previous);
                 setShowFilter(false);
               }}
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[#dedede] bg-white px-3 text-[12px] font-medium hover:bg-[#f7f7f7]"
+              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] font-medium hover:bg-[var(--hover)] text-[var(--accent)]"
             >
               <span className="text-[14px]">▥</span>
               Fields
             </button>
 
             {showFields && (
-              <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[#dedede] bg-white p-2 shadow-lg">
+              <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
                 <div className="space-y-1">
                   {fieldOptions.map((field) => (
                     <div
                       key={field}
-                      className="flex h-7 items-center justify-between px-2 text-[11px] text-[#333]"
+                      className="flex h-7 items-center justify-between px-2 text-[11px] text-[var(--text)]"
                     >
                       <span>{field}</span>
 
-                      <div className="h-3.5 w-3.5 rounded-[4px] bg-[#e5e5e5]" />
+                      <div className="h-3.5 w-3.5 rounded-[4px] bg-[var(--border)]" />
                     </div>
                   ))}
                 </div>
@@ -453,14 +454,14 @@ export default function TaskBoard() {
       setShowFilter((previous) => !previous);
       setShowFields(false);
     }}
-    className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border bg-white hover:bg-[#f7f7f7] ${
+    className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] ${
       filterStatus !== "All" ||
       filterPriority !== "All" ||
       filterMember !== "All" ||
       filterDueDate ||
       filterLabel !== "All"
-        ? "border-[#171717]"
-        : "border-[#dedede]"
+        ? "border-[var(--accent)]"
+        : "border-[var(--border)]"
     }`}
   >
     <svg
@@ -476,21 +477,21 @@ export default function TaskBoard() {
   </button>
 
   {showFilter && (
-    <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[#dedede] bg-white p-3 shadow-lg">
-      <p className="mb-3 text-[12px] font-semibold text-[#171717]">
+    <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
+      <p className="mb-3 text-[12px] font-semibold text-[var(--text)]">
         Filter Tasks
       </p>
 
       <div className="space-y-3">
         <div>
-          <label className="text-[11px] text-[#555]">Status</label>
+          <label className="text-[11px] text-[var(--muted)]">Status</label>
 
           <select
             value={filterStatus}
             onChange={(e) =>
               setFilterStatus(e.target.value as TaskStatus | "All")
             }
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[#dedede] bg-white px-2 text-[11px]"
+            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
           >
             <option value="All">All</option>
             <option value="To Do">To Do</option>
@@ -501,12 +502,12 @@ export default function TaskBoard() {
         </div>
 
         <div>
-          <label className="text-[11px] text-[#555]">Priority</label>
+          <label className="text-[11px] text-[var(--muted)]">Priority</label>
 
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[#dedede] bg-white px-2 text-[11px]"
+            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
           >
             <option value="All">All</option>
             <option value="Low">Low</option>
@@ -516,12 +517,12 @@ export default function TaskBoard() {
         </div>
 
         <div>
-          <label className="text-[11px] text-[#555]">Member</label>
+          <label className="text-[11px] text-[var(--muted)]">Member</label>
 
           <select
             value={filterMember}
             onChange={(e) => setFilterMember(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[#dedede] bg-white px-2 text-[11px]"
+            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
           >
             <option value="All">All</option>
 
@@ -536,23 +537,23 @@ export default function TaskBoard() {
         </div>
 
         <div>
-          <label className="text-[11px] text-[#555]">Due Date</label>
+          <label className="text-[11px] text-[var(--muted)]">Due Date</label>
 
           <input
             type="date"
             value={filterDueDate}
             onChange={(e) => setFilterDueDate(e.target.value)}
-            className="mt-1 h-8 w-full rounded-md border border-[#dedede] px-2 text-[11px]"
+            className="mt-1 h-8 w-full rounded-md border border-[var(--border)] px-2 text-[11px]"
           />
         </div>
 
         <div>
-          <label className="text-[11px] text-[#555]">Label</label>
+          <label className="text-[11px] text-[var(--muted)]">Label</label>
 
           <select
             value={filterLabel}
             onChange={(e) => setFilterLabel(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[#dedede] bg-white px-2 text-[11px]"
+            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
           >
             <option value="All">All</option>
 
@@ -578,7 +579,7 @@ export default function TaskBoard() {
           setFilterDueDate("");
           setFilterLabel("All");
         }}
-        className="mt-4 h-8 w-full cursor-pointer rounded-md border border-[#dedede] text-[11px] font-medium hover:bg-[#f7f7f7]"
+        className="mt-4 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] text-[11px] font-medium hover:bg-[var(--hover)]"
       >
         Clear Filters
       </button>
@@ -642,17 +643,17 @@ export default function TaskBoard() {
         >
           <div
             onClick={(event) => event.stopPropagation()}
-            className="w-[400px] rounded-xl border border-[#e5e5e5] bg-white p-5 shadow-lg"
+            className="w-[400px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[16px] font-semibold text-[#171717]">
+              <h2 className="text-[16px] font-semibold text-[var(--text)]">
                 {editingTaskId ? "Edit Task" : "Add Task"}
               </h2>
 
               <button
                 type="button"
                 onClick={resetTaskForm}
-                className="cursor-pointer text-[20px] text-[#777]"
+                className="cursor-pointer text-[20px] text-[var(--muted)]"
               >
                 ×
               </button>
@@ -660,7 +661,7 @@ export default function TaskBoard() {
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="text-[12px] font-medium text-[#333]">
+                <label className="text-[12px] font-medium text-[var(--text)]">
                   Title
                 </label>
 
@@ -670,12 +671,12 @@ export default function TaskBoard() {
                     setTitle(event.target.value)
                   }
                   placeholder="Enter task title"
-                  className="mt-1 h-10 w-full rounded-lg border border-[#dedede] px-3 text-[13px] outline-none focus:border-[#999]"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none focus:border-[var(--accent)]"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[#333]">
+                <label className="text-[12px] font-medium text-[var(--text)]">
                   Status
                 </label>
 
@@ -686,7 +687,7 @@ export default function TaskBoard() {
                       event.target.value as TaskStatus
                     )
                   }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[#dedede] bg-white px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] outline-none"
                 >
                   <option value="To Do">To Do</option>
                   <option value="Doing">Doing</option>
@@ -698,7 +699,7 @@ export default function TaskBoard() {
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[#333]">
+                <label className="text-[12px] font-medium text-[var(--text)]">
                   Priority
                 </label>
 
@@ -707,7 +708,7 @@ export default function TaskBoard() {
                   onChange={(event) =>
                     setPriority(event.target.value)
                   }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[#dedede] bg-white px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] outline-none"
                 >
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -716,7 +717,7 @@ export default function TaskBoard() {
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[#333]">
+                <label className="text-[12px] font-medium text-[var(--text)]">
                   Due Date
                 </label>
 
@@ -726,12 +727,12 @@ export default function TaskBoard() {
                   onChange={(event) =>
                     setDueDate(event.target.value)
                   }
-                  className="mt-1 h-10 w-full rounded-lg border border-[#dedede] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[#333]">
+                <label className="text-[12px] font-medium text-[var(--text)]">
                   Labels
                 </label>
 
@@ -741,10 +742,10 @@ export default function TaskBoard() {
                     setLabels(event.target.value)
                   }
                   placeholder="Design, Frontend"
-                  className="mt-1 h-10 w-full rounded-lg border border-[#dedede] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none"
                 />
 
-                <p className="mt-1 text-[10px] text-[#888]">
+                <p className="mt-1 text-[10px] text-[var(--muted)]">
                   Separate multiple labels with commas.
                 </p>
               </div>
@@ -754,7 +755,7 @@ export default function TaskBoard() {
               <button
                 type="button"
                 onClick={resetTaskForm}
-                className="h-9 cursor-pointer rounded-lg border border-[#dedede] px-4 text-[12px] font-medium text-[#333]"
+                className="h-9 cursor-pointer rounded-lg border border-[var(--border)] px-4 text-[12px] font-medium text-[var(--text)]"
               >
                 Cancel
               </button>
@@ -766,7 +767,7 @@ export default function TaskBoard() {
                     ? handleUpdateTask
                     : handleAddTask
                 }
-                className="h-9 cursor-pointer rounded-lg bg-[#171717] px-4 text-[12px] font-medium text-white"
+                className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[12px] font-medium text-white"
               >
                 {editingTaskId
                   ? "Save Changes"

@@ -24,10 +24,10 @@ export default function TaskCard({
   return (
     <div
       onClick={onOpen}
-      className="relative cursor-pointer rounded-lg border border-[#e4e4e4] bg-white p-3 hover:border-[#cfcfcf]"
+      className="relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent)]"
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-[13px] font-medium text-[#171717]">
+        <h3 className="text-[13px] font-medium text-[var(--text)]">
           {title}
         </h3>
 
@@ -37,7 +37,7 @@ export default function TaskCard({
         >
           <button
             type="button"
-            className="cursor-pointer text-[#777]"
+            className="cursor-pointer text-[var(--muted)]"
             onClick={(event) => {
               event.stopPropagation();
 
@@ -51,13 +51,13 @@ export default function TaskCard({
             •••
           </button>
 
-          <div className="absolute right-0 top-6 z-20 hidden w-[100px] rounded-lg border border-[#e5e5e5] bg-white p-1 shadow-md">
+          <div className="absolute right-0 top-6 z-20 hidden w-[100px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 shadow-md">
             <button
               type="button"
               onClick={() => {
                 onEdit();
               }}
-              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[#333] hover:bg-[#f3f3f3]"
+              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[var(--text)] hover:bg-[var(--hover)]"
             >
               Edit
             </button>
@@ -77,13 +77,11 @@ export default function TaskCard({
 
       <div className="mt-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#eeeeee] text-[9px]">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--hover)] text-[9px] text-[var(--text)]">
             {assignee.charAt(0)}
           </div>
 
-          <span className="text-[11px] text-[#333]">
-            {assignee}
-          </span>
+          <span className="text-[11px] text-[var(--text)]">{assignee}</span>
         </div>
 
         <span className="flex items-center gap-[4px] rounded-full bg-[#fff0f0] px-[7px] py-[3px] text-[10px] font-medium text-[#ff4d4f]">
@@ -100,7 +98,6 @@ export default function TaskCard({
             <rect x="3" y="5" width="18" height="16" rx="2" />
             <path d="M16 3v4M8 3v4M3 10h18" />
           </svg>
-
           {dueDate}
         </span>
       </div>
@@ -109,7 +106,7 @@ export default function TaskCard({
         {labels.map((label, index) => (
           <span
             key={`${label}-${index}`}
-            className="flex items-center gap-[4px] rounded-full bg-[#f1f1f1] px-[7px] py-[3px] text-[10px] font-medium leading-none text-[#333333]"
+            className="flex items-center gap-[4px] rounded-full bg-[var(--hover)] px-[7px] py-[3px] text-[10px] font-medium leading-none text-[var(--text)]"
           >
             <svg
               width="11"
@@ -124,7 +121,6 @@ export default function TaskCard({
               <path d="M20.59 13.41 11 3.83V3H4v7h.83l9.58 9.59a2 2 0 0 0 2.82 0l3.36-3.36a2 2 0 0 0 0-2.82l-3.36-3.36a2 2 0 0 0-2.82 0Z" />
               <circle cx="7.5" cy="6.5" r="1" />
             </svg>
-
             {label}
           </span>
         ))}

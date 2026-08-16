@@ -84,62 +84,63 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors">
       <Sidebar />
 
-      <main className="ml-[240px] min-h-screen border-t border-[#e8e8e8]">
+      <main className="ml-[240px] min-h-screen border-t border-[var(--border)]">
         <div className="mx-auto max-w-[760px] px-8 py-10">
-          <h1 className="text-[22px] font-semibold text-[#171717]">
+          {/* Page heading */}
+          <h1 className="text-[22px] font-semibold text-[var(--text)]">
             Profile
           </h1>
 
-          <div className="mt-7 rounded-xl border border-[#e5e5e5] bg-white px-5">
-
+          {/* Profile card */}
+          <div className="mt-7 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5">
             {/* Profile picture */}
-            <div className="flex min-h-[62px] items-center justify-between border-b border-[#eeeeee]">
-              <span className="text-[12px] font-medium text-[#333]">
+            <div className="flex min-h-[62px] items-center justify-between border-b border-[var(--border)]">
+              <span className="text-[12px] font-medium text-[var(--text)]">
                 Profile picture
               </span>
 
-              <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#171717] text-[10px] font-medium text-white">
+              <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-medium text-white">
                 {name?.charAt(0)?.toUpperCase() || "G"}
               </div>
             </div>
 
             {/* Email */}
-            <div className="flex min-h-[58px] items-center justify-between border-b border-[#eeeeee]">
-              <span className="text-[12px] font-medium text-[#333]">
+            <div className="flex min-h-[58px] items-center justify-between border-b border-[var(--border)]">
+              <span className="text-[12px] font-medium text-[var(--text)]">
                 Email
               </span>
 
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
+                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {/* Full name */}
-            <div className="flex min-h-[60px] items-center justify-between border-b border-[#eeeeee]">
-              <span className="text-[12px] font-medium text-[#333]">
+            <div className="flex min-h-[60px] items-center justify-between border-b border-[var(--border)]">
+              <span className="text-[12px] font-medium text-[var(--text)]">
                 Full name
               </span>
 
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
+                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {/* Title */}
-            <div className="flex min-h-[70px] items-center justify-between border-b border-[#eeeeee]">
+            <div className="flex min-h-[70px] items-center justify-between border-b border-[var(--border)]">
               <div>
-                <p className="text-[12px] font-medium text-[#333]">
+                <p className="text-[12px] font-medium text-[var(--text)]">
                   Title
                 </p>
 
-                <p className="mt-1 text-[10px] text-[#777]">
+                <p className="mt-1 text-[10px] text-[var(--muted)]">
                   Your job title or role
                 </p>
               </div>
@@ -147,18 +148,18 @@ export default function ProfilePage() {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
+                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {/* Username */}
             <div className="flex min-h-[70px] items-center justify-between">
               <div>
-                <p className="text-[12px] font-medium text-[#333]">
+                <p className="text-[12px] font-medium text-[var(--text)]">
                   Username
                 </p>
 
-                <p className="mt-1 text-[10px] text-[#777]">
+                <p className="mt-1 text-[10px] text-[var(--muted)]">
                   One word, like a nickname or first name
                 </p>
               </div>
@@ -166,17 +167,18 @@ export default function ProfilePage() {
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-8 w-[180px] rounded-lg bg-[#f3f3f3] px-3 text-[12px] text-[#555] outline-none"
+                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
           </div>
 
-          <h2 className="mt-8 text-[15px] font-semibold text-[#333]">
+          {/* Workspace access */}
+          <h2 className="mt-8 text-[15px] font-semibold text-[var(--text)]">
             Workspace access
           </h2>
 
-          <div className="mt-4 flex min-h-[60px] items-center justify-between rounded-xl border border-[#e5e5e5] bg-white px-5">
-            <span className="text-[11px] text-[#888]">
+          <div className="mt-4 flex min-h-[60px] items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5">
+            <span className="text-[11px] text-[var(--muted)]">
               Remove yourself from the workspace
             </span>
 
@@ -188,9 +190,16 @@ export default function ProfilePage() {
             </button>
           </div>
 
+          {/* Save */}
           <div className="mt-6 flex items-center justify-center gap-3">
             {message && (
-              <span className="text-[11px] text-[#777]">
+              <span
+                className={`text-[11px] ${
+                  message === "Changes saved"
+                    ? "text-[var(--accent)]"
+                    : "text-red-500"
+                }`}
+              >
                 {message}
               </span>
             )}
@@ -199,7 +208,7 @@ export default function ProfilePage() {
               type="button"
               onClick={handleSaveChanges}
               disabled={saving}
-              className="h-[36px] cursor-pointer rounded-lg bg-[#171717] px-5 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-[36px] cursor-pointer rounded-lg bg-[var(--accent)] px-5 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
