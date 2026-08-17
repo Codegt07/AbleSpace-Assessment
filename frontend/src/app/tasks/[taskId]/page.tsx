@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
@@ -116,7 +116,9 @@ function priorityTextClass(priority?: string) {
 
 export default function TaskDetailsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const taskId = params.taskId as string;
+  const viewOnly = searchParams.get("mode") === "view";
 
   const [task, setTask] = useState<Task | null>(null);
   const [updates, setUpdates] = useState<TaskUpdate[]>([]);
@@ -550,24 +552,26 @@ useEffect(() => {
           return;
         }
 
-       const taskUrl =
+       const modeQuery = viewOnly ? "&mode=view" : "";
+
+const taskUrl =
   `http://localhost:5000/tasks/${taskId}` +
-  `?workspaceId=${workspaceId}&userId=${userId}`;
+  `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 const updatesUrl =
   `http://localhost:5000/tasks/${taskId}/updates` +
-  `?workspaceId=${workspaceId}&userId=${userId}`;
+  `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 console.log("TASK URL:", taskUrl);
 console.log("UPDATES URL:", updatesUrl);
 
 const subtasksUrl =
   `http://localhost:5000/tasks/${taskId}/subtasks` +
-  `?workspaceId=${workspaceId}&userId=${userId}`;
+  `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
   const commentsUrl =
   `http://localhost:5000/tasks/${taskId}/comments` +
-  `?workspaceId=${workspaceId}&userId=${userId}`;
+  `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 console.log("SUBTASKS URL:", subtasksUrl);
 
@@ -654,7 +658,7 @@ setComments(commentsData);
     };
 
     fetchTaskData();
-  }, [taskId]);
+  }, [taskId, viewOnly]);
 
   if (loading) {
     return (
@@ -811,13 +815,13 @@ const isTaskMember =
   ) ?? false;
 
 const canAddMembers =
-  isCreator || task.allowMembersToAddMembers !== false;
+  !viewOnly && (isCreator || task.allowMembersToAddMembers !== false);
 
 const canCreateSubtasks =
-  isCreator || task.allowMembersToCreateSubtasks !== false;
+  !viewOnly && (isCreator || task.allowMembersToCreateSubtasks !== false);
 
 const canComment =
-  isCreator || task.allowMembersToComment !== false;
+  !viewOnly && (isCreator || task.allowMembersToComment !== false);
 
 const handleRemoveMember = async (memberId: string) => {
   if (!isCreator || memberId === task.createdBy) {
@@ -974,7 +978,15 @@ const handleSaveTaskSettings = async () => {
               </div>
 
               <div className="flex shrink-0 items-center gap-1.5">
-                <button type="button" title="Lock"  onClick={() => setShowTaskSettingsModal(true)} className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"> 
+                <button
+                  type="button"
+                  title={viewOnly ? "View only" : "Task settings"}
+                  onClick={() => {
+                    if (!viewOnly) setShowTaskSettingsModal(true);
+                  }}
+                  disabled={viewOnly}
+                  className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] disabled:cursor-default disabled:opacity-60"
+                >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="3" y="6" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M4.5 6V4.5C4.5 2.57 9.5 2.57 9.5 4.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -995,7 +1007,7 @@ const handleSaveTaskSettings = async () => {
                     <path d="M5.3 6.3L8.7 4.2M5.3 7.7L8.7 9.8" stroke="currentColor" strokeWidth="1.1" />
                   </svg>
                 </button>
-                <div className="relative">
+                {!viewOnly && <div className="relative">
   <button
     type="button"
     title="More"
@@ -1060,7 +1072,7 @@ const handleSaveTaskSettings = async () => {
 
     </div>
   )}
-</div>
+</div>}
               </div>
             </div>
 
@@ -1138,7 +1150,11 @@ const handleSaveTaskSettings = async () => {
 
                       <div className="flex items-center">
                         {members.length === 0 ? (
-                          <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[15px] text-[var(--muted)]">+</button>
+                          viewOnly ? (
+                            <span className="text-[10px] text-[var(--muted)]">—</span>
+                          ) : (
+                            <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[15px] text-[var(--muted)]">+</button>
+                          )
                         ) : (
                           <>
                             {visible.map((member, index) => (
@@ -1160,35 +1176,39 @@ const handleSaveTaskSettings = async () => {
                       <div className="text-[12px] text-[var(--text)]">{formatShortDate(subtask.dueDate)}</div>
 
                       <div className="relative flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenSubtaskAction((previous) =>
-                              previous === subtask._id ? null : subtask._id,
-                            )
-                          }
-                          className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-[14px] text-[var(--muted)] hover:bg-[var(--hover)]"
-                        >
-                          ···
-                        </button>
+                        {!viewOnly && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenSubtaskAction((previous) =>
+                                  previous === subtask._id ? null : subtask._id,
+                                )
+                              }
+                              className="flex h-[28px] w-[28px] items-center justify-center rounded-md text-[14px] text-[var(--muted)] hover:bg-[var(--hover)]"
+                            >
+                              ···
+                            </button>
 
-                        {openSubtaskAction === subtask._id && (
-                          <div className="absolute right-0 top-[32px] z-20 w-[112px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => handleEditSubtask(subtask)}
-                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteSubtask(subtask._id)}
-                              className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#ef4444] hover:bg-[#fff5f5]"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                            {openSubtaskAction === subtask._id && (
+                              <div className="absolute right-0 top-[32px] z-20 w-[112px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => handleEditSubtask(subtask)}
+                                  className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteSubtask(subtask._id)}
+                                  className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#ef4444] hover:bg-[#fff5f5]"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -1306,7 +1326,7 @@ const handleSaveTaskSettings = async () => {
                     </div>
                   ) : (
                     <div className="flex h-[48px] items-center rounded-lg border border-[var(--border)] px-4 text-[11px] text-[var(--muted)]">
-                      Comments disabled by task creator
+                      {viewOnly ? "You need to be a member to comment" : "Comments disabled by task creator"}
                     </div>
                   )}
 
@@ -1398,7 +1418,7 @@ const handleSaveTaskSettings = async () => {
                 </div>
               ) : (
                 <div className="flex h-[48px] items-center rounded-lg border border-[var(--border)] px-4 text-[11px] text-[var(--muted)]">
-                  Comments disabled by task creator
+                  {viewOnly ? "You need to be a member to comment" : "Comments disabled by task creator"}
                 </div>
               )}
             </div>
@@ -1957,7 +1977,7 @@ const handleSaveTaskSettings = async () => {
     </div>
   </div>
 )}
-        {showTaskSettingsModal && (
+        {showTaskSettingsModal && !viewOnly && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
             <div className="w-full max-w-[430px] rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
               <div className="flex items-center justify-between">
@@ -2023,15 +2043,17 @@ const handleSaveTaskSettings = async () => {
                             [setting.key]: !enabled,
                           }))
                         }
-                        className={`relative h-[20px] w-[38px] shrink-0 rounded-full transition-colors ${
+                        className={`relative h-[20px] w-[36px] shrink-0 rounded-full transition-colors ${
                           enabled
                             ? "bg-[var(--accent)]"
                             : "bg-[var(--border)]"
                         }`}
                       >
                         <span
-                          className={`absolute top-[3px] left-[3px] h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform ${
-                            enabled ? "translate-x-[18px]" : "translate-x-0"
+                          className={`absolute top-[3px] h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform ${
+                            enabled
+                              ? "translate-x-[19px]"
+                              : "translate-x-[3px]"
                           }`}
                         />
                       </button>
