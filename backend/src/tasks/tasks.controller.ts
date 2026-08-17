@@ -12,6 +12,7 @@ import {
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
+import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
 
 @Controller('tasks')
 export class TasksController {
@@ -179,20 +180,20 @@ getUpdates(
     );
   }
 
-  @Patch(':id/settings/member-add')
-updateMemberAddPermission(
-  @Param('id') id: string,
-  @Query('workspaceId') workspaceId: string,
-  @Query('userId') userId: string,
-  @Body('enabled') enabled: boolean,
-) {
-  return this.tasksService.updateMemberAddPermission(
-    id,
-    workspaceId,
-    userId,
-    enabled,
-  );
-}
+   @Patch(':id/settings')
+  updateTaskSettings(
+    @Param('id') id: string,
+    @Query('workspaceId') workspaceId: string,
+    @Query('userId') userId: string,
+    @Body() updateTaskSettingsDto: UpdateTaskSettingsDto,
+  ) {
+    return this.tasksService.updateTaskSettings(
+      id,
+      workspaceId,
+      userId,
+      updateTaskSettingsDto,
+    );
+  }
 @Get(':id/comments')
 getComments(
   @Param('id') id: string,

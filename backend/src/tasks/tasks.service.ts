@@ -22,6 +22,7 @@ import {
   TaskCommentDocument,
 } from './schemas/task-comment.schema';
 
+import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
 
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
 
@@ -140,6 +141,17 @@ export class TasksService {
 
   if (!parentTask) {
     throw new NotFoundException('Parent task not found');
+  }
+
+    const isCreator = parentTask.createdBy === userId;
+
+  if (
+    !isCreator &&
+    !parentTask.allowMembersToCreateSubtasks
+  ) {
+    throw new ForbiddenException(
+      'Members are not allowed to create subtasks',
+    );
   }
 
   const {
@@ -497,38 +509,75 @@ async updateMemberStatus(
   return task.save();
 }
 
-async updateMemberAddPermission(
-  id: string,
-  workspaceId: string,
-  userId: string,
-  enabled: boolean,
-) {
-  const task = await this.taskModel.findOne({
-    _id: id,
-    workspaceId,
-  });
+  async updateTaskSettings(
+    id: string,
+    workspaceId: string,
+    userId: string,
+    settings: UpdateTaskSettingsDto,
+  ) {
+    const task = await this.taskModel.findOne({
+      _id: id,
+      workspaceId,
+    });
 
-  if (!task) {
-    throw new NotFoundException('Task not found');
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    if (task.createdBy !== userId) {
+      throw new ForbiddenException(
+        'Only the task creator can change task settings',
+      );
+    }
+
+    const changes: Record<string, any> = {};
+
+    const allowedSettings = [
+      'allowMembersToAddMembers',
+      'allowMembersToCreateSubtasks',
+      'allowMembersToComment',
+    ] as const;
+
+    for (const field of allowedSettings) {
+      const newValue = settings[field];
+
+      if (newValue === undefined) {
+        continue;
+      }
+
+      const oldValue = task[field];
+
+      if (oldValue !== newValue) {
+        changes[field] = {
+          oldValue,
+          newValue,
+        };
+
+        task[field] = newValue;
+      }
+    }
+
+    const fieldLabels: Record<string, string> = {
+      allowMembersToAddMembers: 'member adding permission',
+      allowMembersToCreateSubtasks: 'subtask creation permission',
+      allowMembersToComment: 'comment permission',
+    };
+
+    for (const [field, change] of Object.entries(changes)) {
+      const label = fieldLabels[field] ?? field;
+
+      await this.createUpdate(
+        id,
+        userId,
+        `${change.newValue ? 'Enabled' : 'Disabled'} ${label}`,
+        {
+          [field]: change,
+        },
+      );
+    }
+
+    return task.save();
   }
-
-  if (task.createdBy !== userId) {
-    throw new ForbiddenException(
-      'Only the task creator can change task settings',
-    );
-  }
-
-  task.allowMembersToAddMembers = enabled;
-  await this.createUpdate(
-  id,
-  userId,
-  enabled
-    ? 'Enabled member adding'
-    : 'Disabled member adding',
-);
-
-  return task.save();
-}
 
   async removeMember(
     id: string,
@@ -700,6 +749,14 @@ async addComment(
 
   if (!task) {
     throw new NotFoundException('Task not found');
+  }
+
+    const isCreator = task.createdBy === userId;
+
+  if (!isCreator && !task.allowMembersToComment) {
+    throw new ForbiddenException(
+      'Members are not allowed to comment on this task',
+    );
   }
 
   if (!message?.trim()) {

@@ -33,7 +33,7 @@ export class Task {
   type: string;
 
   @Prop({ type: String, default: null })
-  parentTaskId?: string | null;  
+  parentTaskId?: string | null;
 
   @Prop({
     enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
@@ -47,22 +47,29 @@ export class Task {
   })
   priority: string;
 
-@Prop({
-  type: [
-    {
-      userId: { type: String, required: true },
-      status: {
-        type: String,
-        enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
-        default: 'To Do',
+  @Prop({
+    type: [
+      {
+        userId: { type: String, required: true },
+        status: {
+          type: String,
+          enum: ['To Do', 'Doing', 'Completed', 'On Hold'],
+          default: 'To Do',
+        },
       },
-    },
-  ],
-  default: [],
-})
-members: TaskMember[];
+    ],
+    default: [],
+  })
+  members: TaskMember[];
+
   @Prop({ default: false })
-allowMembersToAddMembers: boolean;
+  allowMembersToAddMembers: boolean;
+
+  @Prop({ default: true })
+  allowMembersToCreateSubtasks: boolean;
+
+  @Prop({ default: true })
+  allowMembersToComment: boolean;
 
   @Prop({ required: true })
   createdBy: string;
@@ -81,8 +88,6 @@ allowMembersToAddMembers: boolean;
 
   @Prop({ type: [String], default: [] })
   resources: string[];
-  
 }
-
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

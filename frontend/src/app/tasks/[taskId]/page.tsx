@@ -27,6 +27,8 @@ type Task = {
   resources?: any[];
   dueDate?: string;
   allowMembersToAddMembers?: boolean;
+  allowMembersToCreateSubtasks?: boolean;
+  allowMembersToComment?: boolean;
 };
 
 type TaskUpdate = {
@@ -122,6 +124,16 @@ export default function TaskDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [showSubtaskModal, setShowSubtaskModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
+ const [showActionMenu, setShowActionMenu] = useState(false);
+const [showTaskSettingsModal, setShowTaskSettingsModal] = useState(false);
+const [currentUserId, setCurrentUserId] = useState("");
+const [savingSettings, setSavingSettings] = useState(false);
+
+const [taskSettings, setTaskSettings] = useState({
+  allowMembersToAddMembers: false,
+  allowMembersToCreateSubtasks: true,
+  allowMembersToComment: true,
+});
 const [memberId, setMemberId] = useState("");
 const [addingMember, setAddingMember] = useState(false);
 
@@ -167,6 +179,7 @@ const handleCreateSubtask = async () => {
     if (!storedGuest) return;
 
     const guest = JSON.parse(storedGuest);
+    setCurrentUserId(guest.guestId);
     const workspaceId = guest.workspaceId;
     const userId = guest.guestId;
 
@@ -522,6 +535,8 @@ useEffect(() => {
 
         const guest = JSON.parse(storedGuest);
 
+        setCurrentUserId(guest.guestId);
+
         const workspaceId = guest.workspaceId;
         const userId = guest.guestId;
 
@@ -618,6 +633,16 @@ const updatesData = await updatesResponse.json();
 const subtasksData = await subtasksResponse.json();
 const commentsData = await commentsResponse.json();
 setTask(taskData);
+setTaskSettings({
+  allowMembersToAddMembers:
+    taskData.allowMembersToAddMembers ?? false,
+
+  allowMembersToCreateSubtasks:
+    taskData.allowMembersToCreateSubtasks ?? true,
+
+  allowMembersToComment:
+    taskData.allowMembersToComment ?? true,
+});
 setUpdates(updatesData);
 setSubtasks(subtasksData);
 setComments(commentsData);
@@ -778,6 +803,157 @@ setComments(commentsData);
     }
   };
 
+  const isCreator = currentUserId === task.createdBy;
+
+const isTaskMember =
+  task.members?.some(
+    (member) => member.userId === currentUserId,
+  ) ?? false;
+
+const canAddMembers =
+  isCreator || task.allowMembersToAddMembers !== false;
+
+const canCreateSubtasks =
+  isCreator || task.allowMembersToCreateSubtasks !== false;
+
+const canComment =
+  isCreator || task.allowMembersToComment !== false;
+
+const handleRemoveMember = async (memberId: string) => {
+  if (!isCreator || memberId === task.createdBy) {
+    return;
+  }
+
+  const member = task.members?.find(
+    (item) => item.userId === memberId,
+  );
+
+  if (!member) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Remove this member from the task?",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/members/${memberId}` +
+        `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "REMOVE MEMBER ERROR:",
+        response.status,
+        errorText,
+      );
+      throw new Error("Failed to remove member");
+    }
+
+    const updatedTask = await response.json();
+    setTask(updatedTask);
+  } catch (error) {
+    console.error("Remove Member Error:", error);
+  }
+};
+
+const handleLeaveTask = async () => {
+  if (isCreator) return;
+
+  const confirmed = window.confirm(
+    "Leave this task?",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/leave` +
+        `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to leave task");
+    }
+
+    window.location.href = "/tasks";
+  } catch (error) {
+    console.error("Leave Task Error:", error);
+  }
+};
+
+const handleSaveTaskSettings = async () => {
+  try {
+    setSavingSettings(true);
+
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}/settings` +
+        `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(taskSettings),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        "TASK SETTINGS ERROR:",
+        response.status,
+        errorText,
+      );
+      throw new Error("Failed to update task settings");
+    }
+
+    const updatedTask = await response.json();
+
+    setTask(updatedTask);
+
+    setTaskSettings({
+      allowMembersToAddMembers:
+        updatedTask.allowMembersToAddMembers ?? false,
+      allowMembersToCreateSubtasks:
+        updatedTask.allowMembersToCreateSubtasks ?? true,
+      allowMembersToComment:
+        updatedTask.allowMembersToComment ?? true,
+    });
+
+    setShowTaskSettingsModal(false);
+  } catch (error) {
+    console.error("Task Settings Error:", error);
+  } finally {
+    setSavingSettings(false);
+  }
+};
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
@@ -798,7 +974,7 @@ setComments(commentsData);
               </div>
 
               <div className="flex shrink-0 items-center gap-1.5">
-                <button type="button" title="Lock" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]">
+                <button type="button" title="Lock"  onClick={() => setShowTaskSettingsModal(true)} className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"> 
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="3" y="6" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M4.5 6V4.5C4.5 2.57 9.5 2.57 9.5 4.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -819,9 +995,72 @@ setComments(commentsData);
                     <path d="M5.3 6.3L8.7 4.2M5.3 7.7L8.7 9.8" stroke="currentColor" strokeWidth="1.1" />
                   </svg>
                 </button>
-                <button type="button" title="More" className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]">
-                  •••
-                </button>
+                <div className="relative">
+  <button
+    type="button"
+    title="More"
+    onClick={() =>
+      setShowActionMenu((previous) => !previous)
+    }
+    className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]"
+  >
+    •••
+  </button>
+
+  {showActionMenu && (
+    <div className="absolute right-0 top-[36px] z-40 w-[145px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-lg">
+
+      {isCreator ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setShowActionMenu(false);
+              // existing edit flow yahan connect hoga
+            }}
+            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+          >
+            Edit
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowActionMenu(false);
+              // existing delete flow yahan connect hoga
+            }}
+            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-red-500 hover:bg-[var(--hover)]"
+          >
+            Delete
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowActionMenu(false);
+              setShowTaskSettingsModal(true);
+            }}
+            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+          >
+            Task Settings
+          </button>
+        </>
+      ) : isTaskMember ? (
+        <button
+          type="button"
+          onClick={() => {
+            setShowActionMenu(false);
+            handleLeaveTask();
+          }}
+          className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+        >
+          Leave Task
+        </button>
+      ) : null}
+
+    </div>
+  )}
+</div>
               </div>
             </div>
 
@@ -956,10 +1195,20 @@ setComments(commentsData);
                   );
                 })}
 
-                <button type="button" onClick={() => setShowSubtaskModal(true)} className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]">
-                  <span className="text-[18px] leading-none">+</span>
-                  Add Subtasks
-                </button>
+                {canCreateSubtasks ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowSubtaskModal(true)}
+                    className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+                  >
+                    <span className="text-[18px] leading-none">+</span>
+                    Add Subtasks
+                  </button>
+                ) : (
+                  <div className="flex h-[42px] w-full items-center px-3 text-[11px] text-[var(--muted)]">
+                    Adding subtask disabled
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1032,44 +1281,34 @@ setComments(commentsData);
                       </div>
                     </div>
 
-                    <div className="flex h-[43px] items-center gap-2.5 border-t border-[var(--border)] px-4">
-                      <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
-                        {getUser(task.createdBy)?.avatar ? (
-                          <img
-                            src={getUser(task.createdBy)?.avatar}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          userInitial(task.createdBy)
-                        )}
-                      </div>
+                        {canComment ? (
+                    <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[var(--border)] px-4">
+                      {/* existing avatar */}
+
                       <input
-                        value={replyingTo === comment._id ? replyText : ""}
-                        onFocus={() => setReplyingTo(comment._id)}
-                        onChange={(e) => {
-                          setReplyingTo(comment._id);
-                          setReplyText(e.target.value);
-                        }}
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddComment(comment._id);
+                          if (e.key === "Enter") handleAddComment(null);
                         }}
-                        placeholder="Leave a reply..."
+                        placeholder="Add a comment..."
                         className="h-full flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
                       />
+
                       <button
                         type="button"
-                        onClick={() => handleAddComment(comment._id)}
-                        disabled={
-                          addingReply ||
-                          !replyText.trim() ||
-                          replyingTo !== comment._id
-                        }
-                        className="text-[14px] text-[var(--accent)] transition-colors hover:opacity-75 disabled:opacity-40"
+                        onClick={() => handleAddComment(null)}
+                        disabled={addingComment || !commentText.trim()}
+                        className="text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
                       >
                         ➤
                       </button>
                     </div>
+                  ) : (
+                    <div className="flex h-[48px] items-center rounded-lg border border-[var(--border)] px-4 text-[11px] text-[var(--muted)]">
+                      Comments disabled by task creator
+                    </div>
+                  )}
 
                     {replies.length > 0 && (
                       <div className="border-t border-[var(--border)] px-4 py-2.5">
@@ -1126,36 +1365,42 @@ setComments(commentsData);
                 );
               })}
 
-              <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[var(--border)] px-4">
-                <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
-                  {getUser(task.createdBy)?.avatar ? (
-                    <img
-                      src={getUser(task.createdBy)?.avatar}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    userInitial(task.createdBy)
-                  )}
+              {canComment ? (
+                <div className="flex h-[48px] items-center gap-2.5 rounded-lg border border-[var(--border)] px-4">
+                  <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
+                    {getUser(currentUserId)?.avatar ? (
+                      <img
+                        src={getUser(currentUserId)?.avatar}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      userInitial(currentUserId)
+                    )}
+                  </div>
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddComment(null);
+                    }}
+                    placeholder="Add a comment..."
+                    className="h-full flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddComment(null)}
+                    disabled={addingComment || !commentText.trim()}
+                    className="text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
+                  >
+                    ➤
+                  </button>
                 </div>
-                <input
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddComment(null);
-                  }}
-                  placeholder="Add a comment..."
-                  className="h-full flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAddComment(null)}
-                  disabled={addingComment || !commentText.trim()}
-                  className="text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
-                >
-                  ➤
-                </button>
-              </div>
+              ) : (
+                <div className="flex h-[48px] items-center rounded-lg border border-[var(--border)] px-4 text-[11px] text-[var(--muted)]">
+                  Comments disabled by task creator
+                </div>
+              )}
             </div>
           </section>
 
@@ -1254,15 +1499,37 @@ setComments(commentsData);
                             )}
                           </div>
                         ))}
+
                         {task.members.length > 3 && (
                           <div className="-ml-1 flex h-[25px] min-w-[25px] items-center justify-center rounded-full border-2 border-white bg-[var(--hover)] px-1 text-[9px] font-medium text-[var(--muted)]">
                             +{task.members.length - 3}
                           </div>
                         )}
+
+                        {canAddMembers ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowMemberModal(true)}
+                            className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
+                          >
+                            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
+                              +
+                            </span>
+                            <PeopleIcon />
+                            Add members
+                          </button>
+                        ) : (
+                          <span className="ml-1 text-[10px] text-[var(--muted)]">
+                            Adding members disabled
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      canAddMembers ? (
                         <button
                           type="button"
                           onClick={() => setShowMemberModal(true)}
-                          className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
+                          className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
                         >
                           <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
                             +
@@ -1270,19 +1537,11 @@ setComments(commentsData);
                           <PeopleIcon />
                           Add members
                         </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setShowMemberModal(true)}
-                        className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
-                      >
-                        <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
-                          +
+                      ) : (
+                        <span className="text-[10px] text-[var(--muted)]">
+                          Adding members disabled
                         </span>
-                        <PeopleIcon />
-                        Add members
-                      </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -1612,16 +1871,45 @@ setComments(commentsData);
 
                 {/* Add / Already Added */}
                 {alreadyMember ? (
-                  <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--hover)] text-[14px] font-medium text-[var(--muted)]">
-                    ✓
-                  </div>
+                  user.userId === task.createdBy ? (
+                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--hover)] text-[14px] font-medium text-[var(--muted)]">
+                      ✓
+                    </div>
+                  ) : isCreator ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleRemoveMember(user.userId)
+                      }
+                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium text-[var(--muted)] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
+                    >
+                      −
+                    </button>
+                  ) : user.userId === currentUserId ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleRemoveMember(user.userId)
+                      }
+                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium text-[var(--muted)] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
+                    >
+                      −
+                    </button>
+                  ) : (
+                    <div className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-[var(--hover)] text-[14px] font-medium text-[var(--muted)]">
+                      ✓
+                    </div>
+                  )
                 ) : (
                   <button
                     type="button"
                     onClick={() =>
                       handleAddWorkspaceMember(user.userId)
                     }
-                    disabled={addingMemberId === user.userId}
+                    disabled={
+                      addingMemberId === user.userId ||
+                      !canAddMembers
+                    }
                     className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] text-[var(--muted)] transition-colors hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {addingMemberId === user.userId
@@ -1669,6 +1957,111 @@ setComments(commentsData);
     </div>
   </div>
 )}
+        {showTaskSettingsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
+            <div className="w-full max-w-[430px] rounded-[20px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[17px] font-semibold text-[var(--text)]">
+                  Task Settings
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowTaskSettingsModal(false)}
+                  className="text-[20px] text-[var(--muted)]"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="mt-5 divide-y divide-[var(--border)]">
+                {[
+                  {
+                    key: "allowMembersToAddMembers",
+                    title: "Allow members to add members",
+                    description:
+                      "Members can add other workspace members to this task.",
+                  },
+                  {
+                    key: "allowMembersToCreateSubtasks",
+                    title: "Allow members to create subtasks",
+                    description:
+                      "Members can create subtasks under this task.",
+                  },
+                  {
+                    key: "allowMembersToComment",
+                    title: "Allow members to comment",
+                    description:
+                      "Members can add comments and replies.",
+                  },
+                ].map((setting) => {
+                  const enabled =
+                    taskSettings[
+                      setting.key as keyof typeof taskSettings
+                    ];
+
+                  return (
+                    <div
+                      key={setting.key}
+                      className="flex items-center justify-between gap-5 py-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-medium text-[var(--text)]">
+                          {setting.title}
+                        </p>
+                        <p className="mt-1 text-[10px] leading-4 text-[var(--muted)]">
+                          {setting.description}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={enabled}
+                        onClick={() =>
+                          setTaskSettings((previous) => ({
+                            ...previous,
+                            [setting.key]: !enabled,
+                          }))
+                        }
+                        className={`relative h-[20px] w-[38px] shrink-0 rounded-full transition-colors ${
+                          enabled
+                            ? "bg-[var(--accent)]"
+                            : "bg-[var(--border)]"
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-[3px] left-[3px] h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform ${
+                            enabled ? "translate-x-[18px]" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTaskSettingsModal(false)}
+                  className="h-[36px] rounded-full border border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveTaskSettings}
+                  disabled={savingSettings}
+                  className="h-[36px] rounded-full bg-[var(--accent)] px-5 text-[12px] font-medium text-white disabled:opacity-50"
+                >
+                  {savingSettings ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );
