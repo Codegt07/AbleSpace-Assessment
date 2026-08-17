@@ -7,6 +7,7 @@ import { Guest, GuestSchema } from './schemas/guest.schema';
 
 import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { WorkspaceMembersModule } from '../workspace-members/workspace-members.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { WorkspaceMembersModule } from '../workspace-members/workspace-members.m
 
     WorkspacesModule,
     WorkspaceMembersModule,
+    NotificationsModule
   ],
   controllers: [AuthController],
   providers: [AuthService],

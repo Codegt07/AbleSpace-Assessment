@@ -2033,30 +2033,28 @@ const handleSaveTaskSettings = async () => {
                         </p>
                       </div>
 
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={enabled}
-                        onClick={() =>
-                          setTaskSettings((previous) => ({
-                            ...previous,
-                            [setting.key]: !enabled,
-                          }))
-                        }
-                        className={`relative h-[20px] w-[36px] shrink-0 rounded-full transition-colors ${
-                          enabled
-                            ? "bg-[var(--accent)]"
-                            : "bg-[var(--border)]"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-[3px] h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform ${
-                            enabled
-                              ? "translate-x-[19px]"
-                              : "translate-x-[3px]"
-                          }`}
-                        />
-                      </button>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    onClick={() =>
+                      setTaskSettings((previous) => ({
+                        ...previous,
+                        [setting.key]: !enabled,
+                      }))
+                    }
+                    className={`relative h-[20px] w-[38px] shrink-0 rounded-full transition-colors ${
+                      enabled
+                        ? "bg-[var(--accent)]"
+                        : "bg-[var(--border)]"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-[3px] left-[3px] h-[14px] w-[14px] rounded-full bg-white shadow-sm transition-transform ${
+                        enabled ? "translate-x-[18px]" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
                     </div>
                   );
                 })}

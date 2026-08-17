@@ -14,6 +14,7 @@ import {
   TaskComment,
   TaskCommentSchema,
 } from './schemas/task-comment.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -32,6 +33,8 @@ import {
 }
 ]),
     WorkspaceMembersModule,
+    WorkspaceMembersModule,
+    NotificationsModule
   ],
   controllers: [TasksController],
   providers: [TasksService],

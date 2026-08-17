@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import { Guest, GuestDocument } from './schemas/guest.schema';
 import { WorkspacesService } from '../workspaces/workspaces.service';
 import { WorkspaceMembersService } from '../workspace-members/workspace-members.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly workspacesService: WorkspacesService,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
+    private readonly notificationsService: NotificationsService
   ) {}
 
   async createGuest() {
@@ -33,6 +35,12 @@ export class AuthService {
     guest.guestId,
     'member',
    );
+
+   await this.notificationsService.create(
+  guest.guestId,
+  'welcome',
+  'Welcome to the workspace!',
+);
 
    return {
     ...guest.toObject(),

@@ -23,6 +23,7 @@ import {
 } from './schemas/task-comment.schema';
 
 import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
 
@@ -41,6 +42,8 @@ export class TasksService {
     private readonly taskCommentModel: Model<TaskCommentDocument>,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
+    private readonly notificationsService: NotificationsService
+
   ) {}
 
   private calculateOverallStatus(statuses: TaskStatus[]): TaskStatus {
@@ -204,6 +207,7 @@ export class TasksService {
 
   return subtask;
 }
+
 
 async getSubtasks(
   parentTaskId: string,
@@ -506,6 +510,13 @@ async updateMemberStatus(
   { memberId },
 );
 
+await this.notificationsService.create(
+  memberId,
+  'task_added',
+  `You were added to task "${task.title}"`,
+  id,
+);
+
   return task.save();
 }
 
@@ -620,13 +631,20 @@ async updateMemberStatus(
       );
     }
 
+    await this.notificationsService.create(
+  memberId,
+  'task_removed',
+  `You were removed from task "${task.title}"`,
+  id,
+);
+
     task.members = task.members.filter(
       (member) => member.userId !== memberId,
     );
 
     this.updateOverallStatus(task);
 
-    await this.createUpdate(
+  await this.createUpdate(
   id,
   userId,
   'Removed a member from this task',

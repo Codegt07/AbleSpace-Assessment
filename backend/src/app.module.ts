@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { WorkspaceMembersModule } from './workspace-members/workspace-members.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { WorkspaceMembersModule } from './workspace-members/workspace-members.mo
     TasksModule,
     WorkspacesModule,
     WorkspaceMembersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

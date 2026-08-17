@@ -26,6 +26,16 @@ type Guest = {
   name?: string;
 };
 
+type Notification = {
+  _id: string;
+  userId: string;
+  type: "welcome" | "task_added" | "task_removed" | "tip";
+  message: string;
+  taskId?: string | null;
+  isRead: boolean;
+  createdAt: string;
+};
+
 const statuses: TaskStatus[] = [
   "To Do",
   "Doing",
@@ -42,45 +52,92 @@ const fieldOptions = [
   "Reporter",
 ];
 
-
 export default function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("board");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showFields, setShowFields] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(
-    null
-  );
 
+  const [viewMode, setViewMode] =
+    useState<ViewMode>("board");
+
+  const [searchOpen, setSearchOpen] =
+    useState(false);
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [showFields, setShowFields] =
+    useState(false);
+
+  const [showFilter, setShowFilter] =
+    useState(false);
+
+  const [showTaskModal, setShowTaskModal] =
+    useState(false);
+
+  const [editingTaskId, setEditingTaskId] =
+    useState<string | null>(null);
+
+  // Notification
+  const [notifications, setNotifications] =
+    useState<Notification[]>([]);
+
+  const [showNotifications, setShowNotifications] =
+    useState(false);
+
+  const [notificationsLoading, setNotificationsLoading] =
+    useState(false);
+
+  // Task form
   const [title, setTitle] = useState("");
+
   const [selectedStatus, setSelectedStatus] =
     useState<TaskStatus>("To Do");
-  const [priority, setPriority] = useState("Medium");
-  const [dueDate, setDueDate] = useState("");
-  const [labels, setLabels] = useState("");
-  const [filterStatus, setFilterStatus] = useState<TaskStatus | "All">("All");
-  const [filterPriority, setFilterPriority] = useState("All");
-  const [filterMember, setFilterMember] = useState("All");
-  const [filterDueDate, setFilterDueDate] = useState("");
-  const [filterLabel, setFilterLabel] = useState("All");
-  
+
+  const [priority, setPriority] =
+    useState("Medium");
+
+  const [dueDate, setDueDate] =
+    useState("");
+
+  const [labels, setLabels] =
+    useState("");
+
+  // Filters
+  const [filterStatus, setFilterStatus] =
+    useState<TaskStatus | "All">("All");
+
+  const [filterPriority, setFilterPriority] =
+    useState("All");
+
+  const [filterMember, setFilterMember] =
+    useState("All");
+
+  const [filterDueDate, setFilterDueDate] =
+    useState("");
+
+  const [filterLabel, setFilterLabel] =
+    useState("All");
+
   const router = useRouter();
 
   const openTask = (taskId: string) => {
-  router.push(`/tasks/${taskId}`);
-};
-
+    router.push(`/tasks/${taskId}`);
+  };
 
   useEffect(() => {
     fetchTasks();
+    fetchNotifications();
+
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const getGuest = (): Guest | null => {
-    const storedGuest = localStorage.getItem("guest");
+    const storedGuest =
+      localStorage.getItem("guest");
 
     if (!storedGuest) {
       return null;
@@ -109,6 +166,10 @@ export default function TaskBoard() {
     setShowTaskModal(false);
   };
 
+  // =========================
+  // TASKS
+  // =========================
+
   const fetchTasks = async () => {
     try {
       const guest = getGuest();
@@ -119,23 +180,212 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-      `http://localhost:5000/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`
-    );
+        `http://localhost:5000/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch tasks");
       }
 
       const data = await response.json();
+
       setTasks(data);
     } catch (error) {
-      console.error("Fetch Tasks Error:", error);
+      console.error(
+        "Fetch Tasks Error:",
+        error
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const openAddTask = (status: TaskStatus) => {
+  // =========================
+  // NOTIFICATIONS
+  // =========================
+
+  const fetchNotifications = async (
+    silent = false
+  ) => {
+    try {
+      const guest = getGuest();
+
+      if (!guest) {
+        return;
+      }
+
+      if (!silent) {
+        setNotificationsLoading(true);
+      }
+
+      const response = await fetch(
+        `http://localhost:5000/notifications?userId=${guest.guestId}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to fetch notifications"
+        );
+      }
+
+      const data = await response.json();
+
+      setNotifications(
+        Array.isArray(data) ? data : []
+      );
+    } catch (error) {
+      console.error(
+        "Fetch Notifications Error:",
+        error
+      );
+    } finally {
+      if (!silent) {
+        setNotificationsLoading(false);
+      }
+    }
+  };
+
+  const unreadNotificationCount =
+    notifications.filter(
+      (notification) => !notification.isRead
+    ).length;
+
+  const markNotificationAsRead = async (
+    notification: Notification
+  ) => {
+    try {
+      const guest = getGuest();
+
+      if (!guest) {
+        return;
+      }
+
+      if (!notification.isRead) {
+        const response = await fetch(
+          `http://localhost:5000/notifications/${notification._id}/read?userId=${guest.guestId}`,
+          {
+            method: "PATCH",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to mark notification as read"
+          );
+        }
+
+        setNotifications(
+          (previousNotifications) =>
+            previousNotifications.map(
+              (item) =>
+                item._id === notification._id
+                  ? {
+                      ...item,
+                      isRead: true,
+                    }
+                  : item
+            )
+        );
+      }
+
+      if (notification.taskId) {
+        setShowNotifications(false);
+        router.push(
+          `/tasks/${notification.taskId}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Mark Notification Read Error:",
+        error
+      );
+    }
+  };
+
+  const markAllNotificationsAsRead =
+    async () => {
+      try {
+        const guest = getGuest();
+
+        if (!guest) {
+          return;
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/notifications/read-all?userId=${guest.guestId}`,
+          {
+            method: "PATCH",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to mark all notifications as read"
+          );
+        }
+
+        setNotifications(
+          (previousNotifications) =>
+            previousNotifications.map(
+              (notification) => ({
+                ...notification,
+                isRead: true,
+              })
+            )
+        );
+      } catch (error) {
+        console.error(
+          "Mark All Notifications Error:",
+          error
+        );
+      }
+    };
+
+  const formatNotificationTime = (
+    createdAt: string
+  ) => {
+    const date = new Date(createdAt);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getNotificationIcon = (
+    type: Notification["type"]
+  ) => {
+    if (type === "welcome") {
+      return "👋";
+    }
+
+    if (type === "task_added") {
+      return "✓";
+    }
+
+    if (type === "task_removed") {
+      return "−";
+    }
+
+    return "💡";
+  };
+
+  // =========================
+  // ADD TASK
+  // =========================
+
+  const openAddTask = (
+    status: TaskStatus
+  ) => {
     setEditingTaskId(null);
     setTitle("");
     setSelectedStatus(status);
@@ -145,8 +395,16 @@ export default function TaskBoard() {
     setShowTaskModal(true);
   };
 
-  const openEditTask = (taskId: string) => {
-    const task = tasks.find((task) => task._id === taskId);
+  // =========================
+  // EDIT TASK
+  // =========================
+
+  const openEditTask = (
+    taskId: string
+  ) => {
+    const task = tasks.find(
+      (task) => task._id === taskId
+    );
 
     if (!task) {
       return;
@@ -155,21 +413,34 @@ export default function TaskBoard() {
     setEditingTaskId(task._id);
     setTitle(task.title);
     setSelectedStatus(task.status);
-    setPriority(task.priority || "Medium");
+    setPriority(
+      task.priority || "Medium"
+    );
 
     setDueDate(
       task.dueDate
-        ? new Date(task.dueDate).toISOString().split("T")[0]
+        ? new Date(task.dueDate)
+            .toISOString()
+            .split("T")[0]
         : ""
     );
 
-    setLabels((task.labels || []).join(", "));
+    setLabels(
+      (task.labels || []).join(", ")
+    );
+
     setShowTaskModal(true);
   };
 
+  // =========================
+  // CREATE TASK
+  // =========================
+
   const handleAddTask = async () => {
     if (!title.trim()) {
-      toast.error("Task title is required");
+      toast.error(
+        "Task title is required"
+      );
       return;
     }
 
@@ -180,46 +451,74 @@ export default function TaskBoard() {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-        title: title.trim(),
-        description: "",
-        type: "main",
-        parentTaskId: null,
-        priority,
-        members: [guest.guestId],
-        createdBy: guest.guestId,
-        workspaceId: guest.workspaceId,
-        labels: parseLabels(),
-        resources: [],
-      }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/tasks",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            description: "",
+            type: "main",
+            parentTaskId: null,
+            priority,
+            members: [guest.guestId],
+            createdBy: guest.guestId,
+            workspaceId:
+              guest.workspaceId,
+            labels: parseLabels(),
+            resources: [],
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to create task");
+        throw new Error(
+          "Failed to create task"
+        );
       }
 
-      const newTask = await response.json();
+      const newTask =
+        await response.json();
 
-      setTasks((previousTasks) => [
-        newTask,
-        ...previousTasks,
-      ]);
+      setTasks(
+        (previousTasks) => [
+          newTask,
+          ...previousTasks,
+        ]
+      );
 
       resetTaskForm();
-      toast.success("Task created successfully");
+
+      toast.success(
+        "Task created successfully"
+      );
+
+      await fetchNotifications(true);
     } catch (error) {
-      console.error("Add Task Error:", error);
-      toast.error("Failed to create task");
+      console.error(
+        "Add Task Error:",
+        error
+      );
+
+      toast.error(
+        "Failed to create task"
+      );
     }
   };
 
+  // =========================
+  // UPDATE TASK
+  // =========================
+
   const handleUpdateTask = async () => {
-    if (!editingTaskId || !title.trim()) {
+    if (
+      !editingTaskId ||
+      !title.trim()
+    ) {
       return;
     }
 
@@ -235,41 +534,66 @@ export default function TaskBoard() {
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify({
             title: title.trim(),
             status: selectedStatus,
             priority,
-            dueDate: dueDate || undefined,
+            dueDate:
+              dueDate || undefined,
             labels: parseLabels(),
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update task");
+        throw new Error(
+          "Failed to update task"
+        );
       }
 
-      const updatedTask = await response.json();
+      const updatedTask =
+        await response.json();
 
-      setTasks((previousTasks) =>
-        previousTasks.map((task) =>
-          task._id === editingTaskId
-            ? updatedTask
-            : task
-        )
+      setTasks(
+        (previousTasks) =>
+          previousTasks.map(
+            (task) =>
+              task._id ===
+              editingTaskId
+                ? updatedTask
+                : task
+          )
       );
 
       resetTaskForm();
-      toast.success("Task updated successfully");
+
+      toast.success(
+        "Task updated successfully"
+      );
+
+      await fetchNotifications(true);
     } catch (error) {
-      console.error("Update Task Error:", error);
-      toast.error("Failed to update task");
+      console.error(
+        "Update Task Error:",
+        error
+      );
+
+      toast.error(
+        "Failed to update task"
+      );
     }
   };
 
-  const handleDeleteTask = async (taskId: string) => {
+  // =========================
+  // DELETE TASK
+  // =========================
+
+  const handleDeleteTask = async (
+    taskId: string
+  ) => {
     try {
       const guest = getGuest();
 
@@ -285,66 +609,100 @@ export default function TaskBoard() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to delete task");
+        throw new Error(
+          "Failed to delete task"
+        );
       }
 
-      setTasks((previousTasks) =>
-        previousTasks.filter(
-          (task) => task._id !== taskId
-        )
+      setTasks(
+        (previousTasks) =>
+          previousTasks.filter(
+            (task) =>
+              task._id !== taskId
+          )
       );
 
-      toast.success("Task deleted successfully");
+      toast.success(
+        "Task deleted successfully"
+      );
+
+      await fetchNotifications(true);
     } catch (error) {
-      console.error("Delete Task Error:", error);
-      toast.error("Failed to delete task");
+      console.error(
+        "Delete Task Error:",
+        error
+      );
+
+      toast.error(
+        "Failed to delete task"
+      );
     }
   };
 
- const filteredTasks = tasks.filter((task) => {
-  const matchesSearch = task.title
-    .toLowerCase()
-    .includes(searchQuery.trim().toLowerCase());
+  // =========================
+  // FILTER
+  // =========================
 
-  const matchesStatus =
-    filterStatus === "All" || task.status === filterStatus;
+  const filteredTasks =
+    tasks.filter((task) => {
+      const matchesSearch =
+        task.title
+          .toLowerCase()
+          .includes(
+            searchQuery
+              .trim()
+              .toLowerCase()
+          );
 
-  const matchesPriority =
-    filterPriority === "All" || task.priority === filterPriority;
+      const matchesStatus =
+        filterStatus === "All" ||
+        task.status === filterStatus;
 
-  const matchesMember =
-    filterMember === "All" || task.assignee === filterMember;
+      const matchesPriority =
+        filterPriority === "All" ||
+        task.priority ===
+          filterPriority;
 
-  const matchesDueDate =
-    !filterDueDate ||
-    (task.dueDate &&
-      new Date(task.dueDate).toISOString().split("T")[0] ===
-        filterDueDate);
+      const matchesMember =
+        filterMember === "All" ||
+        task.assignee ===
+          filterMember;
 
-  const matchesLabel =
-    filterLabel === "All" ||
-    task.labels?.includes(filterLabel);
+      const matchesDueDate =
+        !filterDueDate ||
+        (task.dueDate &&
+          new Date(task.dueDate)
+            .toISOString()
+            .split("T")[0] ===
+            filterDueDate);
 
-  return (
-    matchesSearch &&
-    matchesStatus &&
-    matchesPriority &&
-    matchesMember &&
-    matchesDueDate &&
-    matchesLabel
-  );
-});
+      const matchesLabel =
+        filterLabel === "All" ||
+        task.labels?.includes(
+          filterLabel
+        );
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesPriority &&
+        matchesMember &&
+        matchesDueDate &&
+        matchesLabel
+      );
+    });
 
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-[16px] font-semibold text-[var(--accent)]">
+        <h1 className="text-[18px] font-semibold text-[var(--accent)]">
           Tasks
         </h1>
 
         <div className="flex items-center gap-2">
+          {/* SEARCH */}
           {searchOpen ? (
-            <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3" >
+            <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3">
               <svg
                 width="15"
                 height="15"
@@ -352,9 +710,12 @@ export default function TaskBoard() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                
               >
-                <circle cx="11" cy="11" r="7" />
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                />
                 <path d="m20 20-3.5-3.5" />
               </svg>
 
@@ -362,17 +723,21 @@ export default function TaskBoard() {
                 autoFocus
                 value={searchQuery}
                 onChange={(event) =>
-                  setSearchQuery(event.target.value)
+                  setSearchQuery(
+                    event.target.value
+                  )
                 }
                 placeholder="Search tasks..."
-                className="w-full bg-transparent text-[13px] outline-none"
+                className="w-full bg-transparent text-[14px] outline-none"
               />
             </div>
           ) : (
             <button
               type="button"
-              onClick={() => setSearchOpen(true)}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--hover)] text-[var(--accent)]"
+              onClick={() =>
+                setSearchOpen(true)
+              }
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
             >
               <svg
                 width="16"
@@ -382,17 +747,24 @@ export default function TaskBoard() {
                 stroke="currentColor"
                 strokeWidth="2"
               >
-                <circle cx="11" cy="11" r="7" />
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                />
                 <path d="m20 20-3.5-3.5" />
               </svg>
             </button>
           )}
 
+          {/* LIST / BOARD */}
           <div className="flex h-9 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
             <button
               type="button"
-              onClick={() => setViewMode("list")}
-              className={`flex cursor-pointer items-center gap-2 px-3 text-[12px] font-medium ${
+              onClick={() =>
+                setViewMode("list")
+              }
+              className={`flex cursor-pointer items-center gap-2 px-3 text-[13px] font-medium ${
                 viewMode === "list"
                   ? "bg-[var(--active-bg)] text-[var(--accent)]"
                   : "bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
@@ -404,8 +776,10 @@ export default function TaskBoard() {
 
             <button
               type="button"
-              onClick={() => setViewMode("board")}
-              className={`flex cursor-pointer items-center  text-[var(--accent)]gap-2 border-l border-[var(--border)] px-3 text-[12px] font-medium ${
+              onClick={() =>
+                setViewMode("board")
+              }
+              className={`flex cursor-pointer items-center gap-2 border-l border-[var(--border)] px-3 text-[13px] font-medium ${
                 viewMode === "board"
                   ? "bg-[var(--active-bg)] text-[var(--accent)]"
                   : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)]"
@@ -416,216 +790,532 @@ export default function TaskBoard() {
             </button>
           </div>
 
+          {/* FIELDS */}
           <div className="relative">
             <button
               type="button"
               onClick={() => {
-                setShowFields((previous) => !previous);
+                setShowFields(
+                  (previous) =>
+                    !previous
+                );
                 setShowFilter(false);
+                setShowNotifications(
+                  false
+                );
               }}
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] font-medium hover:bg-[var(--hover)] text-[var(--accent)]"
+              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
             >
-              <span className="text-[14px]">▥</span>
+              <span className="text-[15px]">
+                ▥
+              </span>
               Fields
             </button>
 
             {showFields && (
               <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
                 <div className="space-y-1">
-                  {fieldOptions.map((field) => (
-                    <div
-                      key={field}
-                      className="flex h-7 items-center justify-between px-2 text-[11px] text-[var(--text)]"
-                    >
-                      <span>{field}</span>
+                  {fieldOptions.map(
+                    (field) => (
+                      <div
+                        key={field}
+                        className="flex h-7 items-center justify-between px-2 text-[12px] text-[var(--text)]"
+                      >
+                        <span>
+                          {field}
+                        </span>
 
-                      <div className="h-3.5 w-3.5 rounded-[4px] bg-[var(--border)]" />
-                    </div>
-                  ))}
+                        <div className="h-3.5 w-3.5 rounded-[4px] bg-[var(--border)]" />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             )}
           </div>
 
+          {/* FILTER */}
           <div className="relative">
-  <button
-    type="button"
-    onClick={() => {
-      setShowFilter((previous) => !previous);
-      setShowFields(false);
-    }}
-    className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] ${
-      filterStatus !== "All" ||
-      filterPriority !== "All" ||
-      filterMember !== "All" ||
-      filterDueDate ||
-      filterLabel !== "All"
-        ? "border-[var(--accent)]"
-        : "border-[var(--border)]"
-    }`}
-  >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
-    </svg>
-  </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowFilter(
+                  (previous) =>
+                    !previous
+                );
+                setShowFields(false);
+                setShowNotifications(
+                  false
+                );
+              }}
+              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] ${
+                filterStatus !==
+                  "All" ||
+                filterPriority !==
+                  "All" ||
+                filterMember !==
+                  "All" ||
+                filterDueDate ||
+                filterLabel !==
+                  "All"
+                  ? "border-[var(--accent)]"
+                  : "border-[var(--border)]"
+              }`}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+              </svg>
+            </button>
 
-  {showFilter && (
-    <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
-      <p className="mb-3 text-[12px] font-semibold text-[var(--text)]">
-        Filter Tasks
-      </p>
+            {showFilter && (
+              <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
+                <p className="mb-3 text-[13px] font-semibold text-[var(--text)]">
+                  Filter Tasks
+                </p>
 
-      <div className="space-y-3">
-        <div>
-          <label className="text-[11px] text-[var(--muted)]">Status</label>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[12px] text-[var(--muted)]">
+                      Status
+                    </label>
 
-          <select
-            value={filterStatus}
-            onChange={(e) =>
-              setFilterStatus(e.target.value as TaskStatus | "All")
-            }
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
-          >
-            <option value="All">All</option>
-            <option value="To Do">To Do</option>
-            <option value="Doing">Doing</option>
-            <option value="Completed">Completed</option>
-            <option value="On Hold">On Hold</option>
-          </select>
-        </div>
+                    <select
+                      value={
+                        filterStatus
+                      }
+                      onChange={(e) =>
+                        setFilterStatus(
+                          e.target
+                            .value as
+                            | TaskStatus
+                            | "All"
+                        )
+                      }
+                      className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
+                    >
+                      <option value="All">
+                        All
+                      </option>
+                      <option value="To Do">
+                        To Do
+                      </option>
+                      <option value="Doing">
+                        Doing
+                      </option>
+                      <option value="Completed">
+                        Completed
+                      </option>
+                      <option value="On Hold">
+                        On Hold
+                      </option>
+                    </select>
+                  </div>
 
-        <div>
-          <label className="text-[11px] text-[var(--muted)]">Priority</label>
+                  <div>
+                    <label className="text-[12px] text-[var(--muted)]">
+                      Priority
+                    </label>
 
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
-          >
-            <option value="All">All</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
-        </div>
+                    <select
+                      value={
+                        filterPriority
+                      }
+                      onChange={(e) =>
+                        setFilterPriority(
+                          e.target.value
+                        )
+                      }
+                      className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
+                    >
+                      <option value="All">
+                        All
+                      </option>
+                      <option value="Low">
+                        Low
+                      </option>
+                      <option value="Medium">
+                        Medium
+                      </option>
+                      <option value="High">
+                        High
+                      </option>
+                    </select>
+                  </div>
 
-        <div>
-          <label className="text-[11px] text-[var(--muted)]">Member</label>
+                  <div>
+                    <label className="text-[12px] text-[var(--muted)]">
+                      Member
+                    </label>
 
-          <select
-            value={filterMember}
-            onChange={(e) => setFilterMember(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
-          >
-            <option value="All">All</option>
+                    <select
+                      value={
+                        filterMember
+                      }
+                      onChange={(e) =>
+                        setFilterMember(
+                          e.target.value
+                        )
+                      }
+                      className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
+                    >
+                      <option value="All">
+                        All
+                      </option>
 
-            {[...new Set(tasks.map((task) => task.assignee).filter(Boolean))].map(
-              (member) => (
-                <option key={member} value={member}>
-                  {member}
-                </option>
-              )
+                      {[
+                        ...new Set(
+                          tasks
+                            .map(
+                              (
+                                task
+                              ) =>
+                                task.assignee
+                            )
+                            .filter(
+                              Boolean
+                            )
+                        ),
+                      ].map(
+                        (member) => (
+                          <option
+                            key={
+                              member
+                            }
+                            value={
+                              member
+                            }
+                          >
+                            {member}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[12px] text-[var(--muted)]">
+                      Due Date
+                    </label>
+
+                    <input
+                      type="date"
+                      value={
+                        filterDueDate
+                      }
+                      onChange={(e) =>
+                        setFilterDueDate(
+                          e.target.value
+                        )
+                      }
+                      className="mt-1 h-8 w-full rounded-md border border-[var(--border)] px-2 text-[12px]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[12px] text-[var(--muted)]">
+                      Label
+                    </label>
+
+                    <select
+                      value={
+                        filterLabel
+                      }
+                      onChange={(e) =>
+                        setFilterLabel(
+                          e.target.value
+                        )
+                      }
+                      className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
+                    >
+                      <option value="All">
+                        All
+                      </option>
+
+                      {[
+                        ...new Set(
+                          tasks.flatMap(
+                            (task) =>
+                              task.labels ||
+                              []
+                          )
+                        ),
+                      ].map(
+                        (label) => (
+                          <option
+                            key={
+                              label
+                            }
+                            value={
+                              label
+                            }
+                          >
+                            {label}
+                          </option>
+                        )
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterStatus(
+                      "All"
+                    );
+                    setFilterPriority(
+                      "All"
+                    );
+                    setFilterMember(
+                      "All"
+                    );
+                    setFilterDueDate(
+                      ""
+                    );
+                    setFilterLabel(
+                      "All"
+                    );
+                  }}
+                  className="mt-4 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] text-[12px] font-medium hover:bg-[var(--hover)]"
+                >
+                  Clear Filters
+                </button>
+              </div>
             )}
-          </select>
-        </div>
+          </div>
 
-        <div>
-          <label className="text-[11px] text-[var(--muted)]">Due Date</label>
+          {/* NOTIFICATIONS */}
+          <div className="relative ml-10">
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotifications(
+                  (previous) =>
+                    !previous
+                );
 
-          <input
-            type="date"
-            value={filterDueDate}
-            onChange={(e) => setFilterDueDate(e.target.value)}
-            className="mt-1 h-8 w-full rounded-md border border-[var(--border)] px-2 text-[11px]"
-          />
-        </div>
+                setShowFilter(false);
+                setShowFields(false);
 
-        <div>
-          <label className="text-[11px] text-[var(--muted)]">Label</label>
+                if (!showNotifications) {
+                  fetchNotifications();
+                }
+              }}
+              className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                <path d="M10 21h4" />
+              </svg>
 
-          <select
-            value={filterLabel}
-            onChange={(e) => setFilterLabel(e.target.value)}
-            className="mt-1 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px]"
-          >
-            <option value="All">All</option>
+              {unreadNotificationCount >
+                0 && (
+                <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-bold text-white">
+                  {unreadNotificationCount >
+                  99
+                    ? "99+"
+                    : unreadNotificationCount}
+                </span>
+              )}
+            </button>
 
-            {[
-              ...new Set(
-                tasks.flatMap((task) => task.labels || [])
-              ),
-            ].map((label) => (
-              <option key={label} value={label}>
-                {label}
-              </option>
-            ))}
-          </select>
+            {showNotifications && (
+              <div className="absolute right-0 top-[44px] z-50 w-[360px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl">
+                <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-[var(--text)]">
+                      Notifications
+                    </h3>
+
+                    <p className="text-[11px] text-[var(--muted)]">
+                      {unreadNotificationCount}{" "}
+                      unread
+                    </p>
+                  </div>
+
+                  {unreadNotificationCount >
+                    0 && (
+                    <button
+                      type="button"
+                      onClick={
+                        markAllNotificationsAsRead
+                      }
+                      className="cursor-pointer text-[11px] font-medium text-[var(--accent)] hover:underline"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-[420px] overflow-y-auto">
+                  {notificationsLoading ? (
+                    <div className="px-4 py-8 text-center text-[12px] text-[var(--muted)]">
+                      Loading notifications...
+                    </div>
+                  ) : notifications.length ===
+                    0 ? (
+                    <div className="px-4 py-10 text-center">
+                      <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--active-bg)] text-[var(--accent)]">
+                        <svg
+                          width="17"
+                          height="17"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                          <path d="M10 21h4" />
+                        </svg>
+                      </div>
+
+                      <p className="text-[13px] font-medium text-[var(--text)]">
+                        No notifications
+                      </p>
+
+                      <p className="mt-1 text-[11px] text-[var(--muted)]">
+                        You&apos;re all caught up.
+                      </p>
+                    </div>
+                  ) : (
+                    notifications.map(
+                      (notification) => (
+                        <button
+                          key={
+                            notification._id
+                          }
+                          type="button"
+                          onClick={() =>
+                            markNotificationAsRead(
+                              notification
+                            )
+                          }
+                         className={`flex w-full cursor-pointer gap-3 border-b border-[var(--border)] px-4 py-3 text-left transition hover:bg-[var(--hover)] ${
+                          notification.isRead
+                            ? "bg-[var(--surface)]"
+                            : "bg-[var(--active-bg)] text-[var(--text)]"
+                        }`}
+                        >
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--accent)]">
+                            {getNotificationIcon(
+                              notification.type
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p
+                              className={`text-[12px] leading-5 ${
+                                notification.isRead
+                                  ? "font-normal text-[var(--text)]"
+                                  : "font-semibold text-[var(--text)]"
+                              }`}
+                            >
+                              {notification.message}
+                            </p>
+
+                              {!notification.isRead && (
+                                <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" />
+                              )}
+                            </div>
+
+                            <p className="mt-1 text-[10px] text-[var(--muted)]">
+                              {formatNotificationTime(
+                                notification.createdAt
+                              )}
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          setFilterStatus("All");
-          setFilterPriority("All");
-          setFilterMember("All");
-          setFilterDueDate("");
-          setFilterLabel("All");
-        }}
-        className="mt-4 h-8 w-full cursor-pointer rounded-md border border-[var(--border)] text-[11px] font-medium hover:bg-[var(--hover)]"
-      >
-        Clear Filters
-      </button>
-    </div>
-  )}
-</div>
-        </div>
-      </div>
-
+      {/* BOARD / LIST */}
       {viewMode === "board" ? (
         <div className="grid w-full grid-cols-4 items-start gap-3">
-          {statuses.map((status) => {
-            const columnTasks = filteredTasks.filter(
-              (task) => task.status === status
-            );
+          {statuses.map(
+            (status) => {
+              const columnTasks =
+                filteredTasks.filter(
+                  (task) =>
+                    task.status ===
+                    status
+                );
 
-            if (
-              searchQuery.trim() &&
-              columnTasks.length === 0
-            ) {
-              return null;
+              if (
+                searchQuery.trim() &&
+                columnTasks.length === 0
+              ) {
+                return null;
+              }
+
+              return (
+                <BoardColumn
+                  key={status}
+                  title={status}
+                  tasks={columnTasks.map(
+                    (task) => ({
+                      _id: task._id,
+                      title: task.title,
+                      assignee:
+                        task.assignee ||
+                        "Guest",
+                      dueDate:
+                        task.dueDate
+                          ? new Date(
+                              task.dueDate
+                            ).toLocaleDateString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month:
+                                  "short",
+                              }
+                            )
+                          : "No date",
+                      labels:
+                        task.labels ||
+                        [],
+                    })
+                  )}
+                  onAddTask={() =>
+                    openAddTask(
+                      status
+                    )
+                  }
+                  onOpenTask={
+                    openTask
+                  }
+                  onEditTask={
+                    openEditTask
+                  }
+                  onDeleteTask={
+                    handleDeleteTask
+                  }
+                />
+              );
             }
-
-            return (
-              <BoardColumn
-                key={status}
-                title={status}
-                tasks={columnTasks.map((task) => ({
-                  _id: task._id,
-                  title: task.title,
-                  assignee: task.assignee || "Guest",
-                  dueDate: task.dueDate
-                    ? new Date(task.dueDate).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                      })
-                    : "No date",
-                  labels: task.labels || [],
-                }))}
-                onAddTask={() => openAddTask(status)}
-                onOpenTask={openTask}
-                onEditTask={openEditTask}
-                onDeleteTask={handleDeleteTask}
-              />
-            );
-          })}
+          )}
         </div>
       ) : (
         <TaskList
@@ -636,24 +1326,33 @@ export default function TaskBoard() {
         />
       )}
 
+      {/* TASK MODAL */}
       {showTaskModal && (
         <div
-          onClick={resetTaskForm}
+          onClick={
+            resetTaskForm
+          }
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
         >
           <div
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
             className="w-[400px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-[16px] font-semibold text-[var(--text)]">
-                {editingTaskId ? "Edit Task" : "Add Task"}
+              <h2 className="text-[18px] font-semibold text-[var(--text)]">
+                {editingTaskId
+                  ? "Edit Task"
+                  : "Add Task"}
               </h2>
 
               <button
                 type="button"
-                onClick={resetTaskForm}
-                className="cursor-pointer text-[20px] text-[var(--muted)]"
+                onClick={
+                  resetTaskForm
+                }
+                className="cursor-pointer text-[21px] text-[var(--muted)]"
               >
                 ×
               </button>
@@ -661,63 +1360,84 @@ export default function TaskBoard() {
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="text-[12px] font-medium text-[var(--text)]">
+                <label className="text-[13px] font-medium text-[var(--text)]">
                   Title
                 </label>
 
                 <input
                   value={title}
                   onChange={(event) =>
-                    setTitle(event.target.value)
+                    setTitle(
+                      event.target
+                        .value
+                    )
                   }
                   placeholder="Enter task title"
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none focus:border-[var(--accent)]"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none focus:border-[var(--accent)]"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[var(--text)]">
+                <label className="text-[13px] font-medium text-[var(--text)]">
                   Status
                 </label>
 
                 <select
-                  value={selectedStatus}
+                  value={
+                    selectedStatus
+                  }
                   onChange={(event) =>
                     setSelectedStatus(
-                      event.target.value as TaskStatus
+                      event.target
+                        .value as TaskStatus
                     )
                   }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none"
                 >
-                  <option value="To Do">To Do</option>
-                  <option value="Doing">Doing</option>
+                  <option value="To Do">
+                    To Do
+                  </option>
+                  <option value="Doing">
+                    Doing
+                  </option>
                   <option value="Completed">
                     Completed
                   </option>
-                  <option value="On Hold">On Hold</option>
+                  <option value="On Hold">
+                    On Hold
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[var(--text)]">
+                <label className="text-[13px] font-medium text-[var(--text)]">
                   Priority
                 </label>
 
                 <select
                   value={priority}
                   onChange={(event) =>
-                    setPriority(event.target.value)
+                    setPriority(
+                      event.target
+                        .value
+                    )
                   }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none"
                 >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
+                  <option value="Low">
+                    Low
+                  </option>
+                  <option value="Medium">
+                    Medium
+                  </option>
+                  <option value="High">
+                    High
+                  </option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[var(--text)]">
+                <label className="text-[13px] font-medium text-[var(--text)]">
                   Due Date
                 </label>
 
@@ -725,28 +1445,35 @@ export default function TaskBoard() {
                   type="date"
                   value={dueDate}
                   onChange={(event) =>
-                    setDueDate(event.target.value)
+                    setDueDate(
+                      event.target
+                        .value
+                    )
                   }
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[12px] font-medium text-[var(--text)]">
+                <label className="text-[13px] font-medium text-[var(--text)]">
                   Labels
                 </label>
 
                 <input
                   value={labels}
                   onChange={(event) =>
-                    setLabels(event.target.value)
+                    setLabels(
+                      event.target
+                        .value
+                    )
                   }
                   placeholder="Design, Frontend"
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[13px] outline-none"
+                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none"
                 />
 
-                <p className="mt-1 text-[10px] text-[var(--muted)]">
-                  Separate multiple labels with commas.
+                <p className="mt-1 text-[11px] text-[var(--muted)]">
+                  Separate multiple labels
+                  with commas.
                 </p>
               </div>
             </div>
@@ -754,8 +1481,10 @@ export default function TaskBoard() {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={resetTaskForm}
-                className="h-9 cursor-pointer rounded-lg border border-[var(--border)] px-4 text-[12px] font-medium text-[var(--text)]"
+                onClick={
+                  resetTaskForm
+                }
+                className="h-9 cursor-pointer rounded-lg border border-[var(--border)] px-4 text-[13px] font-medium text-[var(--text)]"
               >
                 Cancel
               </button>
@@ -767,7 +1496,7 @@ export default function TaskBoard() {
                     ? handleUpdateTask
                     : handleAddTask
                 }
-                className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[12px] font-medium text-white"
+                className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[13px] font-medium text-white"
               >
                 {editingTaskId
                   ? "Save Changes"
