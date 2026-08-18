@@ -344,11 +344,13 @@ async update(
     }
   }
 
-  Object.assign(task, allowedTaskUpdates);
+Object.assign(task, allowedTaskUpdates);
 
-  this.updateOverallStatus(task);
+if (status !== undefined) {
+  task.status = status as TaskStatus;
+}
 
-  const savedTask = await task.save();
+const savedTask = await task.save();
 
   if (Object.keys(changes).length > 0) {
     const fieldLabels: Record<string, string> = {

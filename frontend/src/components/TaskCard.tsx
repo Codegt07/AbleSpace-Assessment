@@ -22,10 +22,14 @@ export default function TaskCard({
   onDelete,
 }: TaskCardProps) {
   return (
-    <div
-      onClick={onOpen}
-      className="relative cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent)]"
-    >
+          <div
+        draggable
+        onDragStart={(event) => {
+          event.dataTransfer.setData("taskId", taskId);
+        }}
+        onClick={onOpen}
+        className="relative cursor-grab rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 hover:border-[var(--accent)]"
+      >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-[13px] font-medium text-[var(--text)]">
           {title}

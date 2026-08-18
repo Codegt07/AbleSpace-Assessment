@@ -187,7 +187,7 @@ export default function Home() {
             <button
               type="button"
               onClick={handleGuestLogin}
-              className="h-[38px] w-full rounded-full bg-[#171717] text-[14px] font-medium text-white transition-opacity hover:opacity-90"
+              className="h-[38px] w-full rounded-full bg-[#171717] text-[14px] font-medium text-white cursor-pointer transition-opacity hover:opacity-90"
             >
               Continue as Guest
             </button>
@@ -197,7 +197,7 @@ export default function Home() {
               onClick={() => {
                 googleCodeClient.current?.requestCode();
               }}
-              className="flex h-[38px] w-full items-center justify-center gap-2 rounded-full border border-[#dedede] bg-white text-[14px] font-medium text-[#171717] transition-colors hover:bg-[#fafafa]"
+              className="flex h-[38px] w-full items-center justify-center gap-2 rounded-full border cursor-pointer border-[#dedede] bg-white text-[14px] font-medium text-[#171717] transition-colors hover:bg-[#fafafa]"
             >
               <span className="text-[18px] font-semibold">
                 G

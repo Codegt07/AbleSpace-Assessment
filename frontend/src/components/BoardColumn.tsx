@@ -1,4 +1,5 @@
 import TaskCard from "./TaskCard";
+type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
 type Task = {
   _id: string;
@@ -15,7 +16,9 @@ type BoardColumnProps = {
   onOpenTask: (taskId: string) => void;
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
+  onDropTask: (taskId: string, status: TaskStatus) => void;
 };
+
 
 export default function BoardColumn({
   title,
@@ -24,9 +27,24 @@ export default function BoardColumn({
   onOpenTask,
   onEditTask,
   onDeleteTask,
+  onDropTask,
 }: BoardColumnProps) {
   return (
-    <section className="w-full min-w-0 self-start rounded-lg border border-[var(--border)] bg-[var(--hover)] p-2 text-[var(--text)]">
+    <section
+  onDragOver={(event) => {
+    event.preventDefault();
+  }}
+  onDrop={(event) => {
+    event.preventDefault();
+
+    const taskId = event.dataTransfer.getData("taskId");
+
+    if (taskId) {
+      onDropTask(taskId, title);
+    }
+  }}
+  className="w-full min-w-0 self-start rounded-lg border border-[var(--border)] bg-[var(--hover)] p-2 text-[var(--text)]"
+>
       <div className="flex items-center justify-between px-1 py-1">
         <div className="flex items-center gap-2">
           <span className="text-[var(--muted)]">⠿</span>

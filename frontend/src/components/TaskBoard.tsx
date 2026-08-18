@@ -432,9 +432,59 @@ export default function TaskBoard() {
     setShowTaskModal(true);
   };
 
-  // =========================
-  // CREATE TASK
-  // =========================
+const handleDropTask = async (
+  taskId: string,
+  newStatus: TaskStatus
+) => {
+  try {
+    const guest = getGuest();
+
+    if (!guest) {
+      return;
+    }
+
+    const task = tasks.find(
+      (task) => task._id === taskId
+    );
+
+    if (!task) {
+      return;
+    }
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: task.title,
+          status: newStatus,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update task status");
+    }
+
+    const updatedTask = await response.json();
+
+    setTasks((previousTasks) =>
+      previousTasks.map((task) =>
+        task._id === taskId ? updatedTask : task
+      )
+    );
+  } catch (error) {
+    console.error(
+      "Drag and Drop Status Error:",
+      error
+    );
+
+    toast.error("Failed to move task");
+  }
+};
 
   const handleAddTask = async () => {
     if (!title.trim()) {
@@ -460,18 +510,19 @@ export default function TaskBoard() {
               "application/json",
           },
           body: JSON.stringify({
-            title: title.trim(),
-            description: "",
-            type: "main",
-            parentTaskId: null,
-            priority,
-            members: [guest.guestId],
-            createdBy: guest.guestId,
-            workspaceId:
-              guest.workspaceId,
-            labels: parseLabels(),
-            resources: [],
-          }),
+          title: title.trim(),
+          description: "",
+          type: "main",
+          parentTaskId: null,
+          status: selectedStatus,
+          priority,
+          members: [guest.guestId],
+          createdBy: guest.guestId,
+          workspaceId: guest.workspaceId,
+          dueDate: dueDate || undefined,
+          labels: parseLabels(),
+          resources: [],
+        })
         }
       );
 
@@ -1312,6 +1363,7 @@ export default function TaskBoard() {
                   onDeleteTask={
                     handleDeleteTask
                   }
+                  onDropTask={handleDropTask}
                 />
               );
             }
@@ -1323,6 +1375,7 @@ export default function TaskBoard() {
           onAddTask={openAddTask}
           onEditTask={openEditTask}
           onDeleteTask={handleDeleteTask}
+          isSearching={searchQuery.trim().length > 0}
         />
       )}
 
