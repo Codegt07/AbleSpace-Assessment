@@ -8,6 +8,13 @@ export class Guest {
   @Prop({ required: true, unique: true })
   guestId: string;
 
+  @Prop({
+    type: String,
+    unique: true,
+    sparse: true,
+  })
+  googleId?: string;
+
   @Prop({ default: 'Guest', trim: true })
   name: string;
 

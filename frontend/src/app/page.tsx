@@ -1,15 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
 
 export default function Home() {
   const router = useRouter();
 
+  const googleCodeClient =
+    useRef<any>(null);
+
   const handleGuestLogin = async () => {
     try {
-      const response = await fetch("http://localhost:5000/auth/guest", {
-        method: "POST",
-      });
+      const response = await fetch(
+        "http://localhost:5000/auth/guest",
+        {
+          method: "POST",
+        },
+      );
 
       if (!response.ok) {
         throw new Error("Guest login failed");
@@ -17,13 +30,115 @@ export default function Home() {
 
       const guest = await response.json();
 
-      localStorage.setItem("guest", JSON.stringify(guest));
+      localStorage.setItem(
+        "guest",
+        JSON.stringify(guest),
+      );
 
       router.push("/tasks");
     } catch (error) {
-      console.error("Guest Login Error:", error);
+      console.error(
+        "Guest Login Error:",
+        error,
+      );
     }
   };
+
+  const handleGoogleCode = async (
+    response: any,
+  ) => {
+    try {
+      if (!response?.code) {
+        throw new Error(
+          "Google authorization code missing",
+        );
+      }
+
+      const result = await fetch(
+        "http://localhost:5000/auth/google",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+            "X-Requested-With":
+              "XMLHttpRequest",
+          },
+          body: JSON.stringify({
+            code: response.code,
+          }),
+        },
+      );
+
+      const data = await result.json();
+
+      if (!result.ok) {
+        throw new Error(
+          data.message ||
+            "Google login failed",
+        );
+      }
+
+      localStorage.setItem(
+        "guest",
+        JSON.stringify(data),
+      );
+
+      router.push("/tasks");
+    } catch (error) {
+      console.error(
+        "Google Login Error:",
+        error,
+      );
+    }
+  };
+
+  useEffect(() => {
+    const loadGoogle = () => {
+      if (!window.google) {
+        return;
+      }
+
+      googleCodeClient.current =
+        window.google.accounts.oauth2.initCodeClient(
+          {
+            client_id:
+              process.env
+                .NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+
+            scope:
+              "openid email profile",
+
+            ux_mode: "popup",
+
+            callback:
+              handleGoogleCode,
+          },
+        );
+    };
+
+    if (window.google) {
+      loadGoogle();
+      return;
+    }
+
+    const script =
+      document.createElement("script");
+
+    script.src =
+      "https://accounts.google.com/gsi/client";
+
+    script.async = true;
+    script.defer = true;
+
+    script.onload = loadGoogle;
+
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-4">
@@ -43,6 +158,7 @@ export default function Home() {
                 strokeWidth="1.3"
                 strokeLinejoin="round"
               />
+
               <path
                 d="M6 1V13M1.5 11.5L6 7L10.5 11.5"
                 stroke="white"
@@ -63,7 +179,8 @@ export default function Home() {
           </h1>
 
           <p className="mt-2 text-center text-[14px] text-[#777777]">
-            Enter your email below to login to your account.
+            Enter your email below to login
+            to your account.
           </p>
 
           <div className="mt-6 space-y-[11px]">
@@ -77,9 +194,15 @@ export default function Home() {
 
             <button
               type="button"
+              onClick={() => {
+                googleCodeClient.current?.requestCode();
+              }}
               className="flex h-[38px] w-full items-center justify-center gap-2 rounded-full border border-[#dedede] bg-white text-[14px] font-medium text-[#171717] transition-colors hover:bg-[#fafafa]"
             >
-              <span className="text-[18px] font-semibold">G</span>
+              <span className="text-[18px] font-semibold">
+                G
+              </span>
+
               Login with Google
             </button>
           </div>
@@ -89,15 +212,24 @@ export default function Home() {
           By clicking continue, you agree to
           <br />
           our{" "}
-          <a href="#" className="underline underline-offset-2">
+          <a
+            href="#"
+            className="underline underline-offset-2"
+          >
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href="#" className="underline underline-offset-2">
+          <a
+            href="#"
+            className="underline underline-offset-2"
+          >
             Privacy
           </a>
           <br />
-          <a href="#" className="underline underline-offset-2">
+          <a
+            href="#"
+            className="underline underline-offset-2"
+          >
             Policy
           </a>
         </p>

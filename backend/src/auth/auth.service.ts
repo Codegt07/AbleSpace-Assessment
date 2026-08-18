@@ -1,79 +1,230 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 
-import { Guest, GuestDocument } from './schemas/guest.schema';
+import {
+  Guest,
+  GuestDocument,
+} from './schemas/guest.schema';
+
 import { WorkspacesService } from '../workspaces/workspaces.service';
-import { WorkspaceMembersService } from '../workspace-members/workspace-members.service';
-import { NotificationsService } from '../notifications/notifications.service';
 
+import {
+  WorkspaceMembersService,
+} from '../workspace-members/workspace-members.service';
+
+import {
+  NotificationsService,
+} from '../notifications/notifications.service';
 
 @Injectable()
 export class AuthService {
+  private readonly googleClient =
+    new OAuth2Client(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+    );
+
   constructor(
     @InjectModel(Guest.name)
     private readonly guestModel: Model<GuestDocument>,
 
     private readonly workspacesService: WorkspacesService,
 
-    private readonly workspaceMembersService: WorkspaceMembersService,
-    private readonly notificationsService: NotificationsService
+    private readonly workspaceMembersService:
+      WorkspaceMembersService,
+
+    private readonly notificationsService:
+      NotificationsService,
   ) {}
 
   async createGuest() {
-   const guest = await this.guestModel.create({
-    guestId: randomUUID(),
-    name: 'Guest',
-    isGuest: true,
-   });
+    const guest =
+      await this.guestModel.create({
+        guestId: randomUUID(),
+        name: 'Guest',
+        isGuest: true,
+      });
 
-   const commonWorkspaceId = '6a7f11d3b4bb4dc3f2f82b82';
+    const commonWorkspaceId =
+      '6a7f11d3b4bb4dc3f2f82b82';
 
-   await this.workspaceMembersService.addMember(
-    commonWorkspaceId,
-    guest.guestId,
-    'member',
-   );
+    await this.workspaceMembersService.addMember(
+      commonWorkspaceId,
+      guest.guestId,
+      'member',
+    );
 
-   await this.notificationsService.create(
-  guest.guestId,
-  'welcome',
-  'Welcome to the workspace!',
-);
+    await this.notificationsService.create(
+      guest.guestId,
+      'welcome',
+      'Welcome to the workspace!',
+    );
 
-   return {
-    ...guest.toObject(),
-    workspaceId: commonWorkspaceId,
-   };
- }
-
- async updateProfile(
-  guestId: string,
-  data: {
-    name?: string;
-    email?: string;
-    username?: string;
-    title?: string;
-    avatar?: string;
-  },
-) {
-  const guest = await this.guestModel.findOneAndUpdate(
-    { guestId },
-    {
-      $set: data,
-    },
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
-
-  if (!guest) {
-    throw new Error('Guest not found');
+    return {
+      ...guest.toObject(),
+      workspaceId: commonWorkspaceId,
+    };
   }
 
-  return guest;
-}
+  async googleLogin(code: string) {
+    if (!code) {
+      throw new UnauthorizedException(
+        'Google authorization code is required',
+      );
+    }
 
+    try {
+      const redirectUri =
+        process.env.FRONTEND_URL ||
+        'http://localhost:3000';
+
+      const { tokens } =
+        await this.googleClient.getToken({
+          code,
+          redirect_uri: redirectUri,
+        });
+
+      if (!tokens.id_token) {
+        throw new UnauthorizedException(
+          'Google ID token not received',
+        );
+      }
+
+      const ticket =
+        await this.googleClient.verifyIdToken({
+          idToken: tokens.id_token,
+          audience:
+            process.env.GOOGLE_CLIENT_ID,
+        });
+
+      const payload =
+        ticket.getPayload();
+
+      if (!payload || !payload.sub) {
+        throw new UnauthorizedException(
+          'Invalid Google account',
+        );
+      }
+
+      const googleId = payload.sub;
+
+      const commonWorkspaceId =
+        '6a7f11d3b4bb4dc3f2f82b82';
+
+      let guest =
+        await this.guestModel.findOne({
+          googleId,
+        });
+
+      const isNewUser = !guest;
+
+      if (!guest) {
+        guest =
+          await this.guestModel.create({
+            guestId: randomUUID(),
+            googleId,
+            name:
+              payload.name ||
+              payload.email?.split('@')[0] ||
+              'Google User',
+            email:
+              payload.email || '',
+            username:
+              payload.email?.split('@')[0] ||
+              '',
+            avatar:
+              payload.picture || '',
+            isGuest: false,
+          });
+      } else {
+        guest.name =
+          payload.name || guest.name;
+
+        guest.email =
+          payload.email || guest.email;
+
+        guest.avatar =
+          payload.picture ||
+          guest.avatar;
+
+        guest.isGuest = false;
+
+        await guest.save();
+      }
+
+      await this.workspaceMembersService.addMember(
+        commonWorkspaceId,
+        guest.guestId,
+        'member',
+      );
+
+      if (isNewUser) {
+        await this.notificationsService.create(
+          guest.guestId,
+          'welcome',
+          'Welcome to the workspace!',
+        );
+      }
+
+      return {
+        ...guest.toObject(),
+        workspaceId:
+          commonWorkspaceId,
+      };
+    } catch (error) {
+      if (
+        error instanceof
+        UnauthorizedException
+      ) {
+        throw error;
+      }
+
+      console.error(
+        'Google Login Error:',
+        error,
+      );
+
+      throw new UnauthorizedException(
+        'Google login failed',
+      );
+    }
+  }
+
+  async updateProfile(
+    guestId: string,
+    data: {
+      name?: string;
+      email?: string;
+      username?: string;
+      title?: string;
+      avatar?: string;
+    },
+  ) {
+    const guest =
+      await this.guestModel.findOneAndUpdate(
+        { guestId },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+    if (!guest) {
+      throw new Error(
+        'Guest not found',
+      );
+    }
+
+    return guest;
+  }
 }

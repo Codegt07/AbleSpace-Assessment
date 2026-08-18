@@ -4,6 +4,8 @@ import {
   Patch,
   Post,
   Query,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
@@ -17,6 +19,21 @@ export class AuthController {
   @Post('guest')
   createGuest() {
     return this.authService.createGuest();
+  }
+
+  @Post('google')
+  googleLogin(
+    @Body('code') code: string,
+    @Headers('x-requested-with')
+    requestedWith: string,
+  ) {
+    if (requestedWith !== 'XMLHttpRequest') {
+      throw new UnauthorizedException(
+        'Invalid Google login request',
+      );
+    }
+
+    return this.authService.googleLogin(code);
   }
 
   @Patch('profile')
