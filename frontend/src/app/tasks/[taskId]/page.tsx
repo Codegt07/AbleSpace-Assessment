@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import TaskFormModal from "@/components/TaskFormModal";
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
@@ -1697,18 +1698,23 @@ const handleSaveTaskSettings = async () => {
             </div>
           </aside>
         </div>
-        {showSubtaskModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-    <div className="w-full max-w-[430px] rounded-[22px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-xl">
-
-      <div className="flex items-center justify-between">
-        <h2 className="text-[18px] font-semibold text-[var(--text)]">
-          {editingSubtaskId ? "Edit Subtask" : "Add Subtask"}
-        </h2>
-
-        <button
-          type="button"
-          onClick={() => {
+        <TaskFormModal
+          open={showSubtaskModal}
+          editingTaskId={editingSubtaskId}
+          mode="subtask"
+          title={subtaskTitle}
+          description={subtaskDescription}
+          selectedStatus={subtaskStatus}
+          priority={subtaskPriority}
+          dueDate={subtaskDueDate}
+          labels={subtaskLabels}
+          setTitle={setSubtaskTitle}
+          setDescription={setSubtaskDescription}
+          setSelectedStatus={setSubtaskStatus}
+          setPriority={setSubtaskPriority}
+          setDueDate={setSubtaskDueDate}
+          setLabels={setSubtaskLabels}
+          onClose={() => {
             setShowSubtaskModal(false);
             setEditingSubtaskId(null);
             setSubtaskTitle("");
@@ -1718,157 +1724,8 @@ const handleSaveTaskSettings = async () => {
             setSubtaskDueDate("");
             setSubtaskLabels("");
           }}
-          className="text-[20px] text-[var(--muted)]"
-        >
-          ×
-        </button>
-      </div>
-
-      <div className="mt-5 space-y-4">
-
-        {/* Title */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Title
-          </label>
-
-          <input
-            value={subtaskTitle}
-            onChange={(e) =>
-              setSubtaskTitle(e.target.value)
-            }
-            placeholder="Enter subtask title"
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none focus:border-[var(--muted)]"
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Description
-          </label>
-
-          <textarea
-            value={subtaskDescription}
-            onChange={(e) =>
-              setSubtaskDescription(e.target.value)
-            }
-            placeholder="Add a description"
-            rows={3}
-            className="mt-1.5 w-full resize-none rounded-[10px] border border-[var(--border)] px-3 py-2.5 text-[13px] outline-none focus:border-[var(--muted)]"
-          />
-        </div>
-
-        {/* Status */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Status
-          </label>
-
-          <select
-            value={subtaskStatus}
-            onChange={(e) =>
-              setSubtaskStatus(
-                e.target.value as TaskStatus
-              )
-            }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
-          >
-            <option>To Do</option>
-            <option>Doing</option>
-            <option>Completed</option>
-            <option>On Hold</option>
-          </select>
-        </div>
-
-        {/* Priority */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Priority
-          </label>
-
-          <select
-            value={subtaskPriority}
-            onChange={(e) =>
-              setSubtaskPriority(e.target.value)
-            }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
-          >
-            <option>Low</option>
-            <option>Medium</option>
-            <option>High</option>
-          </select>
-        </div>
-
-        {/* Due Date */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Due Date
-          </label>
-
-          <input
-            type="date"
-            value={subtaskDueDate}
-            onChange={(e) =>
-              setSubtaskDueDate(e.target.value)
-            }
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
-          />
-        </div>
-
-        {/* Labels */}
-        <div>
-          <label className="text-[12px] font-medium text-[var(--text)]">
-            Labels
-          </label>
-
-          <input
-            value={subtaskLabels}
-            onChange={(e) =>
-              setSubtaskLabels(e.target.value)
-            }
-            placeholder="Design, Frontend"
-            className="mt-1.5 h-[40px] w-full rounded-[10px] border border-[var(--border)] px-3 text-[13px] outline-none"
-          />
-
-          <p className="mt-1 text-[10px] text-[var(--muted)]">
-            Separate multiple labels with commas.
-          </p>
-        </div>
-
-      </div>
-
-      {/* Actions */}
-      <div className="mt-6 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() =>
-            setShowSubtaskModal(false)
-          }
-          className="h-[38px] rounded-full border border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={handleCreateSubtask}
-          disabled={creatingSubtask}
-          className="h-[38px] rounded-full bg-[var(--text)] px-5 text-[12px] font-medium text-white disabled:opacity-50"
-        >
-          {creatingSubtask
-            ? editingSubtaskId
-              ? "Saving..."
-              : "Creating..."
-            : editingSubtaskId
-              ? "Save Changes"
-              : "Add Subtask"}
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
+          onSubmit={handleCreateSubtask}
+        />
 
 {showMemberModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">

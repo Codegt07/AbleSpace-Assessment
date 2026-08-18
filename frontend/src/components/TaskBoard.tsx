@@ -5,6 +5,8 @@ import { toast } from "react-hot-toast";
 import BoardColumn from "./BoardColumn";
 import TaskList from "./TaskList";
 import { useRouter } from "next/navigation";
+import TaskFormModal from "./TaskFormModal";
+
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 type ViewMode = "board" | "list";
@@ -90,6 +92,8 @@ export default function TaskBoard() {
   // Task form
   const [title, setTitle] = useState("");
 
+  const [description, setDescription] = useState("");
+
   const [selectedStatus, setSelectedStatus] =
     useState<TaskStatus>("To Do");
 
@@ -158,6 +162,7 @@ export default function TaskBoard() {
 
   const resetTaskForm = () => {
     setTitle("");
+    setDescription("");
     setSelectedStatus("To Do");
     setPriority("Medium");
     setDueDate("");
@@ -388,6 +393,7 @@ export default function TaskBoard() {
   ) => {
     setEditingTaskId(null);
     setTitle("");
+    setDescription("");
     setSelectedStatus(status);
     setPriority("Medium");
     setDueDate("");
@@ -412,6 +418,7 @@ export default function TaskBoard() {
 
     setEditingTaskId(task._id);
     setTitle(task.title);
+    setDescription(task.description || "");
     setSelectedStatus(task.status);
     setPriority(
       task.priority || "Medium"
@@ -511,7 +518,7 @@ const handleDropTask = async (
           },
           body: JSON.stringify({
           title: title.trim(),
-          description: "",
+          description: description.trim(),
           type: "main",
           parentTaskId: null,
           status: selectedStatus,
@@ -591,6 +598,7 @@ const handleDropTask = async (
           body: JSON.stringify({
             title: title.trim(),
             status: selectedStatus,
+            description: description.trim(),
             priority,
             dueDate:
               dueDate || undefined,
@@ -1379,186 +1387,29 @@ const handleDropTask = async (
         />
       )}
 
-      {/* TASK MODAL */}
-      {showTaskModal && (
-        <div
-          onClick={
-            resetTaskForm
-          }
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
-        >
-          <div
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-            className="w-[400px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-[18px] font-semibold text-[var(--text)]">
-                {editingTaskId
-                  ? "Edit Task"
-                  : "Add Task"}
-              </h2>
-
-              <button
-                type="button"
-                onClick={
-                  resetTaskForm
-                }
-                className="cursor-pointer text-[21px] text-[var(--muted)]"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              <div>
-                <label className="text-[13px] font-medium text-[var(--text)]">
-                  Title
-                </label>
-
-                <input
-                  value={title}
-                  onChange={(event) =>
-                    setTitle(
-                      event.target
-                        .value
-                    )
-                  }
-                  placeholder="Enter task title"
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none focus:border-[var(--accent)]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[13px] font-medium text-[var(--text)]">
-                  Status
-                </label>
-
-                <select
-                  value={
-                    selectedStatus
-                  }
-                  onChange={(event) =>
-                    setSelectedStatus(
-                      event.target
-                        .value as TaskStatus
-                    )
-                  }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none"
-                >
-                  <option value="To Do">
-                    To Do
-                  </option>
-                  <option value="Doing">
-                    Doing
-                  </option>
-                  <option value="Completed">
-                    Completed
-                  </option>
-                  <option value="On Hold">
-                    On Hold
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[13px] font-medium text-[var(--text)]">
-                  Priority
-                </label>
-
-                <select
-                  value={priority}
-                  onChange={(event) =>
-                    setPriority(
-                      event.target
-                        .value
-                    )
-                  }
-                  className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none"
-                >
-                  <option value="Low">
-                    Low
-                  </option>
-                  <option value="Medium">
-                    Medium
-                  </option>
-                  <option value="High">
-                    High
-                  </option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[13px] font-medium text-[var(--text)]">
-                  Due Date
-                </label>
-
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(event) =>
-                    setDueDate(
-                      event.target
-                        .value
-                    )
-                  }
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-[13px] font-medium text-[var(--text)]">
-                  Labels
-                </label>
-
-                <input
-                  value={labels}
-                  onChange={(event) =>
-                    setLabels(
-                      event.target
-                        .value
-                    )
-                  }
-                  placeholder="Design, Frontend"
-                  className="mt-1 h-10 w-full rounded-lg border border-[var(--border)] px-3 text-[14px] outline-none"
-                />
-
-                <p className="mt-1 text-[11px] text-[var(--muted)]">
-                  Separate multiple labels
-                  with commas.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={
-                  resetTaskForm
-                }
-                className="h-9 cursor-pointer rounded-lg border border-[var(--border)] px-4 text-[13px] font-medium text-[var(--text)]"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  editingTaskId
-                    ? handleUpdateTask
-                    : handleAddTask
-                }
-                className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[13px] font-medium text-white"
-              >
-                {editingTaskId
-                  ? "Save Changes"
-                  : "Add Task"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TaskFormModal
+        open={showTaskModal}
+        editingTaskId={editingTaskId}
+        mode="task"
+        description={description}
+        title={title}
+        selectedStatus={selectedStatus}
+        priority={priority}
+        dueDate={dueDate}
+        labels={labels}
+        setTitle={setTitle}
+        setDescription={setDescription}
+        setSelectedStatus={setSelectedStatus}
+        setPriority={setPriority}
+        setDueDate={setDueDate}
+        setLabels={setLabels}
+        onClose={resetTaskForm}
+        onSubmit={
+          editingTaskId
+            ? handleUpdateTask
+            : handleAddTask
+        }
+      />
     </>
   );
 }
