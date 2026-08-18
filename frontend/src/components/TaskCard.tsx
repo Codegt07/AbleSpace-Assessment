@@ -1,4 +1,6 @@
 "use client";
+import TaskActionMenu from "./TaskActionMenu";
+import { useState } from "react";
 
 type TaskCardProps = {
   taskId: string;
@@ -11,6 +13,7 @@ type TaskCardProps = {
   onDelete: () => void;
 };
 
+
 export default function TaskCard({
   taskId,
   title,
@@ -21,6 +24,8 @@ export default function TaskCard({
   onEdit,
   onDelete,
 }: TaskCardProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
           <div
         draggable
@@ -42,41 +47,23 @@ export default function TaskCard({
           <button
             type="button"
             className="cursor-pointer text-[var(--muted)]"
-            onClick={(event) => {
-              event.stopPropagation();
-
-              const menu = event.currentTarget.nextElementSibling;
-
-              if (menu) {
-                menu.classList.toggle("hidden");
-              }
-            }}
+            onClick={() => setMenuOpen((previous) => !previous)}
           >
             •••
           </button>
 
-          <div className="absolute right-0 top-6 z-20 hidden w-[100px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 shadow-md">
-            <button
-              type="button"
-              onClick={() => {
-                onEdit();
-              }}
-              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-[var(--text)] hover:bg-[var(--hover)]"
-            >
-              Edit
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                onDelete();
-              }}
-              className="w-full cursor-pointer rounded-md px-2 py-[6px] text-left text-[11px] text-red-500 hover:bg-[#fff2f2]"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
+          <TaskActionMenu
+            open={menuOpen}
+            onEdit={() => {
+              setMenuOpen(false);
+              onEdit();
+            }}
+            onDelete={() => {
+              setMenuOpen(false);
+              onDelete();
+            }}
+          />
+</div>
       </div>
 
       <div className="mt-3 flex items-center justify-between">

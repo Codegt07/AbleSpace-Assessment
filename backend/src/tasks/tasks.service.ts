@@ -310,6 +310,8 @@ async update(
     throw new NotFoundException('Task not found');
   }
 
+  
+
   if (task.createdBy !== userId) {
     throw new ForbiddenException(
       'Only the task creator can edit task details',
@@ -343,20 +345,37 @@ async update(
       };
     }
   }
-
-Object.assign(task, allowedTaskUpdates);
-
 if (status !== undefined) {
   task.status = status as TaskStatus;
 }
 
-const savedTask = await task.save();
+const savedTask = await this.taskModel.findOneAndUpdate(
+  {
+    _id: id,
+    workspaceId,
+  },
+  {
+    $set: {
+      ...allowedTaskUpdates,
+      ...(status !== undefined ? { status } : {}),
+    },
+  },
+  {
+    new: true,
+    runValidators: true,
+  },
+);
+
+if (!savedTask) {
+  throw new NotFoundException('Task not found');
+}
 
   if (Object.keys(changes).length > 0) {
     const fieldLabels: Record<string, string> = {
       title: 'title',
       description: 'description',
       priority: 'priority',
+      startDate: 'start date',
       dueDate: 'due date',
       labels: 'labels',
       resources: 'resources',

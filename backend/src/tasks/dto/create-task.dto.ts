@@ -28,9 +28,9 @@ export class CreateTaskDto {
   @IsOptional()
   status?: string;
 
-  @IsIn(['Low', 'Medium', 'High'])
-  @IsOptional()
-  priority?: string;
+ @IsIn(['Urgent', 'High', 'Medium', 'Low'])
+ @IsOptional()
+ priority?: string;
 
   @IsArray()
   @IsString({ each: true })
@@ -48,6 +48,10 @@ export class CreateTaskDto {
   @IsString()
   @IsOptional()
   projectId?: string;
+
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
 
   @IsDateString()
   @IsOptional()

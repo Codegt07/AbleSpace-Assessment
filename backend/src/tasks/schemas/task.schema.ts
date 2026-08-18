@@ -41,11 +41,11 @@ export class Task {
   })
   status: string;
 
-  @Prop({
-    enum: ['Low', 'Medium', 'High'],
-    default: 'Medium',
-  })
-  priority: string;
+ @Prop({
+  enum: ['Urgent', 'High', 'Medium', 'Low'],
+  default: 'Medium',
+})
+priority?: string;
 
   @Prop({
     type: [
@@ -79,6 +79,9 @@ export class Task {
 
   @Prop()
   projectId?: string;
+
+  @Prop()
+ startDate?: Date;
 
   @Prop()
   dueDate?: Date;

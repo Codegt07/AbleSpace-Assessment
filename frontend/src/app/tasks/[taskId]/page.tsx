@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TaskFormModal from "@/components/TaskFormModal";
+import TaskActionMenu from "@/components/TaskActionMenu";
+
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
@@ -26,6 +28,7 @@ type Task = {
   workspaceId: string;
   labels?: string[];
   resources?: any[];
+  startDate?: string;
   dueDate?: string;
   allowMembersToAddMembers?: boolean;
   allowMembersToCreateSubtasks?: boolean;
@@ -131,6 +134,19 @@ export default function TaskDetailsPage() {
 const [showTaskSettingsModal, setShowTaskSettingsModal] = useState(false);
 const [currentUserId, setCurrentUserId] = useState("");
 const [savingSettings, setSavingSettings] = useState(false);
+const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+const [showTaskFormModal, setShowTaskFormModal] = useState(false);
+const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+const [taskTitle, setTaskTitle] = useState("");
+const [taskDescription, setTaskDescription] = useState("");
+const [taskStatus, setTaskStatus] =
+  useState<TaskStatus>("To Do");
+const [taskPriority, setTaskPriority] = useState("Medium");
+const [taskDueDate, setTaskDueDate] = useState("");
+const [taskLabels, setTaskLabels] = useState("");
+const [updatingTask, setUpdatingTask] = useState(false);
+const [taskStartDate, setTaskStartDate] = useState("");
 
 const [taskSettings, setTaskSettings] = useState({
   allowMembersToAddMembers: false,
@@ -170,7 +186,6 @@ const [showPriorityMenu, setShowPriorityMenu] = useState(false);
 const [showAllComments, setShowAllComments] = useState(false);
 const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 const [openSubtaskAction, setOpenSubtaskAction] = useState<string | null>(null);
-const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
 
 const handleCreateSubtask = async () => {
   if (!subtaskTitle.trim()) return;
@@ -274,6 +289,95 @@ const handleEditSubtask = (subtask: Task) => {
   setShowSubtaskModal(true);
 };
 
+const handleEditTask = () => {
+  if (!task) return;
+
+  setEditingTaskId(task._id);
+  setTaskTitle(task.title || "");
+  setTaskDescription(task.description || "");
+  setTaskStatus(task.status || "To Do");
+  setTaskPriority(task.priority || "Medium");
+  setTaskStartDate(
+  task.startDate
+    ? new Date(task.startDate).toISOString().slice(0, 10)
+    : "",
+);
+  setTaskDueDate(
+    task.dueDate
+      ? new Date(task.dueDate).toISOString().slice(0, 10)
+      : "",
+  );
+  setTaskLabels((task.labels || []).join(", "));
+
+  setShowActionMenu(false);
+  setShowTaskFormModal(true);
+};
+
+const handleUpdateTask = async () => {
+  if (!editingTaskId || !taskTitle.trim()) return;
+
+  try {
+    setUpdatingTask(true);
+
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: taskTitle.trim(),
+          description: taskDescription.trim(),
+          status: taskStatus,
+          priority: taskPriority,
+          dueDate: taskDueDate || undefined,
+          labels: taskLabels
+            .split(",")
+            .map((label) => label.trim())
+            .filter(Boolean),
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "TASK UPDATE ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to update task");
+    }
+
+    const updatedTask = await response.json();
+
+    setTask(updatedTask);
+
+    setEditingTaskId(null);
+    setTaskTitle("");
+    setTaskDescription("");
+    setTaskStatus("To Do");
+    setTaskPriority("Medium");
+    setTaskDueDate("");
+    setTaskLabels("");
+
+    setShowTaskFormModal(false);
+  } catch (error) {
+    console.error("Update Task Error:", error);
+  } finally {
+    setUpdatingTask(false);
+  }
+};
+
 const handleDeleteSubtask = async (subtaskId: string) => {
   if (!window.confirm("Delete this subtask?")) return;
 
@@ -297,6 +401,32 @@ const handleDeleteSubtask = async (subtaskId: string) => {
     setOpenSubtaskAction(null);
   } catch (error) {
     console.error("Delete Subtask Error:", error);
+  }
+};
+
+const handleDeleteTask = async () => {
+  if (!window.confirm("Delete this task?")) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete task");
+    }
+
+    window.location.href = "/tasks";
+  } catch (error) {
+    console.error("Delete Task Error:", error);
   }
 };
 
@@ -773,7 +903,12 @@ setComments(commentsData);
   const handlePriorityChange = async (nextPriority: string) => {
     setShowPriorityMenu(false);
 
-    const previousPriority = task.priority || "No priority";
+   const previousPriority = task.priority || "No Priority";
+   console.log("PRIORITY CHANGE:", {
+    nextPriority,
+    previousPriority,
+    currentPriority: task.priority,
+    });
     if (nextPriority === previousPriority) return;
 
     try {
@@ -807,6 +942,72 @@ setComments(commentsData);
       console.error("Priority Update Error:", error);
     }
   };
+
+  const handleStartDateChange = async (nextDate: string) => {
+  if (!task || currentUserId !== task.createdBy) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          startDate: nextDate || undefined,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update start date");
+    }
+
+    const updatedTask = await response.json();
+    setTask(updatedTask);
+  } catch (error) {
+    console.error("Start Date Update Error:", error);
+  }
+};
+
+const handleDueDateChange = async (nextDate: string) => {
+  if (!task || currentUserId !== task.createdBy) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    const response = await fetch(
+      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          dueDate: nextDate || undefined,
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update due date");
+    }
+
+    const updatedTask = await response.json();
+    setTask(updatedTask);
+  } catch (error) {
+    console.error("Due Date Update Error:", error);
+  }
+};
 
   const isCreator = currentUserId === task.createdBy;
 
@@ -1020,60 +1221,39 @@ const handleSaveTaskSettings = async () => {
     •••
   </button>
 
-  {showActionMenu && (
-    <div className="absolute right-0 top-[36px] z-40 w-[145px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] py-1 shadow-lg">
-
-      {isCreator ? (
-        <>
-          <button
-            type="button"
-            onClick={() => {
+    <TaskActionMenu
+      open={showActionMenu}
+      onEdit={
+      isCreator
+        ? handleEditTask
+        : undefined
+    }
+      onDelete={
+        isCreator
+          ? () => {
               setShowActionMenu(false);
-              // existing edit flow yahan connect hoga
-            }}
-            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-          >
-            Edit
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowActionMenu(false);
-              // existing delete flow yahan connect hoga
-            }}
-            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-red-500 hover:bg-[var(--hover)]"
-          >
-            Delete
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
+              handleDeleteTask();
+            }
+          : undefined
+      }
+      onSettings={
+        isCreator
+          ? () => {
               setShowActionMenu(false);
               setShowTaskSettingsModal(true);
-            }}
-            className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-          >
-            Task Settings
-          </button>
-        </>
-      ) : isTaskMember ? (
-        <button
-          type="button"
-          onClick={() => {
-            setShowActionMenu(false);
-            handleLeaveTask();
-          }}
-          className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-        >
-          Leave Task
-        </button>
-      ) : null}
-
-    </div>
-  )}
-</div>}
+            }
+          : undefined
+      }
+      onLeave={
+        !isCreator && isTaskMember
+          ? () => {
+              setShowActionMenu(false);
+              handleLeaveTask();
+            }
+          : undefined
+      }
+      />
+      </div>}
               </div>
             </div>
 
@@ -1623,10 +1803,143 @@ const handleSaveTaskSettings = async () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-[65px_1fr] items-center">
-                  <span className="text-[11px] text-[var(--muted)]">Dates</span>
-                  <span className="text-[11px] text-[var(--muted)]">{formatShortDate(task.dueDate)}</span>
-                </div>
+<div className="grid grid-cols-[65px_1fr] items-center">
+  <span className="text-[11px] text-[var(--muted)]">
+    Dates
+  </span>
+
+  <div className="flex items-center gap-2">
+    {/* Start Date */}
+    {currentUserId === task.createdBy ? (
+      <div className="relative flex h-8 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[10px] text-[var(--text)]">
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+
+        <span>
+          {task.startDate
+            ? formatShortDate(task.startDate)
+            : "Start"}
+        </span>
+
+        <input
+          type="date"
+          value={
+            task.startDate
+              ? new Date(task.startDate)
+                  .toISOString()
+                  .slice(0, 10)
+              : ""
+          }
+          onChange={(event) =>
+            handleStartDateChange(event.target.value)
+          }
+          onClick={(event) => {
+            event.currentTarget.showPicker?.();
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </div>
+    ) : (
+      <div className="flex h-8 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[10px] text-[var(--text)]">
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+
+        {task.startDate
+          ? formatShortDate(task.startDate)
+          : "Start"}
+      </div>
+    )}
+
+    <span className="text-[11px] text-[var(--muted)]">
+      →
+    </span>
+
+    {/* End Date */}
+    {currentUserId === task.createdBy ? (
+      <div className="relative flex h-8 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[10px] text-[var(--text)]">
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+
+        <span>
+          {task.dueDate
+            ? formatShortDate(task.dueDate)
+            : "End"}
+        </span>
+
+        <input
+          type="date"
+          value={
+            task.dueDate
+              ? new Date(task.dueDate)
+                  .toISOString()
+                  .slice(0, 10)
+              : ""
+          }
+          onChange={(event) =>
+            handleDueDateChange(event.target.value)
+          }
+          onClick={(event) => {
+            event.currentTarget.showPicker?.();
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </div>
+    ) : (
+      <div className="flex h-8 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[10px] text-[var(--muted)]">
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M16 3v4M8 3v4M3 10h18" />
+        </svg>
+
+        {task.dueDate
+          ? formatShortDate(task.dueDate)
+          : "End"}
+      </div>
+    )}
+  </div>
+</div>
 
                 <div className="grid grid-cols-[65px_1fr] items-start">
                   <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Labels</span>
@@ -1698,6 +2011,7 @@ const handleSaveTaskSettings = async () => {
             </div>
           </aside>
         </div>
+
         <TaskFormModal
           open={showSubtaskModal}
           editingTaskId={editingSubtaskId}
@@ -1726,6 +2040,29 @@ const handleSaveTaskSettings = async () => {
           }}
           onSubmit={handleCreateSubtask}
         />
+
+        <TaskFormModal
+        open={showTaskFormModal}
+        editingTaskId={editingTaskId}
+        mode="task"
+        title={taskTitle}
+        description={taskDescription}
+        selectedStatus={taskStatus}
+        priority={taskPriority}
+        dueDate={taskDueDate}
+        labels={taskLabels}
+        setTitle={setTaskTitle}
+        setDescription={setTaskDescription}
+        setSelectedStatus={setTaskStatus}
+        setPriority={setTaskPriority}
+        setDueDate={setTaskDueDate}
+        setLabels={setTaskLabels}
+        onClose={() => {
+          setShowTaskFormModal(false);
+          setEditingTaskId(null);
+        }}
+        onSubmit={handleUpdateTask}
+      />
 
 {showMemberModal && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">

@@ -19,14 +19,18 @@ export class UpdateTaskDto {
   @IsOptional()
   status?: string;
 
-  @IsIn(['Low', 'Medium', 'High'])
-  @IsOptional()
-  priority?: string;
+ @IsIn(['Urgent', 'High', 'Medium', 'Low'])
+ @IsOptional()
+ priority?: string;
 
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   members?: string[];
+
+  @IsDateString()
+ @ IsOptional()
+   startDate?: string;
 
   @IsDateString()
   @IsOptional()
