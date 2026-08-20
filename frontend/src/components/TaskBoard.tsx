@@ -1178,7 +1178,7 @@ const handleDropTask = async (
             <button
               type="button"
               onClick={() => openAddTask("To Do")}
-              className="flex h-9 cursor-pointer items-center rounded-md bg-[var(--text)] text-[var(--background)] px-3 text-[12px] font-medium  hover:opacity-90 ml-5"
+              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
             >
               + Add Task
             </button>

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TaskFormModal from "@/components/TaskFormModal";
 import TaskActionMenu from "@/components/TaskActionMenu";
+import { useRef} from "react";
 
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
@@ -73,7 +74,7 @@ function PriorityIcon({ priority }: { priority?: string }) {
 
 function TagIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <svg width="15" height="15" viewBox="0 0 13 13" fill="none">
       <path d="M2 3.2V7.1L6.7 11.5L11.2 7L6.8 2.5H2V3.2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
       <circle cx="4.1" cy="4.4" r="0.8" fill="currentColor" />
     </svg>
@@ -147,6 +148,8 @@ const [taskDueDate, setTaskDueDate] = useState("");
 const [taskLabels, setTaskLabels] = useState("");
 const [updatingTask, setUpdatingTask] = useState(false);
 const [taskStartDate, setTaskStartDate] = useState("");
+const [localResources, setLocalResources] = useState<File[]>([]);
+const resourceInputRef = useRef<HTMLInputElement | null>(null);
 
 const [taskSettings, setTaskSettings] = useState({
   allowMembersToAddMembers: false,
@@ -1187,14 +1190,14 @@ const handleSaveTaskSettings = async () => {
                     if (!viewOnly) setShowTaskSettingsModal(true);
                   }}
                   disabled={viewOnly}
-                  className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] disabled:cursor-default disabled:opacity-60"
+                  className="flex h-[32px] w-[32px] cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] disabled:cursor-default disabled:opacity-60"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <rect x="3" y="6" width="8" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
                     <path d="M4.5 6V4.5C4.5 2.57 9.5 2.57 9.5 4.5V6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
                 </button>
-                <button type="button" title="Views" className="flex h-[30px] items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[var(--accent)] hover:bg-[var(--hover)]">
+                <button type="button" title="Views" className="flex h-[30px]  cursor-pointer items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[var(--accent)] hover:bg-[var(--hover)]">
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M1.5 7C2.8 4.8 4.6 3.7 7 3.7C9.4 3.7 11.2 4.8 12.5 7C11.2 9.2 9.4 10.3 7 10.3C4.6 10.3 2.8 9.2 1.5 7Z" stroke="currentColor" strokeWidth="1.1" />
                     <circle cx="7" cy="7" r="1.7" stroke="currentColor" strokeWidth="1.1" />
@@ -1216,7 +1219,7 @@ const handleSaveTaskSettings = async () => {
     onClick={() =>
       setShowActionMenu((previous) => !previous)
     }
-    className="flex h-[30px] w-[30px] items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]"
+    className="flex h-[32px] w-[32px] items-center justify-center cursor-pointer rounded-md border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--accent)] hover:bg-[var(--hover)]"
   >
     •••
   </button>
@@ -1267,7 +1270,7 @@ const handleSaveTaskSettings = async () => {
                 )}
               </div>
               <span className="flex items-center gap-1.5 rounded-md bg-[#fff0f0] px-2.5 py-1 text-[11px] font-medium text-[#ff4d4f]">
-                <span>▣</span>
+                <CalendarIcon />
                 {formatShortDate(task.dueDate)}
               </span>
             </div>
@@ -1276,7 +1279,7 @@ const handleSaveTaskSettings = async () => {
               <span className="w-[58px] pt-[3px] text-[14px] font-medium text-[var(--text)]">Labels</span>
               <div className="flex flex-wrap gap-1.5">
                 {task.labels?.length ? task.labels.map((label) => (
-                  <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2.5 py-1 text-[10px] font-medium text-[var(--text)]">
+                  <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2.5 py-1 text-[12px] font-medium text-[var(--text)]">
                     <TagIcon />
                     {label}
                   </span>
@@ -1288,11 +1291,50 @@ const handleSaveTaskSettings = async () => {
 
             <div className="mt-4 flex items-center gap-7">
               <span className="w-[58px] text-[14px] font-medium text-[var(--text)]">Resources</span>
-              <button type="button" className="flex items-center gap-1.5 text-[13px] text-[var(--muted)] hover:text-[var(--muted)]">
-                <PaperclipIcon />
-                Add document or link...
-              </button>
+              <input
+              ref={resourceInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (!file) return;
+
+                setLocalResources((previous) => [...previous, file]);
+
+                event.target.value = "";
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => resourceInputRef.current?.click()}
+              className="flex items-center gap-1.5 text-[13px] cursor-pointer text-[var(--muted)] hover:text-[var(--text)]"
+            >
+              <PaperclipIcon />
+              Add document or link...
+            </button>
             </div>
+
+            {localResources.length > 0 && (
+  <div className="mt-2 ml-[90px] flex flex-col gap-2">
+    {localResources.map((file, index) => (
+      <div
+        key={`${file.name}-${index}`}
+        className="flex w-fit items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#fff0f0] text-[11px] font-semibold text-[#ff4d4f]">
+          PDF
+        </div>
+
+        <span className="max-w-[260px] truncate text-[13px] text-[var(--text)]">
+          {file.name}
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
             <div className="mt-7">
               <div className="mb-3 flex items-center gap-2">
@@ -1302,7 +1344,7 @@ const handleSaveTaskSettings = async () => {
                   </h2>
                                 </div>
 
-              <div className="overflow-hidden rounded-lg border border-[var(--border)]">
+              <div className="overflow-visible rounded-lg border border-[var(--border)]">
                 <div className="grid grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] border-b border-[var(--border)] px-3">
                   <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Task</div>
                   <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Priority</div>
@@ -1334,7 +1376,7 @@ const handleSaveTaskSettings = async () => {
                           viewOnly ? (
                             <span className="text-[10px] text-[var(--muted)]">—</span>
                           ) : (
-                            <button type="button" className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[15px] text-[var(--muted)]">+</button>
+                            <button type="button" className="flex h-[24px] w-[24px] items-center cursor-pointer justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[16px] text-[var(--muted)]">+</button>
                           )
                         ) : (
                           <>
@@ -1376,14 +1418,14 @@ const handleSaveTaskSettings = async () => {
                                 <button
                                   type="button"
                                   onClick={() => handleEditSubtask(subtask)}
-                                  className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+                                  className="flex w-full cursor-pointer px-3 py-2 text-left text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
                                 >
                                   Edit
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteSubtask(subtask._id)}
-                                  className="flex w-full px-3 py-2 text-left text-[11px] font-medium text-[#ef4444] hover:bg-[#fff5f5]"
+                                  className="flex w-full cursor-pointer px-3 py-2 text-left text-[11px] font-medium text-[#ef4444] hover:bg-[#fff5f5]"
                                 >
                                   Delete
                                 </button>
@@ -1400,7 +1442,7 @@ const handleSaveTaskSettings = async () => {
                   <button
                     type="button"
                     onClick={() => setShowSubtaskModal(true)}
-                    className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+                    className="flex h-[42px] w-full items-center gap-2 px-3 text-[12px] cursor-pointer font-medium text-[var(--text)] hover:bg-[var(--hover)]"
                   >
                     <span className="text-[18px] leading-none">+</span>
                     Add Subtasks
@@ -1422,7 +1464,7 @@ const handleSaveTaskSettings = async () => {
                   <button
                     type="button"
                     onClick={() => setShowAllComments((previous) => !previous)}
-                    className="rounded-md px-2 py-1 text-[11px] font-medium text-[var(--muted)] transition-colors hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+                    className="rounded-md px-2 py-1 text-[11px] cursor-pointer font-medium text-[var(--muted)] transition-colors hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
                   >
                     {showAllComments ? "Show less" : `View more (${rootComments.length - 2})`}
                   </button>
@@ -1483,7 +1525,7 @@ const handleSaveTaskSettings = async () => {
                 <button
                   type="button"
                   onClick={() => toggleReplies(comment._id)}
-                  className="shrink-0 text-[11px] font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+                  className="shrink-0 text-[11px] cursor-pointer font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
                 >
                   {repliesOpen
                     ? "Hide replies"
@@ -1500,7 +1542,7 @@ const handleSaveTaskSettings = async () => {
           {/* Comment action */}
           <button
             type="button"
-            className="shrink-0 rounded-md px-1.5 py-1 text-[13px] text-[var(--muted)] hover:bg-[var(--hover)]"
+            className="shrink-0 rounded-md px-1.5 cursor-pointer py-1 text-[13px] text-[var(--muted)] hover:bg-[var(--hover)]"
           >
             ···
           </button>
@@ -1604,7 +1646,7 @@ const handleSaveTaskSettings = async () => {
               disabled={
                 addingReply || !replyText.trim()
               }
-              className="shrink-0 text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
+              className="shrink-0 cursor-pointer   text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
             >
               ➤
             </button>
@@ -1646,7 +1688,7 @@ const handleSaveTaskSettings = async () => {
       type="button"
       onClick={() => handleAddComment(null)}
       disabled={addingComment || !commentText.trim()}
-      className="text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
+      className="cursor-pointer text-[14px] text-[var(--muted)] transition-colors hover:text-[var(--accent)] disabled:opacity-40"
     >
       ➤
     </button>
@@ -1666,19 +1708,19 @@ const handleSaveTaskSettings = async () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px]">▾</span>
-                  <h2 className="text-[13px] font-semibold text-[var(--accent)]">
+                  <h2 className="text-[14px] font-semibold text-[var(--accent)]">
                     Details
                   </h2>
                 </div>
                 <div className="flex items-center gap-3">
                   <button type="button" className="text-[17px] text-[var(--text)]">+</button>
-                  <button type="button" className="text-[14px] text-[var(--muted)]">⚙</button>
+                  <button type="button" className="text-[17px] text-[var(--muted)]">⚙</button>
                 </div>
               </div>
 
               <div className="mt-5 space-y-5">
                 <div className="grid grid-cols-[65px_1fr] items-center">
-                  <span className="text-[11px] text-[var(--muted)]">Status</span>
+                  <span className="text-[12px] text-[var(--muted)]">Status</span>
                   <span className="flex w-fit items-center gap-1.5 rounded-md bg-[#fff5e6] px-2.5 py-1.5 text-[12px] font-medium text-orange-600">
                     <span className="h-[6px] w-[6px] rounded-full bg-orange-500" />
                     {task.status}
@@ -1712,7 +1754,7 @@ const handleSaveTaskSettings = async () => {
                               key={option}
                               type="button"
                               onClick={() => handlePriorityChange(option)}
-                              className={`flex w-full items-center justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-[var(--hover)] ${
+                              className={`flex w-full items-center cursor-pointer justify-between px-3 py-2 text-left text-[11px] transition-colors hover:bg-[var(--hover)] ${
                                 isSelected
                                   ? priorityTextClass(
                                       option === "No Priority" ? undefined : option,
@@ -1767,12 +1809,12 @@ const handleSaveTaskSettings = async () => {
                           <button
                             type="button"
                             onClick={() => setShowMemberModal(true)}
-                            className="ml-1 flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
+                            className="flex !cursor-pointer items-center gap-1.5 text-[13px] text-[var(--muted)]"
                           >
-                            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
+                            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] cursor-pointer text-[14px]">
                               +
                             </span>
-                            <PeopleIcon />
+                            <PeopleIcon/>
                             Add members
                           </button>
                         ) : (
@@ -1804,7 +1846,7 @@ const handleSaveTaskSettings = async () => {
                 </div>
 
 <div className="grid grid-cols-[65px_1fr] items-center">
-  <span className="text-[11px] text-[var(--muted)]">
+  <span className="text-[12px] text-[var(--muted)]">
     Dates
   </span>
 
@@ -1941,24 +1983,50 @@ const handleSaveTaskSettings = async () => {
   </div>
 </div>
 
-                <div className="grid grid-cols-[65px_1fr] items-start">
-                  <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Labels</span>
+  <div className="grid grid-cols-[65px_1fr] items-start">
+            <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">
+                    Labels
+                  </span>
                   <div className="flex flex-wrap gap-1">
                     {task.labels?.length ? task.labels.map((label) => (
-                      <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2 py-1 text-[9px]">
+                      <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2 py-1 text-[11px]">
                         <TagIcon />
                         {label}
                       </span>
                     )) : <span className="text-[10px] text-[var(--muted)]">None</span>}
                   </div>
                 </div>
+                {/* Reporter */}
+<div className="grid grid-cols-[65px_1fr] items-center">
+  <span className="text-[12px] text-[var(--muted)]">
+    Reporter
+  </span>
+
+  <div className="flex items-center gap-2">
+    <div className="flex h-[25px] w-[25px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[8px] text-white">
+      {getUser(task.createdBy)?.avatar ? (
+        <img
+          src={getUser(task.createdBy)?.avatar}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        userInitial(task.createdBy)
+      )}
+    </div>
+
+    <span className="text-[12px] text-[var(--text)]">
+      {formatUserName(task.createdBy)}
+    </span>
+  </div>
+</div>
               </div>
             </div>
 
             <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
               <div className="flex items-center gap-2">
                 <span className="text-[11px]">▾</span>
-                <h2 className="text-[13px] font-semibold text-[var(--accent)]">
+                <h2 className="text-[14px] font-semibold text-[var(--accent)]">
                   Updates
                 </h2>
               </div>
@@ -2009,8 +2077,8 @@ const handleSaveTaskSettings = async () => {
                 )}
               </div>
             </div>
-          </aside>
-        </div>
+          </aside>      
+ </div>
 
         <TaskFormModal
           open={showSubtaskModal}
@@ -2122,7 +2190,7 @@ const handleSaveTaskSettings = async () => {
               >
                 {/* User */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--text)] text-[10px] font-medium text-white">
+                  <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[var(--text)] text-[10px] font-medium text-white">
                     {user.name?.charAt(0)?.toUpperCase() || "G"}
                   </div>
 
