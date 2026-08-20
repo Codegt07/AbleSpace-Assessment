@@ -7,6 +7,7 @@ type Task = {
   assignee: string;
   dueDate: string;
   labels: string[];
+  priority: string;
 };
 
 type BoardColumnProps = {
@@ -17,12 +18,14 @@ type BoardColumnProps = {
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
   onDropTask: (taskId: string, status: TaskStatus) => void;
+  visibleFields: string[];
 };
 
 
 export default function BoardColumn({
   title,
   tasks,
+  visibleFields,
   onAddTask,
   onOpenTask,
   onEditTask,
@@ -49,7 +52,7 @@ export default function BoardColumn({
         <div className="flex items-center gap-2">
           <span className="text-[var(--muted)]">⠿</span>
 
-          <h2 className="text-[12px] font-semibold text-[var(--text)]">
+          <h2 className="text-[13px] font-semibold text-[var(--text)]">
             {title}
           </h2>
         </div>
@@ -58,14 +61,14 @@ export default function BoardColumn({
           <button
             type="button"
             onClick={onAddTask}
-            className="cursor-pointer text-[16px] text-[var(--text)]"
+            className="cursor-pointer text-[17px] text-[var(--text)]"
           >
             +
           </button>
 
           <button
             type="button"
-            className="cursor-pointer text-[14px] text-[var(--muted)]"
+            className="cursor-pointer text-[15px] text-[var(--muted)]"
           >
             •••
           </button>
@@ -74,17 +77,19 @@ export default function BoardColumn({
 
       <div className="mt-1 space-y-2">
         {tasks.map((task) => (
-          <TaskCard
-            key={task._id}
-            taskId={task._id}
-            title={task.title}
-            assignee={task.assignee}
-            dueDate={task.dueDate}
-            labels={task.labels}
-            onOpen={() => onOpenTask(task._id)}
-            onEdit={() => onEditTask(task._id)}
-            onDelete={() => onDeleteTask(task._id)}
-          />
+       <TaskCard
+        key={task._id}
+        taskId={task._id}
+        title={task.title}
+        assignee={task.assignee}
+        dueDate={task.dueDate}
+        labels={task.labels}
+        priority={task.priority}
+        visibleFields={visibleFields}
+        onOpen={() => onOpenTask(task._id)}
+        onEdit={() => onEditTask(task._id)}
+        onDelete={() => onDeleteTask(task._id)}
+      />
         ))}
       </div>
 

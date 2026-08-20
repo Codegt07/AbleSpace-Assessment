@@ -70,6 +70,13 @@ export default function TaskBoard() {
   const [showFields, setShowFields] =
     useState(false);
 
+   const [visibleFields, setVisibleFields] = useState<string[]>([
+      "Priority",
+      "Members",
+      "Due Date",
+      "Labels",
+    ]);
+
   const [showFilter, setShowFilter] =
     useState(false);
 
@@ -754,11 +761,11 @@ const handleDropTask = async (
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-[18px] font-semibold text-[var(--accent)]">
+        <h1 className="text-[20px] font-semibold text-[var(--accent)]">
           Tasks
         </h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pr-1">
           {/* SEARCH */}
           {searchOpen ? (
             <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3">
@@ -823,7 +830,7 @@ const handleDropTask = async (
               onClick={() =>
                 setViewMode("list")
               }
-              className={`flex cursor-pointer items-center gap-2 px-3 text-[13px] font-medium ${
+              className={`flex cursor-pointer items-center gap-2 px-2.5 text-[13px] font-medium ${
                 viewMode === "list"
                   ? "bg-[var(--active-bg)] text-[var(--accent)]"
                   : "bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
@@ -838,7 +845,7 @@ const handleDropTask = async (
               onClick={() =>
                 setViewMode("board")
               }
-              className={`flex cursor-pointer items-center gap-2 border-l border-[var(--border)] px-3 text-[13px] font-medium ${
+              className={`flex cursor-pointer items-center gap-2 border-l border-[var(--border)] px-2.5 text-[13px] font-medium ${
                 viewMode === "board"
                   ? "bg-[var(--active-bg)] text-[var(--accent)]"
                   : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)]"
@@ -863,7 +870,7 @@ const handleDropTask = async (
                   false
                 );
               }}
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
+              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 text-[13px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
             >
               <span className="text-[15px]">
                 ▥
@@ -872,25 +879,41 @@ const handleDropTask = async (
             </button>
 
             {showFields && (
-              <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
-                <div className="space-y-1">
-                  {fieldOptions.map(
-                    (field) => (
-                      <div
-                        key={field}
-                        className="flex h-7 items-center justify-between px-2 text-[12px] text-[var(--text)]"
-                      >
-                        <span>
-                          {field}
-                        </span>
+            <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+              <div className="space-y-1">
+                {fieldOptions.map((field) => {
+                  const checked = visibleFields.includes(field);
 
-                        <div className="h-3.5 w-3.5 rounded-[4px] bg-[var(--border)]" />
-                      </div>
-                    )
-                  )}
-                </div>
+                  return (
+                    <button
+                      key={field}
+                      type="button"
+                      onClick={() => {
+                        setVisibleFields((previous) =>
+                          checked
+                            ? previous.filter((item) => item !== field)
+                            : [...previous, field]
+                        );
+                      }}
+                      className="flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2.5 text-left text-[12px] text-[var(--text)] hover:bg-[var(--hover)]"
+                    >
+                      <span>{field}</span>
+
+                      <span
+                        className={`flex h-4 w-4 items-center justify-center rounded-[4px] border ${
+                          checked
+                            ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                            : "border-[var(--border)] bg-[var(--surface)]"
+                        }`}
+                      >
+                        {checked && "✓"}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          )}
           </div>
 
           {/* FILTER */}
@@ -932,6 +955,7 @@ const handleDropTask = async (
                 <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
               </svg>
             </button>
+            
 
             {showFilter && (
               <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
@@ -1150,8 +1174,17 @@ const handleDropTask = async (
             )}
           </div>
 
+          {/* ADD TASK */}
+            <button
+              type="button"
+              onClick={() => openAddTask("To Do")}
+              className="flex h-9 cursor-pointer items-center rounded-md bg-[var(--text)] text-[var(--background)] px-3 text-[12px] font-medium  hover:opacity-90 ml-5"
+            >
+              + Add Task
+            </button>
+
           {/* NOTIFICATIONS */}
-          <div className="relative ml-10">
+          <div className="relative ml-5">
             <button
               type="button"
               onClick={() => {
@@ -1265,8 +1298,8 @@ const handleDropTask = async (
                           }
                          className={`flex w-full cursor-pointer gap-3 border-b border-[var(--border)] px-4 py-3 text-left transition hover:bg-[var(--hover)] ${
                           notification.isRead
-                            ? "bg-[var(--surface)]"
-                            : "bg-[var(--active-bg)] text-[var(--text)]"
+                        ? "font-normal text-[var(--text)]"
+                        : "font-semibold text-[var(--accent)]"
                         }`}
                         >
                           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--accent)]">
@@ -1292,7 +1325,7 @@ const handleDropTask = async (
                               )}
                             </div>
 
-                            <p className="mt-1 text-[10px] text-[var(--muted)]">
+                            <p className="mt-1 text-[10px] text-[var(--text)]" >
                               {formatNotificationTime(
                                 notification.createdAt
                               )}
@@ -1310,80 +1343,87 @@ const handleDropTask = async (
       </div>
 
       {/* BOARD / LIST */}
-      {viewMode === "board" ? (
-        <div className="grid w-full grid-cols-4 items-start gap-3">
-          {statuses.map(
-            (status) => {
-              const columnTasks =
-                filteredTasks.filter(
-                  (task) =>
-                    task.status ===
-                    status
-                );
-
-              if (
-                searchQuery.trim() &&
-                columnTasks.length === 0
-              ) {
-                return null;
-              }
-
-              return (
-                <BoardColumn
-                  key={status}
-                  title={status}
-                  tasks={columnTasks.map(
-                    (task) => ({
-                      _id: task._id,
-                      title: task.title,
-                      assignee:
-                        task.assignee ||
-                        "Guest",
-                      dueDate:
-                        task.dueDate
-                          ? new Date(
-                              task.dueDate
-                            ).toLocaleDateString(
-                              "en-GB",
-                              {
-                                day: "2-digit",
-                                month:
-                                  "short",
-                              }
-                            )
-                          : "No date",
-                      labels:
-                        task.labels ||
-                        [],
-                    })
-                  )}
-                  onAddTask={() =>
-                    openAddTask(
+      
+        {viewMode === "board" ? (
+          <div className="mt-8 grid w-full grid-cols-4 items-start gap-3">
+            {statuses.map(
+              (status) => {
+                const columnTasks =
+                  filteredTasks.filter(
+                    (task) =>
+                      task.status ===
                       status
-                    )
-                  }
-                  onOpenTask={
-                    openTask
-                  }
-                  onEditTask={
-                    openEditTask
-                  }
-                  onDeleteTask={
-                    handleDeleteTask
-                  }
-                  onDropTask={handleDropTask}
-                />
-              );
-            }
-          )}
-        </div>
+                  );
+
+                if (
+                  searchQuery.trim() &&
+                  columnTasks.length === 0
+                ) {
+                  return null;
+                }
+
+                return (
+                  <BoardColumn
+                    key={status}
+                    title={status}
+                    tasks={columnTasks.map(
+                      (task) => ({
+                        _id: task._id,
+                        title: task.title,
+                        assignee:
+                          task.assignee ||
+                          "Guest",
+                        dueDate:
+                          task.dueDate
+                            ? new Date(
+                                task.dueDate
+                              ).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  day: "2-digit",
+                                  month:
+                                    "short",
+                                }
+                              )
+                            : "No date",
+                        labels:
+                          task.labels ||
+                          [],
+                          priority:
+                          task.priority || "Medium",
+                      })
+                    )}
+                    onAddTask={() =>
+                      openAddTask(
+                        status
+                      )
+                    }
+                    onOpenTask={
+                      openTask
+                    }
+                    onEditTask={
+                      openEditTask
+                    }
+                    onDeleteTask={
+                      handleDeleteTask
+                    }
+                    
+                    onDropTask={handleDropTask}
+                    visibleFields={visibleFields}
+                  />
+                );
+              }
+            )}
+          </div>
       ) : (
         <TaskList
           tasks={filteredTasks}
           onAddTask={openAddTask}
+          onOpenTask={openTask}
           onEditTask={openEditTask}
           onDeleteTask={handleDeleteTask}
           isSearching={searchQuery.trim().length > 0}
+          visibleFields={visibleFields}
         />
       )}
 
