@@ -79,4 +79,34 @@ export class WorkspaceMembersService {
       title: user.title,
     }));
   }
+
+  async leaveWorkspace(
+  workspaceId: string,
+  userId: string,
+) {
+  const membership = await this.memberModel.findOne({
+    workspaceId,
+    userId,
+  });
+
+  if (!membership) {
+    throw new Error(
+      'You are not a member of this workspace',
+    );
+  }
+
+  await this.memberModel.deleteOne({
+    workspaceId,
+    userId,
+  });
+
+  await this.guestModel.deleteOne({
+    guestId: userId,
+  });
+
+  return {
+    success: true,
+    message: 'Workspace left successfully',
+  };
+}
 }

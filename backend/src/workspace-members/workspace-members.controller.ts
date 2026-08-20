@@ -1,4 +1,10 @@
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { WorkspaceMembersService } from './workspace-members.service';
 
 @Controller('workspace-members')
@@ -37,6 +43,17 @@ addMember(
     workspaceId,
     userId,
     role || 'member',
+  );
+}
+
+@Delete('leave')
+leaveWorkspace(
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.workspaceMembersService.leaveWorkspace(
+    workspaceId,
+    userId,
   );
 }
 

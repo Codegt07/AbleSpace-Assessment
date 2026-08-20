@@ -11,6 +11,8 @@ export default function ProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+const [leavingWorkspace, setLeavingWorkspace] = useState(false);
 
   useEffect(() => {
     const storedGuest = localStorage.getItem("guest");
@@ -19,7 +21,14 @@ export default function ProfilePage() {
       return;
     }
 
+
     const guest = JSON.parse(storedGuest);
+
+
+
+if (!guest.guestId || !guest.workspaceId) {
+  return;
+}
 
     setName(guest.name || "");
     setEmail(guest.email || "");
@@ -83,6 +92,41 @@ export default function ProfilePage() {
     }
   };
 
+const handleLeaveWorkspace = async () => {
+  try {
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    if (!guest.guestId || !guest.workspaceId) {
+      return;
+    }
+
+    setLeavingWorkspace(true);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/workspace-members/leave` +
+        `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to leave workspace");
+    }
+
+    localStorage.clear();
+
+    window.location.href = "/login";
+  } catch (error) {
+    console.error("Leave Workspace Error:", error);
+    setLeavingWorkspace(false);
+  }
+};
+  
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors">
       <Sidebar />
@@ -182,12 +226,16 @@ export default function ProfilePage() {
               Remove yourself from the workspace
             </span>
 
-            <button
-              type="button"
-              className="h-8 cursor-pointer rounded-md bg-[#fff0f0] px-4 text-[11px] font-medium text-red-500 hover:bg-[#ffe8e8]"
-            >
-              Leave Workspace
-            </button>
+           <button
+            type="button"
+            onClick={() => {
+              setShowLeaveModal(false);
+              window.location.href = "/tasks";
+            }}
+            className="h-8 cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600"
+          >
+            Leave Workspace
+          </button>
           </div>
 
           {/* Save */}
@@ -214,6 +262,41 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+        {showLeaveModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+    <div className="w-full max-w-[380px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
+      <h2 className="text-[15px] font-semibold text-[var(--text)]">
+        Leave Workspace?
+      </h2>
+
+      <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
+        Are you sure you want to leave this workspace?
+        This will remove your data from the workspace
+        records.
+      </p>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => setShowLeaveModal(false)}
+          disabled={leavingWorkspace}
+          className="h-8 cursor-pointer rounded-md border border-[var(--border)] px-4 text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLeaveWorkspace}
+          disabled={leavingWorkspace}
+          className="h-8 cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {leavingWorkspace ? "Leaving..." : "Leave Workspace"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   );

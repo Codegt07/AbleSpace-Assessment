@@ -2138,7 +2138,7 @@ const handleSaveTaskSettings = async () => {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[17px] font-semibold text-[var(--text)]">
+        <h2 className="text-[13px] font-semibold text-[var(--text)]">
           Add Member
         </h2>
 
@@ -2165,7 +2165,7 @@ const handleSaveTaskSettings = async () => {
       </div>
 
       {/* Users */}
-      <div className="mt-4 max-h-[280px] overflow-y-auto rounded-[10px] border border-[var(--border)]">
+      <div className="hide-scrollbar mt-4 max-h-[280px] overflow-y-auto rounded-[10px] border border-[var(--border)]">
         {workspaceUsers
           .filter((user) => {
             const search = memberSearch.toLowerCase().trim();
@@ -2190,7 +2190,7 @@ const handleSaveTaskSettings = async () => {
               >
                 {/* User */}
                 <div className="flex items-center gap-3">
-                  <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[var(--text)] text-[10px] font-medium text-white">
+                  <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-medium text-white">
                     {user.name?.charAt(0)?.toUpperCase() || "G"}
                   </div>
 
@@ -2219,7 +2219,7 @@ const handleSaveTaskSettings = async () => {
                       onClick={() =>
                         handleRemoveMember(user.userId)
                       }
-                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium text-[var(--muted)] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
+                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium text-[var(--muted)] cursor-pointer transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
                     >
                       −
                     </button>
@@ -2229,7 +2229,7 @@ const handleSaveTaskSettings = async () => {
                       onClick={() =>
                         handleRemoveMember(user.userId)
                       }
-                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium text-[var(--muted)] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
+                      className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] font-medium cursor-pointer text-[var(--muted)] transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-500"
                     >
                       −
                     </button>
@@ -2248,7 +2248,7 @@ const handleSaveTaskSettings = async () => {
                       addingMemberId === user.userId ||
                       !canAddMembers
                     }
-                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] text-[var(--muted)] transition-colors hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-[26px] w-[26px] items-center justify-center rounded-full border border-[var(--border)] text-[16px] text-[var(--muted)] transition-colors cursor-pointer hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {addingMemberId === user.userId
                       ? "..."
@@ -2286,7 +2286,7 @@ const handleSaveTaskSettings = async () => {
             setShowMemberModal(false);
             setMemberSearch("");
           }}
-          className="h-[36px] rounded-full border border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
+          className="h-[36px] rounded-full border cursor-pointer  border-[var(--border)] px-5 text-[12px] font-medium text-[var(--muted)]"
         >
           Done
         </button>
