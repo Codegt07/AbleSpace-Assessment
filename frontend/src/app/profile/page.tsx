@@ -54,7 +54,7 @@ if (!guest.guestId || !guest.workspaceId) {
       setMessage("");
 
       const response = await fetch(
-        `http://localhost:5000/auth/profile?guestId=${guest.guestId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/profile?guestId=${guest.guestId}`,
         {
           method: "PATCH",
           headers: {

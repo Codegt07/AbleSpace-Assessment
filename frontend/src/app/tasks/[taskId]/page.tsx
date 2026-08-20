@@ -206,8 +206,8 @@ const handleCreateSubtask = async () => {
 
     const isEditing = Boolean(editingSubtaskId);
     const url = isEditing
-      ? `http://localhost:5000/tasks/${editingSubtaskId}?workspaceId=${workspaceId}&userId=${userId}`
-      : `http://localhost:5000/tasks/${taskId}/subtasks?workspaceId=${workspaceId}&userId=${userId}`;
+      ? `${process.env.NEXT_PUBLIC_API_URL}/tasks/${editingSubtaskId}?workspaceId=${workspaceId}&userId=${userId}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/subtasks?workspaceId=${workspaceId}&userId=${userId}`;
 
     const response = await fetch(url, {
       method: isEditing ? "PATCH" : "POST",
@@ -329,7 +329,7 @@ const handleUpdateTask = async () => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "PATCH",
         headers: {
@@ -390,7 +390,7 @@ const handleDeleteSubtask = async (subtaskId: string) => {
 
     const guest = JSON.parse(storedGuest);
     const response = await fetch(
-      `http://localhost:5000/tasks/${subtaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${subtaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       { method: "DELETE" },
     );
 
@@ -417,7 +417,7 @@ const handleDeleteTask = async () => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "DELETE",
       },
@@ -447,7 +447,7 @@ const handleAddWorkspaceMember = async (userId: string) => {
     setAddingMemberId(userId);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${task._id}/members` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${task._id}/members` +
         `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "POST",
@@ -505,7 +505,7 @@ const handleAddMember = async () => {
     const userId = guest.guestId;
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/members` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/members` +
         `?workspaceId=${workspaceId}&userId=${userId}`,
       {
         method: "POST",
@@ -579,7 +579,7 @@ const handleAddComment = async (
     }
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/comments` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/comments` +
         `?workspaceId=${workspaceId}&userId=${userId}`,
       {
         method: "POST",
@@ -640,7 +640,7 @@ useEffect(() => {
       if (!guest.workspaceId) return;
 
       const response = await fetch(
-        `http://localhost:5000/workspace-members/users?workspaceId=${guest.workspaceId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/workspace-members/users?workspaceId=${guest.workspaceId}`
       );
 
       if (!response.ok) {
@@ -689,22 +689,22 @@ useEffect(() => {
        const modeQuery = viewOnly ? "&mode=view" : "";
 
 const taskUrl =
-  `http://localhost:5000/tasks/${taskId}` +
+  `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 const updatesUrl =
-  `http://localhost:5000/tasks/${taskId}/updates` +
+  `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/updates` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 console.log("TASK URL:", taskUrl);
 console.log("UPDATES URL:", updatesUrl);
 
 const subtasksUrl =
-  `http://localhost:5000/tasks/${taskId}/subtasks` +
+  `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/subtasks` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
   const commentsUrl =
-  `http://localhost:5000/tasks/${taskId}/comments` +
+  `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/comments` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
 console.log("SUBTASKS URL:", subtasksUrl);
@@ -921,7 +921,7 @@ setComments(commentsData);
       const guest = JSON.parse(storedGuest);
 
       const response = await fetch(
-        `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
         {
           method: "PATCH",
           headers: {
@@ -956,7 +956,7 @@ setComments(commentsData);
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "PATCH",
         headers: {
@@ -989,7 +989,7 @@ const handleDueDateChange = async (nextDate: string) => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "PATCH",
         headers: {
@@ -1054,7 +1054,7 @@ const handleRemoveMember = async (memberId: string) => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/members/${memberId}` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/members/${memberId}` +
         `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "DELETE",
@@ -1094,7 +1094,7 @@ const handleLeaveTask = async () => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/leave` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/leave` +
         `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "POST",
@@ -1121,7 +1121,7 @@ const handleSaveTaskSettings = async () => {
     const guest = JSON.parse(storedGuest);
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}/settings` +
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/settings` +
         `?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "PATCH",

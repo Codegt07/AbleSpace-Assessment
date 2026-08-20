@@ -67,10 +67,10 @@ export default function ProjectsPage() {
 
         const [projectsResponse, usersResponse] = await Promise.all([
           fetch(
-            `http://localhost:5000/tasks/projects?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+            `${process.env.NEXT_PUBLIC_API_URL}/tasks/projects?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
           ),
           fetch(
-            `http://localhost:5000/workspace-members/users?workspaceId=${guest.workspaceId}`,
+            `${process.env.NEXT_PUBLIC_API_URL}/workspace-members/users?workspaceId=${guest.workspaceId}`,
           ),
         ]);
 

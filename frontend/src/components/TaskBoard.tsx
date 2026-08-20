@@ -192,7 +192,7 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`
       );
 
       if (!response.ok) {
@@ -231,7 +231,7 @@ export default function TaskBoard() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/notifications?userId=${guest.guestId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/notifications?userId=${guest.guestId}`,
         {
           cache: "no-store",
         }
@@ -277,7 +277,7 @@ export default function TaskBoard() {
 
       if (!notification.isRead) {
         const response = await fetch(
-          `http://localhost:5000/notifications/${notification._id}/read?userId=${guest.guestId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/notifications/${notification._id}/read?userId=${guest.guestId}`,
           {
             method: "PATCH",
           }
@@ -327,7 +327,7 @@ export default function TaskBoard() {
         }
 
         const response = await fetch(
-          `http://localhost:5000/notifications/read-all?userId=${guest.guestId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/notifications/read-all?userId=${guest.guestId}`,
           {
             method: "PATCH",
           }
@@ -466,7 +466,7 @@ const handleDropTask = async (
     }
 
     const response = await fetch(
-      `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
         method: "PATCH",
         headers: {
@@ -516,7 +516,7 @@ const handleDropTask = async (
       }
 
       const response = await fetch(
-        "http://localhost:5000/tasks",
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks`,
         {
           method: "POST",
           headers: {
@@ -595,7 +595,7 @@ const handleDropTask = async (
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
         {
           method: "PATCH",
           headers: {
@@ -668,7 +668,7 @@ const handleDropTask = async (
       }
 
       const response = await fetch(
-        `http://localhost:5000/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
         {
           method: "DELETE",
         }

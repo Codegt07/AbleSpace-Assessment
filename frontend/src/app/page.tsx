@@ -18,7 +18,7 @@ export default function Home() {
   const handleGuestLogin = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/auth/guest",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/guest`,
         {
           method: "POST",
         },
@@ -55,7 +55,7 @@ export default function Home() {
       }
 
       const result = await fetch(
-        "http://localhost:5000/auth/google",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/google`,
         {
           method: "POST",
           headers: {
