@@ -11,7 +11,7 @@ type Task = {
 };
 
 type BoardColumnProps = {
-  title: string;
+  title: TaskStatus;
   tasks: Task[];
   onAddTask: () => void;
   onOpenTask: (taskId: string) => void;
