@@ -38,6 +38,7 @@ export default function Sidebar() {
 
   // Workspace is open by default
   const [workspaceOpen, setWorkspaceOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [themeInitialized, setThemeInitialized] =
     useState(false);
@@ -47,6 +48,10 @@ export default function Sidebar() {
     pathname.startsWith("/projects");
   const isProfileActive =
     pathname.startsWith("/profile");
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   // Load saved profile name
   useEffect(() => {
@@ -125,7 +130,43 @@ export default function Sidebar() {
     "G";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-[240px] border-r border-[var(--border)] bg-[var(--sidebar-bg)] px-[8px] py-[14px] text-[var(--text)] transition-colors">
+    <>
+      {/* Mobile menu button */}
+      <button
+        type="button"
+        aria-label="Open navigation"
+        onClick={() => setMobileOpen(true)}
+        className="fixed left-3 top-3 z-50 flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-sm lg:hidden"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        >
+          <path d="M4 6h16" />
+          <path d="M4 12h16" />
+          <path d="M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
+        />
+      )}
+
+    <aside
+    className={`fixed left-0 top-0 z-50 h-screen w-[240px] border-r border-[var(--border)] bg-[var(--sidebar-bg)] px-[8px] py-[14px] text-[var(--text)] shadow-xl transition-transform duration-200 lg:translate-x-0 lg:shadow-none ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
 
       {/* User */}
       <Link
@@ -425,6 +466,7 @@ export default function Sidebar() {
       >
         {avatarLetter}
       </Link>
-    </aside>
+      </aside>
+    </>
   );
 }

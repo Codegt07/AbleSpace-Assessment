@@ -760,15 +760,27 @@ const handleDropTask = async (
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-[20px] font-semibold text-[var(--accent)]">
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex w-full items-center justify-between lg:w-auto">
+        <h1 className="px-1 text-[20px] font-semibold text-[var(--accent)] sm:px-0">
           Tasks
         </h1>
 
-        <div className="flex items-center gap-2 pr-1">
+        {/* MOBILE ADD TASK */}
+        <button
+          type="button"
+          onClick={() => openAddTask("To Do")}
+          className="flex h-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-[11px] font-medium text-[var(--accent)] hover:bg-[var(--hover)] lg:hidden"
+        >
+          + Add Task
+        </button>
+      </div>
+
+        <div className="flex w-full items-center sm:w-auto sm:justify-end">
           {/* SEARCH */}
-          {searchOpen ? (
-            <div className="flex h-9 w-[240px] items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3">
+          <div className="flex items-center gap-2.5">
+           {searchOpen ? (
+            <div className="order-first flex h-10 w-full max-w-full items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 sm:order-none sm:h-9 sm:w-[240px] sm:rounded-md">
               <svg
                 width="15"
                 height="15"
@@ -803,7 +815,7 @@ const handleDropTask = async (
               onClick={() =>
                 setSearchOpen(true)
               }
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] sm:h-9 sm:w-9 sm:rounded-md"
             >
               <svg
                 width="16"
@@ -823,101 +835,92 @@ const handleDropTask = async (
             </button>
           )}
 
-          {/* LIST / BOARD */}
-          <div className="flex h-9 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
-            <button
-              type="button"
-              onClick={() =>
-                setViewMode("list")
-              }
-              className={`flex cursor-pointer items-center gap-2 px-2.5 text-[13px] font-medium ${
-                viewMode === "list"
-                  ? "bg-[var(--active-bg)] text-[var(--accent)]"
-                  : "bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
-              }`}
-            >
-              <span>☰</span>
-              List
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setViewMode("board")
-              }
-              className={`flex cursor-pointer items-center gap-2 border-l border-[var(--border)] px-2.5 text-[13px] font-medium ${
-                viewMode === "board"
-                  ? "bg-[var(--active-bg)] text-[var(--accent)]"
-                  : "bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--hover)]"
-              }`}
-            >
-              <span>▦</span>
-              Board
-            </button>
-          </div>
-
           {/* FIELDS */}
-          <div className="relative">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => {
+            setShowFields((previous) => !previous);
+            setShowFilter(false);
+            setShowNotifications(false);
+          }}
+        className="flex h-9 w-[58px] shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 text-[11px] font-medium text-[var(--accent)] hover:bg-[var(--hover)] sm:h-9 sm:w-auto sm:rounded-md sm:px-2.5 sm:text-[13px]"
+        >
+          <span className="text-[15px]">▥</span>
+          Fields
+        </button>
+
+        {showFields && (
+          <div className="absolute right-0 top-[42px] z-50 w-[220px] max-w-[calc(100vw-24px)] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
+
+            {/* LIST / BOARD */}
+      <div className="mb-2 flex h-8 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--hover)]">
+        <button
+          type="button"
+          onClick={() => setViewMode("list")}
+          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 text-[12px] font-medium transition ${
+            viewMode === "list"
+              ? "bg-[var(--active-bg)] text-[var(--accent)] shadow-sm"
+              : "text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--accent)]"
+          }`}
+        >
+          <span>☰</span>
+          List
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setViewMode("board")}
+          className={`flex flex-1 cursor-pointer items-center justify-center gap-2 border-l border-[var(--border)] text-[12px] font-medium transition ${
+            viewMode === "board"
+              ? "bg-[var(--active-bg)] text-[var(--accent)] shadow-sm"
+              : "text-[var(--muted)] hover:bg-[var(--hover)] hover:text-[var(--accent)]"
+          }`}
+        >
+          <span>▦</span>
+          Board
+        </button>
+      </div>
+
+      {/* FIELD OPTIONS */}
+      <div className="space-y-1">
+        {fieldOptions.map((field) => {
+          const checked = visibleFields.includes(field);
+
+          return (
             <button
+              key={field}
               type="button"
               onClick={() => {
-                setShowFields(
-                  (previous) =>
-                    !previous
-                );
-                setShowFilter(false);
-                setShowNotifications(
-                  false
+                setVisibleFields((previous) =>
+                  checked
+                    ? previous.filter((item) => item !== field)
+                    : [...previous, field]
                 );
               }}
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 text-[13px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
+              className="flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2.5 text-left text-[12px] text-[var(--text)] hover:bg-[var(--hover)]"
             >
-              <span className="text-[15px]">
-                ▥
+              <span>{field}</span>
+
+              <span
+                className={`flex h-4 w-4 items-center justify-center rounded-[4px] border ${
+                  checked
+                    ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                    : "border-[var(--border)] bg-[var(--surface)]"
+                }`}
+              >
+                {checked && "✓"}
               </span>
-              Fields
             </button>
-
-            {showFields && (
-            <div className="absolute right-0 top-[42px] z-30 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
-              <div className="space-y-1">
-                {fieldOptions.map((field) => {
-                  const checked = visibleFields.includes(field);
-
-                  return (
-                    <button
-                      key={field}
-                      type="button"
-                      onClick={() => {
-                        setVisibleFields((previous) =>
-                          checked
-                            ? previous.filter((item) => item !== field)
-                            : [...previous, field]
-                        );
-                      }}
-                      className="flex h-8 w-full cursor-pointer items-center justify-between rounded-md px-2.5 text-left text-[12px] text-[var(--text)] hover:bg-[var(--hover)]"
-                    >
-                      <span>{field}</span>
-
-                      <span
-                        className={`flex h-4 w-4 items-center justify-center rounded-[4px] border ${
-                          checked
-                            ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                            : "border-[var(--border)] bg-[var(--surface)]"
-                        }`}
-                      >
-                        {checked && "✓"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
+</div>
 
           {/* FILTER */}
-          <div className="relative">
+       <div className="relative">
             <button
               type="button"
               onClick={() => {
@@ -930,19 +933,7 @@ const handleDropTask = async (
                   false
                 );
               }}
-              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)] ${
-                filterStatus !==
-                  "All" ||
-                filterPriority !==
-                  "All" ||
-                filterMember !==
-                  "All" ||
-                filterDueDate ||
-                filterLabel !==
-                  "All"
-                  ? "border-[var(--accent)]"
-                  : "border-[var(--border)]"
-              }`}
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-2 text-[var(--accent)] hover:bg-[var(--hover)]"
             >
               <svg
                 width="16"
@@ -958,7 +949,7 @@ const handleDropTask = async (
             
 
             {showFilter && (
-              <div className="absolute right-0 top-[42px] z-40 w-[250px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
+              <div className="absolute right-0 top-[42px] z-50 w-[250px] max-w-[calc(100vw-24px)] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-lg">
                 <p className="mb-3 text-[13px] font-semibold text-[var(--text)]">
                   Filter Tasks
                 </p>
@@ -1144,8 +1135,12 @@ const handleDropTask = async (
                         )
                       )}
                     </select>
+                    
                   </div>
+                  
+                  
                 </div>
+                
 
                 <button
                   type="button"
@@ -1173,18 +1168,19 @@ const handleDropTask = async (
               </div>
             )}
           </div>
+          </div>
 
           {/* ADD TASK */}
             <button
               type="button"
               onClick={() => openAddTask("To Do")}
-              className="flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 text-[12px] font-medium text-[var(--accent)] hover:bg-[var(--hover)]"
+              className="ml-8 hidden h-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 text-[12px] font-medium text-[var(--accent)] hover:bg-[var(--hover)] lg:flex"
             >
               + Add Task
-            </button>
+</button>
 
           {/* NOTIFICATIONS */}
-          <div className="relative ml-5">
+          <div className="relative ml-6">
             <button
               type="button"
               onClick={() => {
@@ -1200,7 +1196,7 @@ const handleDropTask = async (
                   fetchNotifications();
                 }
               }}
-              className="relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
+              className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
             >
               <svg
                 width="17"
@@ -1226,7 +1222,7 @@ const handleDropTask = async (
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-[44px] z-50 w-[360px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl">
+              <div className="absolute right-0 top-[44px] z-50 w-[360px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl">
                 <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                   <div>
                     <h3 className="text-[14px] font-semibold text-[var(--text)]">
@@ -1309,7 +1305,7 @@ const handleDropTask = async (
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex w-full items-center gap-2 sm:w-auto">
                               <p
                               className={`text-[12px] leading-5 ${
                                 notification.isRead
@@ -1345,7 +1341,8 @@ const handleDropTask = async (
       {/* BOARD / LIST */}
       
         {viewMode === "board" ? (
-          <div className="mt-8 grid w-full grid-cols-4 items-start gap-3">
+          <div className="mt-4 w-full pb-2 sm:mt-5 lg:mt-8">
+            <div className="grid w-full grid-cols-1 items-start gap-3 lg:grid-cols-4">
             {statuses.map(
               (status) => {
                 const columnTasks =
@@ -1414,6 +1411,7 @@ const handleDropTask = async (
                 );
               }
             )}
+            </div>
           </div>
       ) : (
         <TaskList

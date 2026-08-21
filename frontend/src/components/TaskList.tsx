@@ -86,12 +86,12 @@ export default function TaskList({
         const isCollapsed = collapsed[status];
 
         const gridColumns = [
-          "minmax(0, 2fr)",
-          showField("Priority") ? "90px" : "",
-          showField("Members") ? "100px" : "",
-          showField("Due Date") ? "120px" : "",
-          showField("Labels") ? "120px" : "",
-          "60px",
+          "minmax(0, 1.8fr)",
+          showField("Priority") ? "0.8fr" : "",
+          showField("Members") ? "0.7fr" : "",
+          showField("Due Date") ? "0.95fr" : "",
+          showField("Labels") ? "0.8fr" : "",
+          "0.55fr",
         ]
           .filter(Boolean)
           .join(" ");
@@ -130,10 +130,10 @@ export default function TaskList({
             </button>
 
             {!isCollapsed && (
-              <div className="overflow-visible rounded-lg border border-[var(--border)] bg-[var(--surface)]">
+              <div className="w-full overflow-visible rounded-lg border border-[var(--border)] bg-[var(--surface)]">
                 {/* HEADER */}
                 <div
-                  className="grid h-[36px] items-center rounded-t-lg bg-[var(--hover)] px-3 text-[13px] font-medium text-[var(--text)]"
+                  className="grid h-[36px] w-full items-center rounded-t-lg bg-[var(--hover)] px-2 text-[11px] font-medium text-[var(--text)] sm:px-3 sm:text-[13px]"
                   style={{
                     gridTemplateColumns: gridColumns,
                   }}
@@ -156,7 +156,7 @@ export default function TaskList({
                     <span>Labels</span>
                   )}
 
-                  <span className="text-right">
+                  <span className="min-w-0 text-right truncate">
                     Actions
                   </span>
                 </div>
@@ -171,13 +171,13 @@ export default function TaskList({
                     <div
                       key={task._id}
                       onClick={() => onOpenTask(task._id)}
-                      className="grid min-h-[38px] cursor-pointer items-center border-t border-[var(--border)] px-3 text-[13px] hover:bg-[var(--hover)]"
+                      className="grid min-h-[38px] w-full cursor-pointer items-center border-t border-[var(--border)] px-2 text-[11px] hover:bg-[var(--hover)] sm:px-3 sm:text-[13px]"
                       style={{
                         gridTemplateColumns: gridColumns,
                       }}
                     >
                       {/* TASK TITLE */}
-                      <span className="truncate text-[var(--text)]">
+                      <span className="min-w-0 truncate text-[var(--text)]">
                         {task.title}
                       </span>
 
@@ -209,7 +209,7 @@ export default function TaskList({
                       {/* MEMBERS */}
                       {showField("Members") && (
                         <div className="flex items-center">
-                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--hover)] text-[10px] font-medium text-[var(--text)]">
+                          <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--hover)] text-[9px] font-medium text-[var(--text)]">
                             {(
                               task.assignee ||
                               "Guest"
@@ -222,7 +222,7 @@ export default function TaskList({
 
                       {/* DUE DATE */}
                       {showField("Due Date") && (
-                        <span className="text-[var(--text)]">
+                        <span className="min-w-0 truncate text-[var(--text)]">
                           {task.dueDate
                             ? new Date(
                                 task.dueDate
@@ -283,7 +283,7 @@ export default function TaskList({
                         </button>
 
                         {openMenuId === task._id && (
-                          <div className="absolute right-0 top-5 z-40 w-[100px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 shadow-md">
+                          <div className="absolute right-0 top-5 z-40 w-[100px] max-w-[calc(100vw-24px)] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 shadow-md">
                             <button
                               type="button"
                               onClick={() => {
