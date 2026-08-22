@@ -328,6 +328,8 @@ const handleUpdateTask = async () => {
 
     const guest = JSON.parse(storedGuest);
 
+
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/tasks/${editingTaskId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
       {
@@ -676,10 +678,7 @@ useEffect(() => {
         const workspaceId = guest.workspaceId;
         const userId = guest.guestId;
 
-        console.log("GUEST:", guest);
-        console.log("workspaceId:", workspaceId);
-        console.log("userId:", userId);
-        console.log("taskId:", taskId);
+       
 
         if (!workspaceId || !userId || !taskId) {
           console.error("Missing task information");
@@ -696,8 +695,7 @@ const updatesUrl =
   `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/updates` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
-console.log("TASK URL:", taskUrl);
-console.log("UPDATES URL:", updatesUrl);
+
 
 const subtasksUrl =
   `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/subtasks` +
@@ -707,7 +705,7 @@ const subtasksUrl =
   `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/comments` +
   `?workspaceId=${workspaceId}&userId=${userId}${modeQuery}`;
 
-console.log("SUBTASKS URL:", subtasksUrl);
+
 
 const [
   taskResponse,
@@ -799,8 +797,8 @@ setComments(commentsData);
       <div className="min-h-screen bg-[var(--background)]">
         <Sidebar />
 
-        <main className="ml-[240px] min-h-screen">
-          <div className="flex items-center justify-center px-6 py-10">
+        <main className="ml-0 min-h-screen pb-16 lg:ml-[240px] lg:pb-0">
+          <div className="flex items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
             <p className="text-[12px] text-[var(--muted)]">
               Loading task...
             </p>
@@ -815,7 +813,7 @@ setComments(commentsData);
       <div className="min-h-screen bg-[var(--background)]">
         <Sidebar />
 
-        <main className="ml-[240px] min-h-screen">
+        <main className="ml-0 min-h-screen pb-16 lg:ml-[240px] lg:pb-0">
           <div className="flex items-center justify-center px-6 py-10">
             <p className="text-[12px] text-[var(--muted)]">
               Task not found
@@ -1167,22 +1165,22 @@ const handleSaveTaskSettings = async () => {
     <div className="min-h-screen bg-[var(--background)]">
       <Sidebar />
 
-      <main className="ml-[240px] min-h-screen">
+      <main className="ml-0 min-h-screen pb-16 lg:ml-[240px] lg:pb-0">
         <div className="h-[54px] border-b border-[var(--border)]" />
 
-        <div className="flex gap-7 px-7 py-6">
-          <section className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6 lg:flex-row lg:gap-7 lg:px-7 lg:py-6">
+          <section className="contents lg:block lg:min-w-0 lg:flex-1">
+            <div className="order-1 flex items-start justify-between gap-3 sm:gap-6 lg:order-none">
               <div className="min-w-0">
-                <h1 className="text-[25px] font-semibold leading-8 text-[var(--text)]">
+                <h1 className="text-[22px] font-semibold leading-7 text-[var(--text)] sm:text-[25px] sm:leading-8">
                   {task.title}
                 </h1>
-                <p className="mt-1.5 max-w-[720px] text-[14px] leading-5.5 text-[var(--muted)]">
+                <p className="mt-1.5 max-w-[720px] text-[13px] leading-5 text-[var(--muted)] sm:text-[14px] sm:leading-5.5">
                   {task.description || "No description provided."}
                 </p>
               </div>
 
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 items-center gap-1.5 self-start">
                 <button
                   type="button"
                   title={viewOnly ? "View only" : "Task settings"}
@@ -1260,7 +1258,7 @@ const handleSaveTaskSettings = async () => {
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-3">
+            <div className="order-2 mt-5 flex items-center gap-3 lg:order-none">
               <span className="text-[14px] font-medium text-[var(--text)]">Properties</span>
               <div className="flex h-[23px] w-[23px] items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[9px] font-medium text-white">
                 {getUser(task.createdBy)?.avatar ? (
@@ -1275,9 +1273,9 @@ const handleSaveTaskSettings = async () => {
               </span>
             </div>
 
-            <div className="mt-4 flex items-start gap-7">
-              <span className="w-[58px] pt-[3px] text-[14px] font-medium text-[var(--text)]">Labels</span>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="order-3 mt-4 flex items-start gap-4 sm:gap-7 lg:order-none">
+              <span className="w-[58px] shrink-0 pt-[3px] text-[13px] font-medium text-[var(--text)] sm:text-[14px]">Labels</span>
+              <div className="flex min-w-0 flex-wrap gap-1.5">
                 {task.labels?.length ? task.labels.map((label) => (
                   <span key={label} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-2.5 py-1 text-[12px] font-medium text-[var(--text)]">
                     <TagIcon />
@@ -1289,8 +1287,8 @@ const handleSaveTaskSettings = async () => {
               </div>
             </div>
 
-            <div className="mt-4 flex items-center gap-7">
-              <span className="w-[58px] text-[14px] font-medium text-[var(--text)]">Resources</span>
+            <div className="order-4 mt-4 flex items-center gap-4 sm:gap-7 lg:order-none">
+              <span className="w-[58px] shrink-0 text-[13px] font-medium text-[var(--text)] sm:text-[14px]">Resources</span>
               <input
               ref={resourceInputRef}
               type="file"
@@ -1310,7 +1308,7 @@ const handleSaveTaskSettings = async () => {
             <button
               type="button"
               onClick={() => resourceInputRef.current?.click()}
-              className="flex items-center gap-1.5 text-[13px] cursor-pointer text-[var(--muted)] hover:text-[var(--text)]"
+              className="flex min-w-0 flex-wrap items-center gap-1.5 text-[12px] cursor-pointer text-[var(--muted)] hover:text-[var(--text)] sm:text-[13px]"
             >
               <PaperclipIcon />
               Add document or link...
@@ -1318,17 +1316,17 @@ const handleSaveTaskSettings = async () => {
             </div>
 
             {localResources.length > 0 && (
-  <div className="mt-2 ml-[90px] flex flex-col gap-2">
+  <div className="order-5 mt-2 ml-[62px] flex flex-col gap-2 sm:ml-[90px] lg:order-none">
     {localResources.map((file, index) => (
       <div
         key={`${file.name}-${index}`}
-        className="flex w-fit items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
+        className="flex max-w-full w-fit items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
       >
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#fff0f0] text-[11px] font-semibold text-[#ff4d4f]">
           PDF
         </div>
 
-        <span className="max-w-[260px] truncate text-[13px] text-[var(--text)]">
+        <span className="max-w-[calc(100vw-150px)] truncate text-[12px] text-[var(--text)] sm:max-w-[260px] sm:text-[13px]">
           {file.name}
         </span>
       </div>
@@ -1336,7 +1334,7 @@ const handleSaveTaskSettings = async () => {
   </div>
 )}
 
-            <div className="mt-7">
+            <div className="order-6 mt-7 lg:order-none">
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-[12px] text-[var(--text)]">▾</span>
                   <h2 className="text-[14px] font-medium text-[var(--accent)]">
@@ -1344,9 +1342,9 @@ const handleSaveTaskSettings = async () => {
                   </h2>
                                 </div>
 
-              <div className="overflow-visible rounded-lg border border-[var(--border)]">
-                <div className="grid grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] border-b border-[var(--border)] px-3">
-                  <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Task</div>
+              <div className="overflow-x-auto rounded-lg border border-[var(--border)] lg:overflow-visible">
+                <div className="grid min-w-[500px] grid-cols-[1.5fr_.9fr_1fr_1.1fr_32px] border-b border-[var(--border)] px-3 lg:min-w-0 lg:grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px]">
+                  <div className="min-w-0 truncate py-3 text-[10px] font-semibold text-[var(--text)] sm:py-3.5 sm:text-[13px]">Task</div>
                   <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Priority</div>
                   <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Members</div>
                   <div className="py-3.5 text-[13px] font-semibold text-[var(--text)]">Due Date</div>
@@ -1363,10 +1361,10 @@ const handleSaveTaskSettings = async () => {
                   const remaining = Math.max(members.length - 3, 0);
 
                   return (
-                    <div key={subtask._id} className="grid min-h-[55px] grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px] items-center border-b border-[var(--border)] px-3 last:border-b-0 hover:bg-[var(--hover)]">
-                      <span className="block truncate text-[13px] font-medium text-[var(--text)]">{subtask.title}</span>
+                    <div key={subtask._id} className="grid min-h-[55px] min-w-[500px] grid-cols-[1.5fr_.9fr_1fr_1.1fr_32px] items-center border-b border-[var(--border)] px-3 last:border-b-0 hover:bg-[var(--hover)] lg:min-w-0 lg:grid-cols-[2fr_1.1fr_1.2fr_1.3fr_48px]">
+                      <span className="block min-w-0 truncate text-[11px] font-medium text-[var(--text)] sm:text-[13px]">{subtask.title}</span>
 
-                      <div className={`flex items-center gap-1.5 text-[12px] font-medium ${priorityTextClass(subtask.priority)}`}>
+                      <div className={`flex min-w-0 items-center gap-1 text-[10px] font-medium sm:gap-1.5 sm:text-[12px] ${priorityTextClass(subtask.priority)}`}>
                         <PriorityIcon priority={subtask.priority} />
                         {subtask.priority || "Medium"}
                       </div>
@@ -1396,9 +1394,9 @@ const handleSaveTaskSettings = async () => {
                         )}
                       </div>
 
-                      <div className="text-[12px] text-[var(--text)]">{formatShortDate(subtask.dueDate)}</div>
+                      <div className="min-w-0 truncate text-[12px] text-[var(--text)]">{formatShortDate(subtask.dueDate)}</div>
 
-                      <div className="relative flex justify-end">
+                      <div className="relative flex min-w-0 justify-end">
                         {!viewOnly && (
                           <>
                             <button
@@ -1455,8 +1453,8 @@ const handleSaveTaskSettings = async () => {
               </div>
             </div>
 
-            <div className="mt-9">
-              <div className="mb-3.5 flex items-center justify-between">
+            <div className="order-8 mt-8 sm:mt-9 lg:order-none">
+              <div className="mb-3.5 flex items-center justify-between gap-2">
                 <h2 className="text-[14px] font-semibold text-[var(--accent)]">
                   Comments
                 </h2>
@@ -1516,7 +1514,7 @@ const handleSaveTaskSettings = async () => {
             </div>
 
             {/* Comment + View replies on same row */}
-            <div className="mt-2 flex items-center justify-between gap-4">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 sm:gap-4">
               <p className="min-w-0 text-[13px] leading-5 text-[var(--text)]">
                 {comment.message}
               </p>
@@ -1525,7 +1523,7 @@ const handleSaveTaskSettings = async () => {
                 <button
                   type="button"
                   onClick={() => toggleReplies(comment._id)}
-                  className="shrink-0 text-[11px] cursor-pointer font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)]"
+                  className="shrink-0 text-[10px] cursor-pointer font-medium text-[var(--muted)] transition-colors hover:text-[var(--accent)] sm:text-[11px]"
                 >
                   {repliesOpen
                     ? "Hide replies"
@@ -1572,7 +1570,7 @@ const handleSaveTaskSettings = async () => {
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-[var(--text)]">
                       {formatUserName(reply.userId)}
                     </span>
@@ -1703,10 +1701,10 @@ const handleSaveTaskSettings = async () => {
             </div>
           </section>
 
-          <aside className="w-[285px] shrink-0">
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+          <aside className="order-7 w-full shrink-0 lg:order-none lg:w-[285px]">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 sm:p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   <span className="text-[11px]">▾</span>
                   <h2 className="text-[14px] font-semibold text-[var(--accent)]">
                     Details
@@ -1719,7 +1717,7 @@ const handleSaveTaskSettings = async () => {
               </div>
 
               <div className="mt-5 space-y-5">
-                <div className="grid grid-cols-[65px_1fr] items-center">
+                <div className="grid grid-cols-[58px_minmax(0,1fr)] items-center sm:grid-cols-[65px_1fr]">
                   <span className="text-[12px] text-[var(--muted)]">Status</span>
                   <span className="flex w-fit items-center gap-1.5 rounded-md bg-[#fff5e6] px-2.5 py-1.5 text-[12px] font-medium text-orange-600">
                     <span className="h-[6px] w-[6px] rounded-full bg-orange-500" />
@@ -1727,7 +1725,7 @@ const handleSaveTaskSettings = async () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-[65px_1fr] items-start">
+                <div className="grid grid-cols-[58px_minmax(0,1fr)] items-start sm:grid-cols-[65px_1fr]">
                   <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Priority</span>
                   <div className="relative">
                     <button
@@ -1777,7 +1775,7 @@ const handleSaveTaskSettings = async () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-[65px_1fr] items-start">
+                <div className="grid grid-cols-[58px_minmax(0,1fr)] items-start sm:grid-cols-[65px_1fr]">
                   <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">Members</span>
                   <div>
                     {task.members?.length ? (
@@ -1809,13 +1807,16 @@ const handleSaveTaskSettings = async () => {
                           <button
                             type="button"
                             onClick={() => setShowMemberModal(true)}
-                            className="flex !cursor-pointer items-center gap-1.5 text-[13px] text-[var(--muted)]"
+                            className="flex shrink-0 !cursor-pointer items-center gap-1.5 text-[11px] text-[var(--muted)]"
                           >
                             <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] cursor-pointer text-[14px]">
                               +
                             </span>
-                            <PeopleIcon/>
-                            Add members
+                            <PeopleIcon />
+                             <span className="leading-4 text-[11px]">
+                              <span className="block">Add</span>
+                              <span className="block">Members</span>
+                            </span>
                           </button>
                         ) : (
                           <span className="ml-1 text-[10px] text-[var(--muted)]">
@@ -1828,13 +1829,18 @@ const handleSaveTaskSettings = async () => {
                         <button
                           type="button"
                           onClick={() => setShowMemberModal(true)}
-                          className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)] hover:text-[var(--text)]"
+                          className="flex items-center gap-1.5 text-[11px] text-[var(--muted)]"
                         >
                           <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border border-[var(--border)] text-[14px]">
                             +
                           </span>
+
                           <PeopleIcon />
-                          Add members
+
+                          <span className="leading-4 text-[11px]">
+                            <span className="block">Add</span>
+                            <span className="block">Members</span>
+                          </span>
                         </button>
                       ) : (
                         <span className="text-[10px] text-[var(--muted)]">
@@ -1845,7 +1851,7 @@ const handleSaveTaskSettings = async () => {
                   </div>
                 </div>
 
-<div className="grid grid-cols-[65px_1fr] items-center">
+<div className="grid grid-cols-[58px_minmax(0,1fr)] items-center sm:grid-cols-[65px_1fr]">
   <span className="text-[12px] text-[var(--muted)]">
     Dates
   </span>
@@ -1983,7 +1989,7 @@ const handleSaveTaskSettings = async () => {
   </div>
 </div>
 
-  <div className="grid grid-cols-[65px_1fr] items-start">
+  <div className="grid grid-cols-[58px_minmax(0,1fr)] items-start sm:grid-cols-[65px_1fr]">
             <span className="pt-1 text-[12px] font-medium text-[var(--muted)]">
                     Labels
                   </span>
@@ -1997,7 +2003,7 @@ const handleSaveTaskSettings = async () => {
                   </div>
                 </div>
                 {/* Reporter */}
-<div className="grid grid-cols-[65px_1fr] items-center">
+<div className="grid grid-cols-[58px_minmax(0,1fr)] items-center sm:grid-cols-[65px_1fr]">
   <span className="text-[12px] text-[var(--muted)]">
     Reporter
   </span>

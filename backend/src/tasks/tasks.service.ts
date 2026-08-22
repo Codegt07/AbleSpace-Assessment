@@ -335,9 +335,25 @@ async update(
   )) {
     const oldValue = (task as any)[key];
 
+    const normalizeValue = (value: any) => {
+      if (value instanceof Date) {
+        return value.toISOString().slice(0, 10);
+      }
+
+      if (Array.isArray(value)) {
+        return JSON.stringify(value);
+      }
+
+      if (value === null || value === undefined || value === '') {
+        return '';
+      }
+
+      return String(value);
+    };
+
     if (
-      String(oldValue ?? '') !==
-      String(newValue ?? '')
+      normalizeValue(oldValue) !==
+      normalizeValue(newValue)
     ) {
       changes[key] = {
         oldValue,
@@ -387,19 +403,55 @@ if (!savedTask) {
 
     for (const [field, change] of Object.entries(changes)) {
       const label = fieldLabels[field] ?? field;
-      const oldValue =
-        change.oldValue === null ||
-        change.oldValue === undefined ||
-        change.oldValue === ''
-          ? 'No value'
-          : String(change.oldValue);
+      const formatUpdateValue = (
+      value: any,
+        field: string,
+      ) => {
+        if (
+          value === null ||
+          value === undefined ||
+          value === ''
+        ) {
+          return 'No value';
+        }
 
-      const newValue =
-        change.newValue === null ||
-        change.newValue === undefined ||
-        change.newValue === ''
-          ? 'No value'
-          : String(change.newValue);
+        if (
+          field === 'startDate' ||
+          field === 'dueDate'
+        ) {
+          const date = new Date(value);
+
+          if (Number.isNaN(date.getTime())) {
+            return String(value);
+          }
+
+          return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          });
+        }
+
+        if (field === 'labels' || field === 'resources') {
+          if (Array.isArray(value)) {
+            return value.length > 0
+              ? value.join(', ')
+              : 'No value';
+          }
+        }
+
+        return String(value);
+      };
+
+      const oldValue = formatUpdateValue(
+        change.oldValue,
+        field,
+      );
+
+      const newValue = formatUpdateValue(
+        change.newValue,
+        field,
+      );
 
       await this.createUpdate(
         id,
