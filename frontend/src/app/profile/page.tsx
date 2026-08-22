@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 
 export default function ProfilePage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [title, setTitle] = useState("");
-  const [username, setUsername] = useState("");
-
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
+const [name, setName] = useState("");
+const [email, setEmail] = useState("");
+const [title, setTitle] = useState("");
+const [username, setUsername] = useState("");
+const [saving, setSaving] = useState(false);
+const [message, setMessage] = useState("");
+const [showLeaveModal, setShowLeaveModal] = useState(false);
 const [leavingWorkspace, setLeavingWorkspace] = useState(false);
 
   useEffect(() => {
@@ -26,7 +25,7 @@ const [leavingWorkspace, setLeavingWorkspace] = useState(false);
 
 
 
-if (!guest.guestId || !guest.workspaceId) {
+ if (!guest.guestId || !guest.workspaceId) {
   return;
 }
 
@@ -131,8 +130,8 @@ const handleLeaveWorkspace = async () => {
     <div className="min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors">
       <Sidebar />
 
-      <main className="ml-[240px] min-h-screen border-t border-[var(--border)]">
-        <div className="mx-auto max-w-[760px] px-8 py-10">
+      <main className="ml-0 min-h-screen border-t border-[var(--border)] pb-16 lg:ml-[240px] lg:pb-0">
+        <div className="mx-auto w-full max-w-[760px] px-3 pt-14 pb-6 sm:px-5 sm:pt-10 sm:pb-8 lg:px-8 lg:py-10">
           {/* Page heading */}
           <h1 className="text-[22px] font-semibold text-[var(--text)]">
             Profile
@@ -160,12 +159,12 @@ const handleLeaveWorkspace = async () => {
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
+                className="h-9 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {/* Full name */}
-            <div className="flex min-h-[60px] items-center justify-between border-b border-[var(--border)]">
+            <div className="flex min-h-[58px] items-center justify-between border-b border-[var(--border)]">
               <span className="text-[12px] font-medium text-[var(--text)]">
                 Full name
               </span>
@@ -173,7 +172,7 @@ const handleLeaveWorkspace = async () => {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
+                className="h-9 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
@@ -192,12 +191,12 @@ const handleLeaveWorkspace = async () => {
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-8 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
+                className="h-9 w-[180px] rounded-lg border border-[var(--border)] bg-[var(--hover)] px-3 text-[12px] text-[var(--text)] outline-none transition-colors focus:border-[var(--accent)]"
               />
             </div>
 
             {/* Username */}
-            <div className="flex min-h-[70px] items-center justify-between">
+            <div className="flex min-h-[70px] items-center justify-between border-b border-[var(--border)]">
               <div>
                 <p className="text-[12px] font-medium text-[var(--text)]">
                   Username
@@ -221,7 +220,7 @@ const handleLeaveWorkspace = async () => {
             Workspace access
           </h2>
 
-          <div className="mt-4 flex min-h-[60px] items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5">
+          <div className="mt-4 flex min-h-[60px] items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 sm:px-5">
             <span className="text-[11px] text-[var(--muted)]">
               Remove yourself from the workspace
             </span>
@@ -232,8 +231,8 @@ const handleLeaveWorkspace = async () => {
               setShowLeaveModal(false);
               window.location.href = "/tasks";
             }}
-            className="h-8 cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600"
-          >
+            className="h-8 w-[150px] cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600"
+            >
             Leave Workspace
           </button>
           </div>
@@ -260,44 +259,44 @@ const handleLeaveWorkspace = async () => {
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
+           </div>
           </div>
+         {showLeaveModal && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
+          <div className="w-full max-w-[380px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
+          <h2 className="text-[15px] font-semibold text-[var(--text)]">
+          Leave Workspace?
+          </h2>
+
+         <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
+         Are you sure you want to leave this workspace?
+         This will remove your data from the workspace
+         records.
+        </p>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowLeaveModal(false)}
+            disabled={leavingWorkspace}
+            className="h-8 cursor-pointer rounded-md border border-[var(--border)] px-4 text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleLeaveWorkspace}
+            disabled={leavingWorkspace}
+            className="h-8 cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {leavingWorkspace ? "Leaving..." : "Leave Workspace"}
+          </button>
         </div>
-        {showLeaveModal && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-    <div className="w-full max-w-[380px] rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
-      <h2 className="text-[15px] font-semibold text-[var(--text)]">
-        Leave Workspace?
-      </h2>
-
-      <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
-        Are you sure you want to leave this workspace?
-        This will remove your data from the workspace
-        records.
-      </p>
-
-      <div className="mt-5 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setShowLeaveModal(false)}
-          disabled={leavingWorkspace}
-          className="h-8 cursor-pointer rounded-md border border-[var(--border)] px-4 text-[11px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={handleLeaveWorkspace}
-          disabled={leavingWorkspace}
-          className="h-8 cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {leavingWorkspace ? "Leaving..." : "Leave Workspace"}
-        </button>
+       </div>
       </div>
-    </div>
-  </div>
-)}
-      </main>
+      )}
+     </main>
     </div>
   );
 }
