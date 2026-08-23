@@ -14,6 +14,8 @@ type TaskFormModalProps = {
   priority: string;
   dueDate: string;
   labels: string;
+  addingTask: boolean;
+ showAddTaskWaitMessage: boolean;
 
   setTitle: (value: string) => void;
   setDescription: (value: string) => void;
@@ -44,6 +46,8 @@ export default function TaskFormModal({
   setLabels,
   onClose,
   onSubmit,
+  addingTask,
+showAddTaskWaitMessage,
 }: TaskFormModalProps) {
   if (!open) {
     return null;
@@ -209,17 +213,25 @@ export default function TaskFormModal({
           <button
             type="button"
             onClick={onSubmit}
-            className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[13px] font-medium text-white"
+            disabled={addingTask}
+            className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {isEditing
-              ? isSubtask
-                ? "Save Changes"
-                : "Save Changes"
+            {addingTask
+            ? "Creating..."
+            : isEditing
+              ? "Save Changes"
               : isSubtask
                 ? "Add Subtask"
                 : "Add Task"}
           </button>
         </div>
+        {showAddTaskWaitMessage && !isEditing && (
+          <p className="mt-2 text-center text-[11px] leading-[15px] text-[var(--muted)]">
+            The server may take a little longer
+            <br />
+            on the first request. Please wait...
+          </p>
+        )}
       </div>
     </div>
   );

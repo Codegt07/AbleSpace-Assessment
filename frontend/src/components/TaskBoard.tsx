@@ -129,6 +129,11 @@ export default function TaskBoard() {
   const [filterLabel, setFilterLabel] =
     useState("All");
 
+  const [addingTask, setAddingTask] = useState(false);
+  const [showAddTaskWaitMessage, setShowAddTaskWaitMessage] =
+  useState(false);
+    
+
   const router = useRouter();
 
   const openTask = (taskId: string) => {
@@ -500,16 +505,23 @@ const handleDropTask = async (
   }
 };
 
-  const handleAddTask = async () => {
-    if (!title.trim()) {
-      toast.error(
-        "Task title is required"
-      );
-      return;
-    }
+const handleAddTask = async () => {
+  if (!title.trim()) {
+    toast.error("Task title is required");
+    return;
+  }
 
-    try {
-      const guest = getGuest();
+  if (addingTask) return;
+
+  setAddingTask(true);
+  setShowAddTaskWaitMessage(false);
+
+  const waitMessageTimer = setTimeout(() => {
+    setShowAddTaskWaitMessage(true);
+  }, 3000);
+
+  try {
+    const guest = getGuest();
 
       if (!guest) {
         return;
@@ -572,6 +584,10 @@ const handleDropTask = async (
       toast.error(
         "Failed to create task"
       );
+    } finally {
+      clearTimeout(waitMessageTimer);
+      setAddingTask(false);
+      setShowAddTaskWaitMessage(false);
     }
   };
 
@@ -1447,6 +1463,8 @@ const handleDropTask = async (
             ? handleUpdateTask
             : handleAddTask
         }
+        addingTask={addingTask}
+        showAddTaskWaitMessage={showAddTaskWaitMessage}
       />
     </>
   );

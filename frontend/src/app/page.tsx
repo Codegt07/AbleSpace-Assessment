@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -10,39 +10,58 @@ declare global {
 }
 
 export default function Home() {
-  const router = useRouter();
 
+const router = useRouter();
+
+const [guestLoading, setGuestLoading] = useState(false);
+
+const [showGuestWaitMessage, setShowGuestWaitMessage] =
+  useState(false);
   const googleCodeClient =
     useRef<any>(null);
 
-  const handleGuestLogin = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/guest`,
-        {
-          method: "POST",
-        },
-      );
+const handleGuestLogin = async () => {
+  if (guestLoading) return;
 
-      if (!response.ok) {
-        throw new Error("Guest login failed");
-      }
+  setGuestLoading(true);
+  setShowGuestWaitMessage(false);
 
-      const guest = await response.json();
+  const waitMessageTimer = setTimeout(() => {
+    setShowGuestWaitMessage(true);
+  }, 3000);
 
-      localStorage.setItem(
-        "guest",
-        JSON.stringify(guest),
-      );
 
-      router.push("/tasks");
-    } catch (error) {
-      console.error(
-        "Guest Login Error:",
-        error,
-      );
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/guest`,
+      {
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Guest login failed");
     }
-  };
+
+    const guest = await response.json();
+
+    localStorage.setItem(
+      "guest",
+      JSON.stringify(guest),
+    );
+
+    router.push("/tasks");
+  } catch (error) {
+    console.error(
+      "Guest Login Error:",
+      error,
+    );
+  } finally {
+    clearTimeout(waitMessageTimer);
+    setGuestLoading(false);
+    setShowGuestWaitMessage(false);
+  }
+};
 
   const handleGoogleCode = async (
     response: any,
@@ -187,10 +206,19 @@ export default function Home() {
             <button
               type="button"
               onClick={handleGuestLogin}
-              className="h-[38px] w-full rounded-full bg-[#171717] text-[14px] font-medium text-white cursor-pointer transition-opacity hover:opacity-90"
+              disabled={guestLoading}
+              className="h-[38px] w-full rounded-full bg-[#171717] text-[14px] font-medium text-white cursor-pointer transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              Continue as Guest
+              {guestLoading ? "Connecting..." : "Continue as Guest"}
             </button>
+
+            {showGuestWaitMessage && (
+              <p className="mt-2 text-center text-[11px] leading-[15px] text-[#888888]">
+                The server may take a little longer
+                <br />
+                on the first request. Please wait...
+              </p>
+            )}
 
             <button
               type="button"
