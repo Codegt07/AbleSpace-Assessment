@@ -318,15 +318,20 @@ async update(
     );
   }
 
-  // Members/status are handled by dedicated actions.
   const {
     members,
     status,
-    ...allowedTaskUpdates
+    ...rawTaskUpdates
   } = updateTaskDto as UpdateTaskDto & {
     members?: unknown;
     status?: unknown;
   };
+
+  const allowedTaskUpdates = Object.fromEntries(
+    Object.entries(rawTaskUpdates).filter(
+      ([, value]) => value !== undefined,
+    ),
+  );
 
   const changes: Record<string, any> = {};
 
@@ -361,6 +366,16 @@ async update(
       };
     }
   }
+
+  const statusChange =
+  status !== undefined &&
+  status !== task.status
+    ? {
+        oldValue: task.status,
+        newValue: status as string,
+      }
+    : null;
+
 if (status !== undefined) {
   task.status = status as TaskStatus;
 }
@@ -381,6 +396,7 @@ const savedTask = await this.taskModel.findOneAndUpdate(
     runValidators: true,
   },
 );
+
 
 if (!savedTask) {
   throw new NotFoundException('Task not found');
@@ -463,6 +479,17 @@ if (!savedTask) {
       );
     }
   }
+
+  if (statusChange) {
+  await this.createUpdate(
+    id,
+    userId,
+    `Changed status from ${statusChange.oldValue} to ${statusChange.newValue}`,
+    {
+      status: statusChange,
+    },
+  );
+}
 
   return savedTask;
 }
