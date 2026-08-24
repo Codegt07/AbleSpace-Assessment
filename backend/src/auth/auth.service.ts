@@ -23,6 +23,11 @@ import {
   NotificationsService,
 } from '../notifications/notifications.service';
 
+import {
+  Task,
+  TaskDocument,
+} from '../tasks/schemas/task.schema';  
+
 @Injectable()
 export class AuthService {
   private readonly googleClient =
@@ -31,18 +36,22 @@ export class AuthService {
       process.env.GOOGLE_CLIENT_SECRET,
     );
 
-  constructor(
-    @InjectModel(Guest.name)
-    private readonly guestModel: Model<GuestDocument>,
+ constructor(
+  @InjectModel(Guest.name)
+  private readonly guestModel: Model<GuestDocument>,
 
-    private readonly workspacesService: WorkspacesService,
+  @InjectModel(Task.name)
+  private readonly taskModel: Model<TaskDocument>,
 
-    private readonly workspaceMembersService:
-      WorkspaceMembersService,
+  private readonly workspacesService: WorkspacesService,
 
-    private readonly notificationsService:
-      NotificationsService,
-  ) {}
+  private readonly workspaceMembersService:
+    WorkspaceMembersService,
+
+  private readonly notificationsService:
+    NotificationsService,
+) {}
+  
 
   async createGuest() {
     const guest =
@@ -67,11 +76,41 @@ export class AuthService {
       'Welcome to the workspace!',
     );
 
+    const welcomeTask =
+  await this.taskModel.findById(
+    '6a8c4b50523cb03a9f2a1b51',
+  );
+
+if (welcomeTask) {
+  const alreadyMember =
+    welcomeTask.members.some(
+      (member) =>
+        member.userId === guest.guestId,
+    );
+
+  if (!alreadyMember) {
+    welcomeTask.members.push({
+      userId: guest.guestId,
+      status: 'To Do',
+    } as any);
+
+    await welcomeTask.save();
+
+    await this.notificationsService.create(
+      guest.guestId,
+      'task_added',
+      'You’ve been added to the Welcome Task by Admin. Explore the task description and subtasks to learn about Pyramid’s features.',
+      '6a8c4b50523cb03a9f2a1b51',
+    );
+  }
+}
+
     return {
       ...guest.toObject(),
       workspaceId: commonWorkspaceId,
     };
   }
+  
 
   async googleLogin(code: string) {
     if (!code) {
@@ -165,13 +204,44 @@ export class AuthService {
         'member',
       );
 
+      
+
       if (isNewUser) {
-        await this.notificationsService.create(
-          guest.guestId,
-          'welcome',
-          'Welcome to the workspace!',
-        );
-      }
+  await this.notificationsService.create(
+    guest.guestId,
+    'welcome',
+    'Welcome to the workspace!',
+  );
+
+  const welcomeTask =
+    await this.taskModel.findById(
+      '6a8c4b50523cb03a9f2a1b51',
+    );
+
+  if (welcomeTask) {
+    const alreadyMember =
+      welcomeTask.members.some(
+        (member) =>
+          member.userId === guest.guestId,
+      );
+
+    if (!alreadyMember) {
+      welcomeTask.members.push({
+        userId: guest.guestId,
+        status: 'To Do',
+      } as any);
+
+      await welcomeTask.save();
+
+      await this.notificationsService.create(
+        guest.guestId,
+        'task_added',
+        'You’ve been added to the Welcome Task by Admin. Explore the task description and subtasks to learn about Pyramid’s features.',
+        '6a8c4b50523cb03a9f2a1b51',
+      );
+    }
+  }
+}
 
       return {
         ...guest.toObject(),

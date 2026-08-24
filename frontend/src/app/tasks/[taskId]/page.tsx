@@ -629,7 +629,7 @@ const handleAddComment = async (
 };
 
 useEffect(() => {
-  if (!showMemberModal) return;
+ 
 
   const loadWorkspaceUsers = async () => {
     try {

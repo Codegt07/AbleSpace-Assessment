@@ -8,15 +8,20 @@ import { Guest, GuestSchema } from './schemas/guest.schema';
 import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { WorkspaceMembersModule } from '../workspace-members/workspace-members.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { Task, TaskSchema } from '../tasks/schemas/task.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      {
-        name: Guest.name,
-        schema: GuestSchema,
-      },
-    ]),
+  {
+    name: Guest.name,
+    schema: GuestSchema,
+  },
+  {
+    name: Task.name,
+    schema: TaskSchema,
+  },
+]),
 
     WorkspacesModule,
     WorkspaceMembersModule,
