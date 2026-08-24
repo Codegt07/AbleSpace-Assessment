@@ -119,7 +119,7 @@ const handleLeaveWorkspace = async () => {
 
     localStorage.clear();
 
-    window.location.href = "/login";
+    window.location.href = "/";
   } catch (error) {
     console.error("Leave Workspace Error:", error);
     setLeavingWorkspace(false);
@@ -227,10 +227,7 @@ const handleLeaveWorkspace = async () => {
 
            <button
             type="button"
-            onClick={() => {
-              setShowLeaveModal(false);
-              window.location.href = "/tasks";
-            }}
+            onClick={() => setShowLeaveModal(true)}
             className="h-8 w-[150px] cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600"
             >
             Leave Workspace
@@ -269,11 +266,14 @@ const handleLeaveWorkspace = async () => {
           </h2>
 
          <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
-         Are you sure you want to leave this workspace?
-         This will remove your data from the workspace
-         records.
+          This will permanently remove all your data from
+          this workspace, including your tasks, subtasks,
+          comments, updates, and membership.
+          <br />
+          <span className="font-medium text-red-500">
+            This action cannot be undone.
+          </span>
         </p>
-
         <div className="mt-5 flex justify-end gap-2">
           <button
             type="button"

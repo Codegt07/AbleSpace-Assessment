@@ -12,6 +12,21 @@ import {
   GuestDocument,
 } from '../auth/schemas/guest.schema';
 
+import {
+  Task,
+  TaskDocument,
+} from '../tasks/schemas/task.schema';
+
+import {
+  TaskUpdate,
+  TaskUpdateDocument,
+} from '../tasks/schemas/task-update.schema';
+
+import {
+  TaskComment,
+  TaskCommentDocument,
+} from '../tasks/schemas/task-comment.schema';
+
 @Injectable()
 export class WorkspaceMembersService {
   constructor(
@@ -20,6 +35,14 @@ export class WorkspaceMembersService {
 
     @InjectModel(Guest.name)
     private readonly guestModel: Model<GuestDocument>,
+    @InjectModel(Task.name)
+    private readonly taskModel: Model<TaskDocument>,
+
+    @InjectModel(TaskUpdate.name)
+    private readonly taskUpdateModel: Model<TaskUpdateDocument>,
+
+    @InjectModel(TaskComment.name)
+    private readonly taskCommentModel: Model<TaskCommentDocument>,
   ) {}
 
   async addMember(
@@ -80,7 +103,7 @@ export class WorkspaceMembersService {
     }));
   }
 
-  async leaveWorkspace(
+async leaveWorkspace(
   workspaceId: string,
   userId: string,
 ) {
@@ -95,6 +118,90 @@ export class WorkspaceMembersService {
     );
   }
 
+  // Tasks created by this user
+  const ownedTasks = await this.taskModel
+    .find({
+      workspaceId,
+      createdBy: userId,
+    })
+    .select('_id')
+    .lean();
+
+const ownedTaskIds = ownedTasks.map(
+  (task) => task._id.toString(),
+);
+
+  
+  const tasksToDelete =
+    await this.taskModel
+      .find({
+        workspaceId,
+        $or: [
+          {
+            createdBy: userId,
+          },
+          {
+            parentTaskId: {
+              $in: ownedTaskIds,
+            },
+          },
+        ],
+      })
+      .select('_id')
+      .lean();
+
+  const taskIdsToDelete =
+  tasksToDelete.map((task) => task._id.toString());
+
+
+  await this.taskModel.updateMany(
+    {
+      workspaceId,
+      createdBy: {
+        $ne: userId,
+      },
+      members: {
+        $elemMatch: {
+          userId,
+        },
+      },
+    },
+    {
+      $pull: {
+        members: {
+          userId,
+        },
+      },
+    },
+  );
+
+  await this.taskCommentModel.deleteMany({
+    userId,
+  });
+
+
+  await this.taskUpdateModel.deleteMany({
+    $or: [
+      {
+        userId,
+      },
+      {
+        taskId: {
+          $in: taskIdsToDelete,
+        },
+      },
+    ],
+  });
+
+  if (taskIdsToDelete.length > 0) {
+    await this.taskModel.deleteMany({
+      _id: {
+        $in: taskIdsToDelete,
+      },
+      workspaceId,
+    });
+  }
+
   await this.memberModel.deleteOne({
     workspaceId,
     userId,
@@ -106,7 +213,8 @@ export class WorkspaceMembersService {
 
   return {
     success: true,
-    message: 'Workspace left successfully',
+    message:
+      'Workspace left and all user data deleted successfully',
   };
 }
 }

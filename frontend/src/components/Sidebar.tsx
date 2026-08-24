@@ -30,13 +30,12 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const [theme, setTheme] = useState<Theme>("light");
-  const [accent, setAccent] = useState<Accent>("blue");
+  const [accent, setAccent] = useState<Accent>("black");
   const [userName, setUserName] = useState("Guest");
 
   const [themeOpen, setThemeOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
 
-  // Workspace is open by default
   const [workspaceOpen, setWorkspaceOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -73,7 +72,6 @@ export default function Sidebar() {
     }
   }, []);
 
-  // Load saved theme and accent
   useEffect(() => {
     const savedTheme =
       localStorage.getItem("theme");
@@ -93,7 +91,7 @@ export default function Sidebar() {
         (item) => item.id === savedAccent
       )
         ? (savedAccent as Accent)
-        : "blue";
+        : "black";
 
     setTheme(initialTheme);
     setAccent(initialAccent);
@@ -107,7 +105,6 @@ export default function Sidebar() {
     setThemeInitialized(true);
   }, []);
 
-  // Apply and save theme/accent
   useEffect(() => {
     if (!themeInitialized) return;
 
