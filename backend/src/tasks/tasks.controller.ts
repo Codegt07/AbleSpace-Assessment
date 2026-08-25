@@ -56,24 +56,38 @@ getSubtasks(
   @Param('id') id: string,
   @Query('workspaceId') workspaceId: string,
   @Query('userId') userId: string,
+  @Query('mode') mode?: string,
 ) {
   return this.tasksService.getSubtasks(
     id,
     workspaceId,
     userId,
+    mode,
   );
 }
 
 
-
   @Get(':id/updates')
-getUpdates(
-  @Param('id') id: string,
+  getUpdates(
+    @Param('id') id: string,
+    @Query('workspaceId') workspaceId: string,
+    @Query('userId') userId: string,
+    @Query('mode') mode?: string,
+  ) {
+    return this.tasksService.getUpdates(
+      id,
+      workspaceId,
+      userId,
+      mode,
+    );
+  }
+
+  @Get('projects')
+getProjects(
   @Query('workspaceId') workspaceId: string,
   @Query('userId') userId: string,
 ) {
-  return this.tasksService.getUpdates(
-    id,
+  return this.tasksService.getProjects(
     workspaceId,
     userId,
   );
@@ -84,11 +98,13 @@ getUpdates(
     @Param('id') id: string,
     @Query('workspaceId') workspaceId: string,
     @Query('userId') userId: string,
+    @Query('mode') mode?: string,
   ) {
     return this.tasksService.findOne(
       id,
       workspaceId,
       userId,
+      mode,
     );
   }
 
@@ -197,18 +213,21 @@ getUpdates(
       updateTaskSettingsDto,
     );
   }
+
 @Get(':id/comments')
-getComments(
-  @Param('id') id: string,
-  @Query('workspaceId') workspaceId: string,
-  @Query('userId') userId: string,
-) {
-  return this.tasksService.getComments(
-    id,
-    workspaceId,
-    userId,
-  );
-}
+  getComments(
+    @Param('id') id: string,
+    @Query('workspaceId') workspaceId: string,
+    @Query('userId') userId: string,
+    @Query('mode') mode?: string,
+  ) {
+    return this.tasksService.getComments(
+      id,
+      workspaceId,
+      userId,
+      mode,
+    );
+  }
 
 @Post(':id/comments')
 addComment(

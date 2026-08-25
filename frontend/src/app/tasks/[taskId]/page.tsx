@@ -1694,8 +1694,8 @@ const handleSaveTaskSettings = async () => {
 ) : (
   <div className="flex h-[48px] items-center rounded-lg border border-[var(--border)] px-4 text-[11px] text-[var(--muted)]">
     {viewOnly
-      ? "You need to be a member to comment"
-      : "Comments disabled by task creator"}
+  ? "Comments are not allowed in view-only mode"
+  : "You need to be a member to comment"}
   </div>
 )}
             </div>

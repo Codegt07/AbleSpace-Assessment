@@ -213,18 +213,37 @@ async getSubtasks(
   parentTaskId: string,
   workspaceId: string,
   userId: string,
+  mode?: string,
 ) {
   const parentTask = await this.taskModel.findOne({
     _id: parentTaskId,
     workspaceId,
-    $or: [
-      { createdBy: userId },
-      { 'members.userId': userId },
-    ],
   });
 
   if (!parentTask) {
-    throw new NotFoundException('Parent task not found');
+    throw new NotFoundException(
+      'Parent task not found',
+    );
+  }
+
+  const directAccess =
+    parentTask.createdBy === userId ||
+    parentTask.members.some(
+      (member) => member.userId === userId,
+    );
+
+  const viewAccess =
+    mode === 'view' &&
+    (await this.hasViewAccess(
+      parentTaskId,
+      workspaceId,
+      userId,
+    ));
+
+  if (!directAccess && !viewAccess) {
+    throw new NotFoundException(
+      'Parent task not found',
+    );
   }
 
   return this.taskModel
@@ -232,6 +251,57 @@ async getSubtasks(
       parentTaskId,
       workspaceId,
       type: 'subtask',
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
+async getProjects(
+  workspaceId: string,
+  userId: string,
+) {
+  const assignedSubtasks = await this.taskModel
+    .find({
+      workspaceId,
+      type: 'subtask',
+      'members.userId': userId,
+    })
+    .select('parentTaskId')
+    .lean();
+
+  const projectIds = new Set<string>();
+
+  for (const subtask of assignedSubtasks) {
+    let currentParentId = subtask.parentTaskId;
+
+    while (currentParentId) {
+      const parentTask = await this.taskModel
+        .findOne({
+          _id: currentParentId,
+          workspaceId,
+        })
+        .select('_id parentTaskId')
+        .lean();
+
+      if (!parentTask) {
+        break;
+      }
+
+      projectIds.add(parentTask._id.toString());
+      currentParentId = parentTask.parentTaskId;
+    }
+  }
+
+  if (projectIds.size === 0) {
+    return [];
+  }
+
+  return this.taskModel
+    .find({
+      workspaceId,
+      _id: {
+        $in: Array.from(projectIds),
+      },
     })
     .sort({ createdAt: -1 })
     .exec();
@@ -250,43 +320,125 @@ async getSubtasks(
       .exec();
   }
 
-  async findOne(
-    id: string,
-    workspaceId: string,
-    userId: string,
-   ) {
-    const task = await this.taskModel.findOne({
-      _id: id,
-      workspaceId,
-      $or: [
-        { createdBy: userId },
-        { 'members.userId': userId },
-      ],
-    });
-
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    return task;
-  }
-
-  async getUpdates(
+  private async hasViewAccess(
   taskId: string,
   workspaceId: string,
   userId: string,
 ) {
+  let currentTaskIds = [taskId];
+
+  while (currentTaskIds.length > 0) {
+    const childTasks = await this.taskModel
+      .find({
+        workspaceId,
+        parentTaskId: {
+          $in: currentTaskIds,
+        },
+      })
+      .select('_id members')
+      .lean();
+
+    if (childTasks.length === 0) {
+      return false;
+    }
+
+    const userAssigned = childTasks.some(
+      (childTask) =>
+        childTask.members?.some(
+          (member) => member.userId === userId,
+        ),
+    );
+
+    if (userAssigned) {
+      return true;
+    }
+
+    currentTaskIds = childTasks.map(
+      (childTask) => childTask._id.toString(),
+    );
+  }
+
+  return false;
+}
+
+async findOne(
+  id: string,
+  workspaceId: string,
+  userId: string,
+  mode?: string,
+) {
   const task = await this.taskModel.findOne({
-    _id: taskId,
+    _id: id,
     workspaceId,
-    $or: [
-      { createdBy: userId },
-      { 'members.userId': userId },
-    ],
   });
 
   if (!task) {
-    throw new NotFoundException('Task not found');
+    throw new NotFoundException(
+      'Task not found',
+    );
+  }
+
+  const directAccess =
+    task.createdBy === userId ||
+    task.members.some(
+      (member) => member.userId === userId,
+    );
+
+  if (directAccess) {
+    return task;
+  }
+
+  if (
+    mode === 'view' &&
+    (await this.hasViewAccess(
+      id,
+      workspaceId,
+      userId,
+    ))
+  ) {
+    return task;
+  }
+
+  throw new NotFoundException(
+    'Task not found',
+  );
+}
+
+async getUpdates(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+  mode?: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException(
+      'Task not found',
+    );
+  }
+
+  const directAccess =
+    task.createdBy === userId ||
+    task.members.some(
+      (member) => member.userId === userId,
+    );
+
+  const viewAccess =
+    mode === 'view' &&
+    (await this.hasViewAccess(
+      taskId,
+      workspaceId,
+      userId,
+    ));
+
+  if (!directAccess && !viewAccess) {
+    throw new NotFoundException(
+      'Task not found',
+    );
   }
 
   return this.taskUpdateModel
@@ -824,22 +976,42 @@ await this.notificationsService.create(
       message: 'Task deleted successfully',
     };
   }
-async getComments(
+
+  async getComments(
   taskId: string,
   workspaceId: string,
   userId: string,
+  mode?: string,
 ) {
   const task = await this.taskModel.findOne({
     _id: taskId,
     workspaceId,
-    $or: [
-      { createdBy: userId },
-      { 'members.userId': userId },
-    ],
   });
 
   if (!task) {
-    throw new NotFoundException('Task not found');
+    throw new NotFoundException(
+      'Task not found',
+    );
+  }
+
+  const directAccess =
+    task.createdBy === userId ||
+    task.members.some(
+      (member) => member.userId === userId,
+    );
+
+  const viewAccess =
+    mode === 'view' &&
+    (await this.hasViewAccess(
+      taskId,
+      workspaceId,
+      userId,
+    ));
+
+  if (!directAccess && !viewAccess) {
+    throw new NotFoundException(
+      'Task not found',
+    );
   }
 
   return this.taskCommentModel
