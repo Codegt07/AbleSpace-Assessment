@@ -26,6 +26,7 @@ import useTaskDetails from "@/hooks/useTaskDetails";
 import useTaskMutations from "@/hooks/useTaskMutations";
 import useWorkspaceUsers from "@/hooks/useWorkSpaceUsers";
 import useTaskComments from "@/hooks/useTaskComments";
+import useTaskViews from "@/hooks/useTaskViews";
 
 
 export default function TaskDetailsPage() {
@@ -74,6 +75,13 @@ const {
   setComments,
   setTaskSettings,
 } = useTaskDetails(taskId, viewOnly);
+
+const {
+  viewCount,
+  viewers,
+  showViewers,
+  toggleViewers,
+} = useTaskViews(taskId, currentUserId, viewOnly);
 
 const {
   workspaceUsers,
@@ -286,7 +294,12 @@ const handleEditTask = () => {
               onDelete={handleDeleteTask}
               onSettings={() => setShowTaskSettingsModal(true)}
               onLeave={handleLeaveTask}
-            />
+              viewCount={viewCount}
+              viewers={viewers}
+              showViewers={showViewers}
+              onToggleViewers={toggleViewers}
+              getUser={getUser}
+/>
 
             <div className="order-2 mt-5 flex items-center gap-3 lg:order-none">
               <span className="text-[14px] font-medium text-[var(--text)]">Properties</span>

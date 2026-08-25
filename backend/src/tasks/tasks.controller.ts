@@ -82,8 +82,38 @@ getSubtasks(
     );
   }
 
+    @Post(':id/views')
+  recordView(
+    @Param('id') id: string,
+    @Query('workspaceId') workspaceId: string,
+    @Query('userId') userId: string,
+    @Query('mode') mode?: string,
+  ) {
+    return this.tasksService.recordView(
+      id,
+      workspaceId,
+      userId,
+      mode,
+    );
+  }
+
+  @Get(':id/views')
+  getViewers(
+    @Param('id') id: string,
+    @Query('workspaceId') workspaceId: string,
+    @Query('userId') userId: string,
+    @Query('mode') mode?: string,
+  ) {
+    return this.tasksService.getViewers(
+      id,
+      workspaceId,
+      userId,
+      mode,
+    );
+  }
+
   @Get('projects')
-getProjects(
+ getProjects(
   @Query('workspaceId') workspaceId: string,
   @Query('userId') userId: string,
 ) {

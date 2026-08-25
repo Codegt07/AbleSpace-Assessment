@@ -22,6 +22,11 @@ import {
   TaskCommentDocument,
 } from './schemas/task-comment.schema';
 
+import {
+  TaskView,
+  TaskViewDocument,
+} from './schemas/task-view.schema';
+
 import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -34,6 +39,9 @@ export class TasksService {
   constructor(
     @InjectModel(Task.name)
     private readonly taskModel: Model<TaskDocument>,
+
+    @InjectModel(TaskView.name)
+    private readonly taskViewModel: Model<TaskViewDocument>,
 
     @InjectModel(TaskUpdate.name)
     private readonly taskUpdateModel: Model<TaskUpdateDocument>,
@@ -446,6 +454,116 @@ async getUpdates(
     .sort({ createdAt: -1 })
     .exec();
 }
+
+  async recordView(
+    taskId: string,
+    workspaceId: string,
+    userId: string,
+    mode?: string,
+  ) {
+    const task = await this.taskModel.findOne({
+      _id: taskId,
+      workspaceId,
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    const directAccess =
+      task.createdBy === userId ||
+      task.members.some((member) => member.userId === userId);
+
+    const viewAccess =
+      mode === 'view' &&
+      (await this.hasViewAccess(
+        taskId,
+        workspaceId,
+        userId,
+      ));
+
+    if (!directAccess && !viewAccess) {
+      throw new NotFoundException('Task not found');
+    }
+
+    try {
+      const existingView = await this.taskViewModel.findOne({
+        taskId,
+        userId,
+      });
+
+      if (existingView) {
+        return {
+          viewed: false,
+          message: 'Task already viewed',
+        };
+      }
+
+      await this.taskViewModel.create({
+        taskId,
+        userId,
+      });
+
+      await this.createUpdate(
+        taskId,
+        userId,
+        'Viewed this task',
+      );
+
+      return {
+        viewed: true,
+        message: 'Task view recorded',
+      };
+    } catch (error: any) {
+      // Duplicate key means another request already recorded the view.
+      if (error?.code === 11000) {
+        return {
+          viewed: false,
+          message: 'Task already viewed',
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  async getViewers(
+    taskId: string,
+    workspaceId: string,
+    userId: string,
+    mode?: string,
+  ) {
+    const task = await this.taskModel.findOne({
+      _id: taskId,
+      workspaceId,
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    const directAccess =
+      task.createdBy === userId ||
+      task.members.some((member) => member.userId === userId);
+
+    const viewAccess =
+      mode === 'view' &&
+      (await this.hasViewAccess(
+        taskId,
+        workspaceId,
+        userId,
+      ));
+
+    if (!directAccess && !viewAccess) {
+      throw new NotFoundException('Task not found');
+    }
+
+    return this.taskViewModel
+      .find({ taskId })
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
 
 async update(
   id: string,
