@@ -2113,6 +2113,8 @@ const handleSaveTaskSettings = async () => {
             setSubtaskLabels("");
           }}
           onSubmit={handleCreateSubtask}
+          addingTask={creatingSubtask}
+          showAddTaskWaitMessage={false}
         />
 
         <TaskFormModal
@@ -2136,6 +2138,8 @@ const handleSaveTaskSettings = async () => {
           setEditingTaskId(null);
         }}
         onSubmit={handleUpdateTask}
+        addingTask={updatingTask}
+        showAddTaskWaitMessage={false}
       />
 
 {showMemberModal && (
