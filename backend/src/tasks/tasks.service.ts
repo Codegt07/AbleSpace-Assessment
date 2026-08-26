@@ -31,7 +31,7 @@ import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
-
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 
 @Injectable()
@@ -50,7 +50,10 @@ export class TasksService {
     private readonly taskCommentModel: Model<TaskCommentDocument>,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly cloudinaryService: CloudinaryService
+    
+    
 
   ) {}
 
@@ -886,6 +889,200 @@ await this.notificationsService.create(
   `You were added to task "${task.title}"`,
   id,
 );
+
+  return task.save();
+}
+
+async uploadTaskResource(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+  file: Express.Multer.File,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  const isCreator = task.createdBy === userId;
+
+  const isTaskMember = task.members.some(
+    (member) => member.userId === userId,
+  );
+
+  if (!isCreator && !isTaskMember) {
+    throw new ForbiddenException(
+      'You are not part of this task',
+    );
+  }
+
+  const allowedMimeTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
+  if (!allowedMimeTypes.includes(file.mimetype)) {
+    throw new BadRequestException(
+      'Only PDF, DOC and DOCX files are allowed',
+    );
+  }
+
+  const uploadedFile =
+    await this.cloudinaryService.uploadFile(file);
+
+    task.resources.push({
+    type: 'file',
+    name: file.originalname,
+    url: uploadedFile.url,
+    mimeType: file.mimetype,
+    size: file.size,
+    addedBy: userId,
+    publicId: uploadedFile.publicId,
+    resourceType: uploadedFile.resourceType,
+  });
+
+  await this.createUpdate(
+    taskId,
+    userId,
+    `Added resource "${file.originalname}"`,
+  );
+
+  return task.save();
+}
+
+async removeTaskResource(
+  taskId: string,
+  resourceId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  const isCreator = task.createdBy === userId;
+
+  const isTaskMember = task.members.some(
+    (member) => member.userId === userId,
+  );
+
+  if (!isCreator) {
+  throw new ForbiddenException(
+    'Only the task owner can remove resources',
+  );
+  }
+
+  const resourceIndex = task.resources.findIndex(
+    (item) => item._id?.toString() === resourceId,
+  );
+
+  if (resourceIndex === -1) {
+    throw new NotFoundException(
+      'Resource not found',
+    );
+  }
+
+  const resource = task.resources[resourceIndex];
+
+  if (
+    resource.type === 'file' &&
+    resource.publicId
+  ) {
+    await this.cloudinaryService.deleteFile(
+      resource.publicId,
+      resource.resourceType || 'image',
+    );
+  }
+
+  task.resources.splice(resourceIndex, 1);
+
+  await this.createUpdate(
+    taskId,
+    userId,
+    `Removed resource "${resource.name}"`,
+  );
+
+  return task.save();
+}
+
+async addTaskResourceLink(
+  taskId: string,
+  workspaceId: string,
+  userId: string,
+  name: string,
+  url: string,
+) {
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  const isCreator = task.createdBy === userId;
+
+  const isTaskMember = task.members.some(
+    (member) => member.userId === userId,
+  );
+
+  if (!isCreator && !isTaskMember) {
+    throw new ForbiddenException(
+      'You are not part of this task',
+    );
+  }
+
+  if (!name?.trim()) {
+    throw new BadRequestException(
+      'Resource name is required',
+    );
+  }
+
+  if (!url?.trim()) {
+    throw new BadRequestException(
+      'Resource URL is required',
+    );
+  }
+
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(url.trim());
+  } catch {
+    throw new BadRequestException(
+      'Please provide a valid URL',
+    );
+  }
+
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new BadRequestException(
+      'Only HTTP and HTTPS links are allowed',
+    );
+  }
+
+  task.resources.push({
+    type: 'link',
+    name: name.trim(),
+    url: parsedUrl.toString(),
+    addedBy: userId,
+  });
+
+  await this.createUpdate(
+    taskId,
+    userId,
+    `Added resource link "${name.trim()}"`,
+  );
 
   return task.save();
 }

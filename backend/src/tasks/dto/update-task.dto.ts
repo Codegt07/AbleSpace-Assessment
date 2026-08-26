@@ -6,6 +6,8 @@ import {
   IsString,
 } from 'class-validator';
 
+import { CreateTaskResourceDto } from './create-task.dto';
+
 export class UpdateTaskDto {
   @IsString()
   @IsOptional()
@@ -44,8 +46,8 @@ export class UpdateTaskDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  resources?: string[];
-
+  resources?: CreateTaskResourceDto[];
+  
   @IsString()
   @IsOptional()
   projectId?: string;

@@ -19,6 +19,7 @@ import {
   TaskViewSchema,
 } from './schemas/task-view.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -41,9 +42,11 @@ import { NotificationsModule } from '../notifications/notifications.module';
 }
 ]),
     WorkspaceMembersModule,
-    NotificationsModule
+    NotificationsModule,
+    CloudinaryModule,
   ],
   controllers: [TasksController],
-  providers: [TasksService],
+  providers: [TasksService]
+  
 })
 export class TasksModule {}

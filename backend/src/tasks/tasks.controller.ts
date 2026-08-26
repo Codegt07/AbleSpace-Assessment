@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,12 +8,17 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 import { UpdateTaskSettingsDto } from './dto/update-task-settings.dto';
+
 
 @Controller('tasks')
 export class TasksController {
@@ -82,6 +88,58 @@ getSubtasks(
     );
   }
 
+  @Post(':id/resources/file')
+@UseInterceptors(FileInterceptor('file'))
+uploadTaskResource(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+  @UploadedFile() file: Express.Multer.File,
+) {
+  if (!file) {
+    throw new BadRequestException('File is required');
+  }
+
+  return this.tasksService.uploadTaskResource(
+    id,
+    workspaceId,
+    userId,
+    file,
+  );
+}
+
+@Delete(':id/resources/:resourceId')
+removeTaskResource(
+  @Param('id') id: string,
+  @Param('resourceId') resourceId: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.removeTaskResource(
+    id,
+    resourceId,
+    workspaceId,
+    userId,
+  );
+}
+
+@Post(':id/resources/link')
+addTaskResourceLink(
+  @Param('id') id: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+  @Body('name') name: string,
+  @Body('url') url: string,
+) {
+  return this.tasksService.addTaskResourceLink(
+    id,
+    workspaceId,
+    userId,
+    name,
+    url,
+  );
+}
+
     @Post(':id/views')
   recordView(
     @Param('id') id: string,
@@ -122,6 +180,8 @@ getSubtasks(
     userId,
   );
 }
+
+
 
   @Get(':id')
   findOne(

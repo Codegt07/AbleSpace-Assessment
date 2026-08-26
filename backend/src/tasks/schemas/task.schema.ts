@@ -1,7 +1,42 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type TaskDocument = HydratedDocument<Task>;
+
+@Schema({ _id: true })
+export class TaskResource {
+  _id?: Types.ObjectId;
+
+  @Prop({
+    required: true,
+    enum: ['link', 'file'],
+  })
+  type: 'link' | 'file';
+
+  @Prop({ required: true, trim: true })
+  name: string;
+
+  @Prop({ required: true })
+  url: string;
+
+  @Prop()
+  mimeType?: string;
+
+  @Prop()
+  size?: number;
+
+  @Prop({ required: true })
+  addedBy: string;
+
+  @Prop()
+  publicId?: string;
+
+  @Prop()
+  resourceType?: string;
+}
+
+export const TaskResourceSchema =
+  SchemaFactory.createForClass(TaskResource);
 
 @Schema({ _id: false })
 export class TaskMember {
@@ -41,11 +76,11 @@ export class Task {
   })
   status: string;
 
- @Prop({
-  enum: ['Urgent', 'High', 'Medium', 'Low'],
-  default: 'Medium',
-})
-priority?: string;
+  @Prop({
+    enum: ['Urgent', 'High', 'Medium', 'Low'],
+    default: 'Medium',
+  })
+  priority?: string;
 
   @Prop({
     type: [
@@ -81,7 +116,7 @@ priority?: string;
   projectId?: string;
 
   @Prop()
- startDate?: Date;
+  startDate?: Date;
 
   @Prop()
   dueDate?: Date;
@@ -89,8 +124,11 @@ priority?: string;
   @Prop({ type: [String], default: [] })
   labels: string[];
 
-  @Prop({ type: [String], default: [] })
-  resources: string[];
+  @Prop({
+    type: [TaskResourceSchema],
+    default: [],
+  })
+  resources: TaskResource[];
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

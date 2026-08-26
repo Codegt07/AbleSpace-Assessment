@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TaskFormModal from "@/components/TaskFormModal";
@@ -27,6 +27,7 @@ import useTaskMutations from "@/hooks/useTaskMutations";
 import useWorkspaceUsers from "@/hooks/useWorkSpaceUsers";
 import useTaskComments from "@/hooks/useTaskComments";
 import useTaskViews from "@/hooks/useTaskViews";
+import TaskResources from "@/components/task-details/TaskResources";
 
 
 export default function TaskDetailsPage() {
@@ -48,9 +49,6 @@ const [taskStatus, setTaskStatus] =
 const [taskPriority, setTaskPriority] = useState("Medium");
 const [taskDueDate, setTaskDueDate] = useState("");
 const [taskLabels, setTaskLabels] = useState("");
-const [localResources, setLocalResources] = useState<File[]>([]);
-const resourceInputRef = useRef<HTMLInputElement | null>(null);
-
 const [subtaskTitle, setSubtaskTitle] = useState("");
 const [subtaskDescription, setSubtaskDescription] = useState("");
 const [subtaskStatus, setSubtaskStatus] =
@@ -330,53 +328,12 @@ const handleEditTask = () => {
               </div>
             </div>
 
-            <div className="order-4 mt-4 flex items-center gap-4 sm:gap-7 lg:order-none">
-              <span className="w-[58px] shrink-0 text-[13px] font-medium text-[var(--text)] sm:text-[14px]">Resources</span>
-              <input
-              ref={resourceInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-
-                if (!file) return;
-
-                setLocalResources((previous) => [...previous, file]);
-
-                event.target.value = "";
-              }}
+            <TaskResources
+              task={task}
+              viewOnly={viewOnly}
+              isCreator={isCreator}
+              setTask={setTask}
             />
-
-            <button
-              type="button"
-              onClick={() => resourceInputRef.current?.click()}
-              className="flex min-w-0 flex-wrap items-center gap-1.5 text-[12px] cursor-pointer text-[var(--muted)] hover:text-[var(--text)] sm:text-[13px]"
-            >
-              <PaperclipIcon />
-              Add document or link...
-            </button>
-            </div>
-
-            {localResources.length > 0 && (
-              <div className="order-5 mt-2 ml-[62px] flex flex-col gap-2 sm:ml-[90px] lg:order-none">
-                {localResources.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="flex max-w-full w-fit items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2"
-                  >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#fff0f0] text-[11px] font-semibold text-[#ff4d4f]">
-                      PDF
-                    </div>
-
-                    <span className="max-w-[calc(100vw-150px)] truncate text-[12px] text-[var(--text)] sm:max-w-[260px] sm:text-[13px]">
-                      {file.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
             <TaskSubtasks
               subtasks={subtasks}
               viewOnly={viewOnly}

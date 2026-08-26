@@ -7,6 +7,18 @@ import {
   IsString,
 } from 'class-validator';
 
+export class CreateTaskResourceDto {
+  type: 'link' | 'file';
+
+  name: string;
+
+  url: string;
+
+  mimeType?: string;
+
+  size?: number;
+}
+
 export class CreateTaskDto {
   @IsString()
   @IsNotEmpty()
@@ -65,5 +77,7 @@ export class CreateTaskDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  resources?: string[];
+
+  resources?: CreateTaskResourceDto[];
+
 }

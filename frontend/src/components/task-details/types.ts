@@ -6,6 +6,18 @@ export type TaskMember = {
   status: TaskStatus;
 };
 
+export type TaskResource = {
+  _id: string;
+  type: "link" | "file";
+  name: string;
+  url: string;
+  mimeType?: string;
+  size?: number;
+  addedBy: string;
+  publicId?: string;
+  resourceType?: string;
+};
+
 export type Task = {
   _id: string;
   title: string;
@@ -18,7 +30,7 @@ export type Task = {
   createdBy: string;
   workspaceId: string;
   labels?: string[];
-  resources?: any[];
+  resources?: TaskResource[];
   startDate?: string;
   dueDate?: string;
   allowMembersToAddMembers?: boolean;
