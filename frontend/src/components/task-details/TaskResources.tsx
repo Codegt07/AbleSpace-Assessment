@@ -243,7 +243,7 @@ export default function TaskResources({
             </>
           )}
 
-          {task.resources?.length > 0 && (
+          {(task.resources?.length ?? 0) > 0 && (
             <div className="mt-2 flex flex-col gap-2">
               {(task.resources as TaskResource[]).map(
                 (resource) => {
