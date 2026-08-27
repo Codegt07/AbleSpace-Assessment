@@ -99,44 +99,51 @@ export class TasksService {
   });
 }
 
-  async create(createTaskDto: CreateTaskDto) {
-    const {
-      members = [],
-      ...taskData
-    } = createTaskDto;
+async create(createTaskDto: CreateTaskDto) {
+  const {
+    members = [],
+    ...taskData
+  } = createTaskDto;
 
-    const workspaceMembers =
-      await this.workspaceMembersService.findByWorkspace(
-        createTaskDto.workspaceId,
-      );
-
-    const validMemberIds = new Set(
-      workspaceMembers.map((member) => member.userId),
+  const workspaceMembers =
+    await this.workspaceMembersService.findByWorkspace(
+      createTaskDto.workspaceId,
     );
 
-    const invalidMembers = members.filter(
-      (userId) => !validMemberIds.has(userId),
+  const validMemberIds = new Set(
+    workspaceMembers.map(
+      (member) => member.userId,
+    ),
+  );
+
+  const invalidMembers = members.filter(
+    (userId) => !validMemberIds.has(userId),
+  );
+
+  if (invalidMembers.length > 0) {
+    throw new BadRequestException(
+      'One or more selected users are not members of this workspace',
     );
-
-    if (invalidMembers.length > 0) {
-      throw new BadRequestException(
-        'One or more selected users are not members of this workspace',
-      );
-    }
-
-    const task = await this.taskModel.create({
-      ...taskData,
-      members: members.map((userId) => ({
-        userId,
-        status: 'To Do',
-      })),
-    });
-
-    this.updateOverallStatus(task);
-    await task.save();
-
-    return task;
   }
+
+  const initialStatus =
+    createTaskDto.status || 'To Do';
+
+  const task = await this.taskModel.create({
+    ...taskData,
+    status: initialStatus,
+    members: members.map((userId) => ({
+      userId,
+      status: initialStatus,
+    })),
+  });
+
+  this.updateOverallStatus(task);
+
+  await task.save();
+
+  return task;
+}
 
   async createSubtask(
   parentTaskId: string,
