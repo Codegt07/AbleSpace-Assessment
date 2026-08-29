@@ -62,7 +62,7 @@ export type UseTaskBoardResult = {
     newStatus: TaskStatus,
   ) => Promise<void>;
 
-  handleAddTask: () => Promise<void>;
+  handleAddTask: () => Promise<Task | null>;
   handleUpdateTask: () => Promise<void>;
   handleDeleteTask: (taskId: string) => Promise<void>;
 };
@@ -289,16 +289,16 @@ export default function useTaskBoard({
   );
 
   const handleAddTask = useCallback(
-    async () => {
+    async (): Promise<Task | null> => {
       if (!title.trim()) {
         toast.error(
           "Task title is required",
         );
-        return;
+        return null;
       }
 
       if (addingTask) {
-        return;
+        return null;
       }
 
       setAddingTask(true);
@@ -313,7 +313,7 @@ export default function useTaskBoard({
         const guest = getGuest();
 
         if (!guest) {
-          return;
+          return null;
         }
 
         const response = await fetch(
@@ -369,6 +369,8 @@ export default function useTaskBoard({
         await refreshNotifications?.(
           true,
         );
+
+        return newTask as Task;
       } catch (error) {
         console.error(
           "Add Task Error:",
@@ -378,6 +380,7 @@ export default function useTaskBoard({
         toast.error(
           "Failed to create task",
         );
+        return null;
       } finally {
         window.clearTimeout(
           waitMessageTimer,

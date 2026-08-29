@@ -1,18 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
-
-type Task = {
-  _id: string;
-  title: string;
-  description?: string;
-  priority?: string;
-  dueDate?: string;
-  createdBy: string;
-  members?: { userId: string; status: string }[];
-};
+import TaskFormModal from "@/components/TaskFormModal";
+import ProjectList, { type Project } from "@/components/ProjectList";
+import TaskBoardToolbar from "@/components/task-board/TaskBoardToolbar";
+import useTaskBoard, { type Task } from "@/hooks/useTaskBoard";
+import useTaskFilters from "@/hooks/useTaskFilters";
+import useTaskNotifications from "@/hooks/useTaskNotifications";
 
 type WorkspaceUser = {
   userId: string;
@@ -21,271 +17,195 @@ type WorkspaceUser = {
   avatar?: string;
 };
 
-function formatDate(date?: string) {
-  if (!date) return "No date";
 
-  return new Date(date).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
 
-function priorityClass(priority?: string) {
-  if (priority === "High" || priority === "Urgent") {
-    return "text-red-500";
-  }
-
-  if (priority === "Low") {
-    return "text-[var(--muted)]";
-  }
-
-  return "text-[var(--accent)]";
-}
+type ProjectItem = Project & { labels?: string[]; status: Task["status"] };
 
 export default function ProjectsPage() {
   const router = useRouter();
-
-  const [projects, setProjects] = useState<Task[]>([]);
+  const board = useTaskBoard();
+  const notifications = useTaskNotifications({
+    onOpenTask: (taskId) => router.push(`/tasks/${taskId}`),
+  });
+  const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [users, setUsers] = useState<WorkspaceUser[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const storedGuest = localStorage.getItem("guest");
+  const loadProjects = useCallback(async () => {
+    try {
+      const storedGuest = localStorage.getItem("guest");
+      if (!storedGuest) return;
+      const guest = JSON.parse(storedGuest) as { guestId?: string; workspaceId?: string };
+      if (!guest.guestId || !guest.workspaceId) return;
 
-        if (!storedGuest) {
-          setLoading(false);
-          return;
-        }
+      const [assignedResponse, tasksResponse, usersResponse] = await Promise.all([
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks/projects?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/workspace-members/users?workspaceId=${guest.workspaceId}`),
+      ]);
 
-        const guest = JSON.parse(storedGuest);
-
-        if (!guest.workspaceId || !guest.guestId) {
-          setLoading(false);
-          return;
-        }
-
-        const [projectsResponse, usersResponse] = await Promise.all([
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/tasks/projects?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
-          ),
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/workspace-members/users?workspaceId=${guest.workspaceId}`,
-          ),
-        ]);
-
-        if (!projectsResponse.ok) {
-          throw new Error("Failed to fetch projects");
-        }
-
-        const projectData = await projectsResponse.json();
-        setProjects(projectData);
-
-        if (usersResponse.ok) {
-          setUsers(await usersResponse.json());
-        }
-      } catch (error) {
-        console.error("Projects Error:", error);
-      } finally {
-        setLoading(false);
+      if (!assignedResponse.ok || !tasksResponse.ok) {
+        throw new Error("Failed to fetch projects");
       }
-    };
 
-    loadProjects();
+      const assigned = (await assignedResponse.json()) as Task[];
+      const allTasks = (await tasksResponse.json()) as Task[];
+      const workspaceUsers = usersResponse.ok
+        ? ((await usersResponse.json()) as WorkspaceUser[])
+        : [];
+
+      setUsers(workspaceUsers);
+      const nextUserMap = new Map(workspaceUsers.map((user) => [user.userId, user]));
+      const assignedIds = new Set(assigned.map((task) => task._id));
+      const ownTasks = allTasks.filter((task) => task.createdBy === guest.guestId && !assignedIds.has(task._id));
+
+      const merged = [...assigned.map((task) => ({ ...task, viewOnly: true })), ...ownTasks.map((task) => ({ ...task, viewOnly: false }))];
+
+      setProjects(merged.map((task) => {
+        const lead = nextUserMap.get(task.createdBy);
+        return {
+          _id: task._id,
+          title: task.title,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          leadName: lead?.name || lead?.username || task.createdBy,
+          leadAvatar: lead?.avatar,
+          viewOnly: task.viewOnly,
+          labels: task.labels || [],
+          status: task.status,
+        };
+      }));
+    } catch (error) {
+      console.error("Projects Error:", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const userMap = useMemo(
-    () => new Map(users.map((user) => [user.userId, user])),
-    [users],
+  useEffect(() => {
+    void loadProjects();
+  }, [loadProjects]);
+
+  const filterTasks: Task[] = useMemo(
+    () => projects.map((project) => ({
+      _id: project._id,
+      title: project.title,
+      status: project.status,
+      priority: project.priority,
+      assignee: project.leadName,
+      dueDate: project.dueDate,
+      labels: project.labels,
+    })),
+    [projects],
   );
+
+  const filters = useTaskFilters(filterTasks);
+
+  const visibleProjects = useMemo(() => {
+    const ids = new Set(filters.filteredTasks.map((task) => task._id));
+    return projects.filter((project) => ids.has(project._id));
+  }, [filters.filteredTasks, projects]);
+
+  const handleOpenProject = (project: ProjectItem) => {
+    router.push(project.viewOnly ? `/tasks/${project._id}?mode=view` : `/tasks/${project._id}`);
+  };
+
+  const handleCreateProject = async () => {
+    const created = await board.handleAddTask();
+    if (created) await loadProjects();
+  };
+
+  const handleUpdateProject = async () => {
+    await board.handleUpdateTask();
+    await loadProjects();
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    await board.handleDeleteTask(projectId);
+    await loadProjects();
+  };
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--text)]">
       <Sidebar />
-
       <main className="ml-0 min-h-screen pb-16 lg:ml-[240px] lg:pb-0">
         <div className="h-[52px] border-b border-[var(--border)]" />
-
         <div className="px-4 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-7">
-          <div className="mb-5 sm:mb-6">
-            <h1 className="text-[20px] font-semibold text-[var(--accent)]">
-              Projects
-            </h1>
+          <TaskBoardToolbar
+            pageTitle="Projects"
+            addLabel="Add Project"
+            searchPlaceholder="Search projects..."
+            showViewToggle={false}
+            showNotificationButton={false}
+            fieldOptionsOverride={["Priority", "Members", "Due Date"]}
+            viewMode={filters.viewMode}
+            setViewMode={filters.setViewMode}
+            searchQuery={filters.searchQuery}
+            setSearchQuery={filters.setSearchQuery}
+            filterStatus={filters.filterStatus}
+            setFilterStatus={filters.setFilterStatus}
+            filterPriority={filters.filterPriority}
+            setFilterPriority={filters.setFilterPriority}
+            filterMember={filters.filterMember}
+            setFilterMember={filters.setFilterMember}
+            filterDueDate={filters.filterDueDate}
+            setFilterDueDate={filters.setFilterDueDate}
+            filterLabel={filters.filterLabel}
+            setFilterLabel={filters.setFilterLabel}
+            visibleFields={filters.visibleFields}
+            setVisibleFields={filters.setVisibleFields}
+            memberOptions={filters.memberOptions}
+            labelOptions={filters.labelOptions}
+            clearFilters={filters.clearFilters}
+            openAddTask={board.openAddTask}
+            notifications={notifications.notifications}
+            showNotifications={notifications.showNotifications}
+            setShowNotifications={notifications.setShowNotifications}
+            notificationsLoading={notifications.notificationsLoading}
+            unreadNotificationCount={notifications.unreadNotificationCount}
+            markNotificationAsRead={notifications.markNotificationAsRead}
+            markAllNotificationsAsRead={notifications.markAllNotificationsAsRead}
+            formatNotificationTime={notifications.formatNotificationTime}
+            getNotificationIcon={notifications.getNotificationIcon}
+          />
 
-            <p className="mt-1 max-w-[420px] text-[11px] leading-4 text-[var(--muted)]">
-              Parent tasks with subtasks assigned to you.
-            </p>
-          </div>
+          {loading ? (
+            <div className="flex h-[160px] items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--muted)]">Loading projects...</div>
+          ) : visibleProjects.length === 0 ? (
+            <div className="flex h-[160px] items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[11px] text-[var(--muted)]">No projects yet.</div>
+          ) : (
+            <ProjectList
+              projects={visibleProjects}
+              visibleFields={filters.visibleFields}
+              onOpenProject={handleOpenProject}
+              onEditProject={board.openEditTask}
+              onDeleteProject={handleDeleteProject}
+              onAddProject={() => board.openAddTask("To Do")}
+            />
+          )}
 
-          <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-            {loading ? (
-              <div className="flex h-[160px] items-center justify-center px-4 text-center text-[11px] text-[var(--muted)]">
-                Loading projects...
-              </div>
-            ) : projects.length === 0 ? (
-              <div className="flex h-[180px] items-center justify-center px-4 text-center text-[11px] text-[var(--muted)]">
-                No projects yet.
-              </div>
-            ) : (
-              <>
-                {/* Desktop */}
-                <div className="hidden md:block">
-                  <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr] border-b border-[var(--border)] px-5">
-                    <div className="py-3.5 text-[11px] font-semibold text-[var(--muted)]">
-                      Project
-                    </div>
-
-                    <div className="py-3.5 text-[11px] font-semibold text-[var(--muted)]">
-                      Lead
-                    </div>
-
-                    <div className="py-3.5 text-[11px] font-semibold text-[var(--muted)]">
-                      Priority
-                    </div>
-
-                    <div className="py-3.5 text-[11px] font-semibold text-[var(--muted)]">
-                      Due Date
-                    </div>
-                  </div>
-
-                  {projects.map((project) => {
-                    const lead = userMap.get(project.createdBy);
-
-                    const leadName =
-                      lead?.name ||
-                      lead?.username ||
-                      project.createdBy;
-
-                    return (
-                      <button
-                        key={project._id}
-                        type="button"
-                        onClick={() =>
-                          router.push(
-                            `/tasks/${project._id}?mode=view`,
-                          )
-                        }
-                        className="grid w-full grid-cols-[2fr_1.2fr_1fr_1fr] items-center border-b border-[var(--border)] px-5 text-left last:border-b-0 hover:bg-[var(--hover)]"
-                      >
-                        <div className="min-w-0 py-4 pr-4">
-                          <p className="truncate text-[13px] font-medium text-[var(--text)]">
-                            {project.title}
-                          </p>
-
-                          <p className="mt-1 truncate text-[10px] text-[var(--muted)]">
-                            View project
-                          </p>
-                        </div>
-
-                        <div className="flex min-w-0 items-center gap-2 py-4">
-                          <div className="flex h-[25px] w-[25px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[9px] font-medium text-white">
-                            {lead?.avatar ? (
-                              <img
-                                src={lead.avatar}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              leadName.charAt(0).toUpperCase()
-                            )}
-                          </div>
-
-                          <span className="truncate text-[11px] text-[var(--text)]">
-                            {leadName}
-                          </span>
-                        </div>
-
-                        <div
-                          className={`py-4 text-[11px] font-medium ${priorityClass(
-                            project.priority,
-                          )}`}
-                        >
-                          {project.priority || "Medium"}
-                        </div>
-
-                        <div className="py-4 text-[11px] text-[var(--muted)]">
-                          {formatDate(project.dueDate)}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile */}
-                <div className="md:hidden">
-                  {projects.map((project) => {
-                    const lead = userMap.get(project.createdBy);
-
-                    const leadName =
-                      lead?.name ||
-                      lead?.username ||
-                      project.createdBy;
-
-                    return (
-                      <button
-                        key={project._id}
-                        type="button"
-                        onClick={() =>
-                          router.push(
-                            `/tasks/${project._id}?mode=view`,
-                          )
-                        }
-                        className="flex w-full flex-col gap-3 border-b border-[var(--border)] px-4 py-4 text-left last:border-b-0 active:bg-[var(--hover)]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[13px] font-medium text-[var(--text)]">
-                              {project.title}
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-[var(--muted)]">
-                              View project
-                            </p>
-                          </div>
-
-                          <span
-                            className={`shrink-0 text-[11px] font-medium ${priorityClass(
-                              project.priority,
-                            )}`}
-                          >
-                            {project.priority || "Medium"}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[9px] font-medium text-white">
-                              {lead?.avatar ? (
-                                <img
-                                  src={lead.avatar}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                leadName
-                                  .charAt(0)
-                                  .toUpperCase()
-                              )}
-                            </div>
-
-                            <span className="truncate text-[11px] text-[var(--text)]">
-                              {leadName}
-                            </span>
-                          </div>
-
-                          <span className="shrink-0 text-[10px] text-[var(--muted)]">
-                            {formatDate(project.dueDate)}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
+          <TaskFormModal
+            open={board.showTaskModal}
+            editingTaskId={board.editingTaskId}
+            mode="task"
+            entityName="Project"
+            title={board.title}
+            description={board.description}
+            selectedStatus={board.selectedStatus}
+            priority={board.priority}
+            dueDate={board.dueDate}
+            labels={board.labels}
+            setTitle={board.setTitle}
+            setDescription={board.setDescription}
+            setSelectedStatus={board.setSelectedStatus}
+            setPriority={board.setPriority}
+            setDueDate={board.setDueDate}
+            setLabels={board.setLabels}
+            onClose={board.resetTaskForm}
+            onSubmit={board.editingTaskId ? handleUpdateProject : handleCreateProject}
+            addingTask={board.addingTask}
+            showAddTaskWaitMessage={board.showAddTaskWaitMessage}
+          />
         </div>
       </main>
     </div>

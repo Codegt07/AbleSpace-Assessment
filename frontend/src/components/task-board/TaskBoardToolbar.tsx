@@ -117,6 +117,14 @@ type TaskBoardToolbarProps = {
   labelOptions: string[];
   clearFilters: () => void;
   openAddTask: (status: TaskStatus) => void;
+
+  pageTitle?: string;
+  addLabel?: string;
+  searchPlaceholder?: string;
+  showViewToggle?: boolean;
+  showNotificationButton?: boolean;
+  fieldOptionsOverride?: string[];
+
   notifications: Notification[];
   showNotifications: boolean;
   setShowNotifications: Dispatch<SetStateAction<boolean>>;
@@ -149,6 +157,12 @@ export default function TaskBoardToolbar({
   labelOptions,
   clearFilters,
   openAddTask,
+  pageTitle = "Tasks",
+  addLabel = "Add Task",
+  searchPlaceholder = "Search tasks...",
+  showViewToggle = true,
+  showNotificationButton = true,
+  fieldOptionsOverride,
   notifications,
   showNotifications,
   setShowNotifications,
@@ -159,7 +173,13 @@ export default function TaskBoardToolbar({
   formatNotificationTime,
   getNotificationIcon,
 }: TaskBoardToolbarProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
+  
+  const [searchOpen, setSearchOpen] = useState(() => {
+  if (typeof window === "undefined") return false;
+
+  return window.innerWidth < 640;
+});
+
   const [showFields, setShowFields] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [activeFilter, setActiveFilter] =
@@ -183,11 +203,13 @@ export default function TaskBoardToolbar({
     setShowFields(false);
   };
 
+  const availableFields = fieldOptionsOverride || fieldOptions;
+
   return (
     <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex w-full items-center justify-between lg:w-auto">
         <h1 className="px-1 text-[20px] font-semibold text-[var(--accent)] sm:px-0">
-          Tasks
+          {pageTitle}
         </h1>
 
         <button
@@ -195,7 +217,7 @@ export default function TaskBoardToolbar({
           onClick={() => openAddTask("To Do")}
           className="flex h-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] px-4 text-[11px] font-medium text-[var(--accent)] hover:bg-[var(--hover)] lg:hidden"
         >
-          + Add Task
+          + {addLabel}
         </button>
       </div>
 
@@ -211,7 +233,7 @@ export default function TaskBoardToolbar({
                 autoFocus
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search tasks..."
+                placeholder={searchPlaceholder}
                 className="w-full bg-transparent text-[14px] outline-none"
               />
             </div>
@@ -240,7 +262,8 @@ export default function TaskBoardToolbar({
 
             {showFields && (
               <div className="absolute right-0 top-[42px] z-50 w-[220px] max-w-[calc(100vw-24px)] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-lg">
-                <div className="mb-2 flex h-8 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--hover)]">
+                {showViewToggle && (
+                  <div className="mb-2 flex h-8 overflow-hidden rounded-md border border-[var(--border)] bg-[var(--hover)]">
                   <button
                     type="button"
                     onClick={() => setViewMode("list")}
@@ -266,10 +289,11 @@ export default function TaskBoardToolbar({
                     <span>▦</span>
                     Board
                   </button>
-                </div>
+                  </div>
+                )}
 
                 <div className="space-y-1">
-                  {fieldOptions.map((field) => {
+                  {availableFields.map((field) => {
                     const checked = visibleFields.includes(field);
 
                     return (
@@ -360,7 +384,7 @@ export default function TaskBoardToolbar({
     </div>
 
     {activeFilter && (
-      <div className="absolute right-[228px] top-[42px] z-50 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl">
+      <div className="fixed left-1/2 top-1/2 z-50 w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl sm:absolute sm:left-auto sm:top-[42px] sm:right-[228px] sm:translate-x-0 sm:translate-y-0">
         <div className="mb-1 flex items-center gap-1 border-b border-[var(--border)] pb-2">
           <button
             type="button"
@@ -501,11 +525,12 @@ export default function TaskBoardToolbar({
             onClick={() => openAddTask("To Do")}
             className="ml-8 hidden h-9 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 text-[12px] font-medium text-[var(--accent)] hover:bg-[var(--hover)] lg:flex"
           >
-            + Add Task
+            + {addLabel}
           </button>
 
-          <div className="relative ml-6">
-            <button
+          {showNotificationButton && (
+            <div className="relative ml-6">
+              <button
               type="button"
               onClick={toggleNotifications}
               className="relative flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--accent)] hover:bg-[var(--hover)]"
@@ -599,7 +624,8 @@ export default function TaskBoardToolbar({
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
