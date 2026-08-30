@@ -148,8 +148,8 @@ export default function TaskHeader({
             </button>
 
             {showViewers && (
-              <div className="absolute right-0 top-[36px] z-50 w-[260px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-xl">
-                <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="absolute right-0 top-[36px] z-50 w-[260px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 shadow-xl ">
+                <div className="mb-2 flex items-centerjustify-between gap-2">
                   <p className="text-[11px] font-semibold text-[var(--text)]">
                     Viewed by
                   </p>
@@ -163,7 +163,7 @@ export default function TaskHeader({
                     No viewers yet.
                   </p>
                 ) : (
-                  <div className="max-h-[220px] space-y-2 overflow-y-auto">
+                  <div className="max-h-[220px] space-y-2 overflow-y-auto hide-scrollbar">
                     {viewers.map((viewer) => {
                       const user = getUser(viewer.userId);
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Settings } from "lucide-react";
 
 type Theme = "light" | "dark";
 type Accent =
@@ -171,7 +172,7 @@ export default function Sidebar() {
         className="flex cursor-pointer items-center rounded-[8px] px-[8px] py-[4px] hover:bg-[var(--hover)]"
       >
         <div className="flex items-center gap-[8px]">
-          <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-semibold text-white">
+          <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-semibold text-[var(--accent-foreground)]">
             {avatarLetter}
           </div>
 
@@ -337,17 +338,21 @@ export default function Sidebar() {
                       setTheme(item);
                       setThemeOpen(false);
                     }}
-                    className={`flex h-[31px] w-full items-center justify-between rounded-[7px] px-[8px] text-[12px] capitalize hover:bg-[var(--hover)] ${
+                    className={`flex h-[31px] w-full items-center justify-between rounded-[7px] px-[8px] text-[12px] cursor-pointer capitalize hover:bg-[var(--hover)] ${
                       theme === item
                         ? "bg-[var(--active-bg)] text-[var(--accent)]"
                         : "text-[var(--text)]"
                     }`}
                   >
-                    {item}
+                    <span className="flex items-center gap-[7px]">
+                      <span className="text-[13px]">
+                        {item === "light" ? "☼" : "◔"}
+                      </span>
 
-                    {theme === item && (
-                      <span>✓</span>
-                    )}
+                      <span>{item}</span>
+                    </span>
+
+                    {theme === item && <span>✓</span>}
                   </button>
                 )
               )}
@@ -420,6 +425,7 @@ export default function Sidebar() {
           )}
 
           {/* Profile */}
+          {/* Settings */}
           <Link
             href="/profile"
             className={`flex h-[34px] w-full cursor-pointer items-center gap-[9px] rounded-[8px] px-[8px] text-[13px] font-medium ${
@@ -427,42 +433,12 @@ export default function Sidebar() {
                 ? "bg-[var(--active-bg)] text-[var(--accent)]"
                 : "text-[var(--text)] hover:bg-[var(--hover)]"
             }`}
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle
-                cx="12"
-                cy="8"
-                r="4"
-              />
-              <path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" />
-            </svg>
-
-            Profile
+           >
+            <Settings size={16} strokeWidth={1.8} />
+            Settings
           </Link>
         </div>
       </div>
-
-      {/* Bottom Profile Avatar */}
-      <Link
-        href="/profile"
-        aria-label="Open profile"
-        className={`absolute bottom-[20px] left-[16px] z-50 flex h-[38px] w-[38px] items-center justify-center rounded-full border text-[12px] font-medium transition-colors ${
-          isProfileActive
-            ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-            : "border-[var(--border)] bg-[var(--surface-strong)] text-white hover:bg-[var(--accent)]"
-        }`}
-      >
-        {avatarLetter}
-      </Link>
       </aside>
     </>
   );

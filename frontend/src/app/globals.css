@@ -13,6 +13,8 @@
   --active-bg: #eeeeee;
   --accent: #3b82f6;
   --accent-soft: #eff6ff;
+  --accent-foreground: #ffffff;
+  
 }
 
 :root[data-theme="dark"] {
@@ -27,6 +29,13 @@
   --hover: #222222;
   --active-bg: var(--accent-soft);
 }
+
+:root[data-theme="dark"][data-accent="black"] {
+  --accent: #f5f5f5;
+  --accent-soft: #262626;
+  --accent-foreground: #171717;
+}
+
 
 :root[data-accent="amber"] { --accent:#f59e0b; --accent-soft:#fff7e6; }
 :root[data-accent="blue"] { --accent:#3b82f6; --accent-soft:#eff6ff; }

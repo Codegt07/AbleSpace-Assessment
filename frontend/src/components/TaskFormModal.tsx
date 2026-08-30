@@ -71,7 +71,7 @@ export default function TaskFormModal({
 
           <div>
             <label className="text-[13px] font-medium text-[var(--text)]">Description</label>
-            <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Add a description" rows={3} className="mt-1 w-full resize-none rounded-lg border border-[var(--border)] px-3 py-2 text-[14px] outline-none focus:border-[var(--accent)]" />
+            <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Add a description" rows={3} className="mt-1 w-full resize-none rounded-lg border hide-scrollbar border-[var(--border)] px-3 py-2 text-[14px] outline-none focus:border-[var(--accent)]" />
           </div>
 
           <div>
@@ -102,7 +102,7 @@ export default function TaskFormModal({
 
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-9 cursor-pointer rounded-lg border border-[var(--border)] px-4 text-[13px] font-medium text-[var(--text)]">Cancel</button>
-          <button type="button" onClick={onSubmit} disabled={addingTask} className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] px-4 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-70">
+          <button type="button" onClick={onSubmit} disabled={addingTask} className="h-9 cursor-pointer rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] px-4 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-70">
             {addingTask ? "Creating..." : isEditing ? "Save Changes" : `Add ${actionName}`}
           </button>
         </div>

@@ -145,7 +145,7 @@ const handleLeaveWorkspace = async () => {
                 Profile picture
               </span>
 
-              <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-medium text-white">
+              <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-[10px] font-medium ">
                 {name?.charAt(0)?.toUpperCase() || "G"}
               </div>
             </div>
@@ -228,7 +228,7 @@ const handleLeaveWorkspace = async () => {
            <button
             type="button"
             onClick={() => setShowLeaveModal(true)}
-            className="h-8 w-[150px] cursor-pointer rounded-md bg-red-500 px-4 text-[11px] font-medium text-white hover:bg-red-600"
+            className="h-8 w-[150px] cursor-pointer rounded-md bg-[#fff1f0] px-4 text-[11px] font-medium text-[#d9534f] transition-colors hover:bg-[#ffe4e2]"
             >
             Leave Workspace
           </button>
@@ -252,7 +252,7 @@ const handleLeaveWorkspace = async () => {
               type="button"
               onClick={handleSaveChanges}
               disabled={saving}
-              className="h-[36px] cursor-pointer rounded-lg bg-[var(--accent)] px-5 text-[12px] font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-[36px] cursor-pointer rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] px-5 text-[12px] font-medium transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

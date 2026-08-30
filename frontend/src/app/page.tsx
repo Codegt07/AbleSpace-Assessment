@@ -113,6 +113,15 @@ const handleGuestLogin = async () => {
   };
 
   useEffect(() => {
+  const storedGuest = localStorage.getItem("guest");
+
+  if (storedGuest) {
+    router.replace("/tasks");
+  }
+}, [router]);
+
+
+  useEffect(() => {
     const loadGoogle = () => {
       if (!window.google) {
         return;
