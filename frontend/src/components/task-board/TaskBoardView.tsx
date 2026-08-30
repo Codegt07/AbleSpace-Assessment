@@ -3,6 +3,7 @@
 import BoardColumn from "../BoardColumn";
 import TaskList from "../TaskList";
 import type { Task, TaskStatus } from "@/hooks/useTaskBoard";
+import { useEffect, useState } from "react";
 
 const statuses: TaskStatus[] = [
   "To Do",
@@ -21,7 +22,10 @@ type TaskBoardViewProps = {
   openEditTask: (taskId: string) => void;
   handleDeleteTask: (taskId: string) => Promise<void>;
   handleDropTask: (taskId: string, newStatus: TaskStatus) => Promise<void>;
+  handleLeaveTask: (taskId: string) => Promise<void>;
 };
+
+
 
 export default function TaskBoardView({
   tasks,
@@ -33,6 +37,7 @@ export default function TaskBoardView({
   openEditTask,
   handleDeleteTask,
   handleDropTask,
+  handleLeaveTask,
 }: TaskBoardViewProps) {
   if (viewMode === "list") {
     return (
@@ -47,6 +52,22 @@ export default function TaskBoardView({
       />
     );
   }
+  const [currentUserId, setCurrentUserId] =
+  useState<string | null>(null);
+
+    useEffect(() => {
+      const storedGuest = localStorage.getItem("guest");
+
+      if (!storedGuest) return;
+
+      try {
+        const guest = JSON.parse(storedGuest);
+
+        setCurrentUserId(guest.guestId || null);
+      } catch {
+        setCurrentUserId(null);
+      }
+    }, []);
 
   return (
     <div className="mt-4 w-full pb-2 sm:mt-5 lg:mt-8">
@@ -76,6 +97,9 @@ export default function TaskBoardView({
                   : "No date",
                 labels: task.labels || [],
                 priority: task.priority || "Medium",
+                createdBy: task.createdBy,
+                members: task.members || [],
+                currentUserId,
               }))}
               onAddTask={() => openAddTask(status)}
               onOpenTask={openTask}
@@ -83,6 +107,7 @@ export default function TaskBoardView({
               onDeleteTask={handleDeleteTask}
               onDropTask={handleDropTask}
               visibleFields={visibleFields}
+              onLeaveTask={handleLeaveTask}
             />
           );
         })}

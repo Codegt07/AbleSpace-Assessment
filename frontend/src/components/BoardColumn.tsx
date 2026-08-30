@@ -2,6 +2,10 @@ import TaskCard from "./TaskCard";
 
 type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
+type TaskMember = {
+  userId: string;
+};
+
 type Task = {
   _id: string;
   title: string;
@@ -9,6 +13,10 @@ type Task = {
   dueDate: string;
   labels: string[];
   priority: string;
+
+  createdBy?: string;
+  members?: TaskMember[];
+  currentUserId: string | null;
 };
 
 type BoardColumnProps = {
@@ -20,6 +28,7 @@ type BoardColumnProps = {
   onEditTask: (taskId: string) => void;
   onDropTask: (taskId: string, status: TaskStatus) => void;
   visibleFields: string[];
+  onLeaveTask: (taskId: string) => Promise<void>;
 };
 
 export default function BoardColumn({
@@ -31,6 +40,7 @@ export default function BoardColumn({
   onEditTask,
   onDeleteTask,
   onDropTask,
+  onLeaveTask,
 }: BoardColumnProps) {
   return (
     <section
@@ -89,7 +99,11 @@ export default function BoardColumn({
             onOpen={() => onOpenTask(task._id)}
             onEdit={() => onEditTask(task._id)}
             onDelete={() => onDeleteTask(task._id)}
-          />
+            createdBy={task.createdBy}
+            members={task.members || []}
+            currentUserId={task.currentUserId}
+            onLeave={() => onLeaveTask(task._id)}
+            />
         ))}
       </div>
 

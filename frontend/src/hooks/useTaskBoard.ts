@@ -10,6 +10,10 @@ export type TaskStatus =
   | "Completed"
   | "On Hold";
 
+export type TaskMember = {
+  userId: string;
+};
+
 export type Task = {
   _id: string;
   title: string;
@@ -19,6 +23,9 @@ export type Task = {
   assignee?: string;
   dueDate?: string;
   labels?: string[];
+
+  createdBy?: string;
+  members?: TaskMember[];
 };
 
 type Guest = {
@@ -65,6 +72,7 @@ export type UseTaskBoardResult = {
   handleAddTask: () => Promise<Task | null>;
   handleUpdateTask: () => Promise<void>;
   handleDeleteTask: (taskId: string) => Promise<void>;
+  handleLeaveTask: (taskId: string) => Promise<void>;
 };
 
 type UseTaskBoardOptions = {
@@ -222,6 +230,44 @@ export default function useTaskBoard({
     },
     [tasks],
   );
+
+
+    const handleLeaveTask = useCallback(
+      async (taskId: string) => {
+        try {
+          const guest = getGuest();
+
+          if (!guest) return;
+
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/leave?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+            {
+              method: "POST",
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to leave task");
+          }
+
+          setTasks((previousTasks) =>
+            previousTasks.filter(
+              (task) => task._id !== taskId,
+            ),
+          );
+
+          toast.success("You left the task");
+        } catch (error) {
+          console.error(
+            "Leave Task Error:",
+            error,
+          );
+
+          toast.error("Failed to leave task");
+        }
+      },
+      [getGuest],
+    );
 
   const handleDropTask = useCallback(
     async (
@@ -567,14 +613,13 @@ export default function useTaskBoard({
     setPriority,
     setDueDate,
     setLabels,
-
     resetTaskForm,
     openAddTask,
     openEditTask,
-
     handleDropTask,
     handleAddTask,
     handleUpdateTask,
     handleDeleteTask,
+    handleLeaveTask,
   };
 }

@@ -297,7 +297,7 @@ const handleEditTask = () => {
               showViewers={showViewers}
               onToggleViewers={toggleViewers}
               getUser={getUser}
-/>
+            />
 
             <div className="order-2 mt-5 flex items-center gap-3 lg:order-none">
               <span className="text-[14px] font-medium text-[var(--text)]">Properties</span>

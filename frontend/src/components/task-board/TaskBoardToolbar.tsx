@@ -337,188 +337,188 @@ export default function TaskBoardToolbar({
                 <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
               </svg>
             </button>
-{showFilter && (
-  <>
-    <div className="absolute right-0 top-[42px] z-50 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl">
-      <p className="px-2.5 pb-2 pt-1 text-[13px] font-semibold text-[var(--text)]">
-        Filter
-      </p>
+            {showFilter && (
+              <>
+                <div className="absolute right-0 top-[42px] z-50 w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl">
+                  <p className="px-2.5 pb-2 pt-1 text-[13px] font-semibold text-[var(--text)]">
+                    Filter
+                  </p>
 
-      {[
-        ["Status", "status"],
-        ["Priority", "priority"],
-        ["Members", "members"],
-        ["Due Date", "date"],
-        ["Labels", "labels"],
-      ].map(([label, icon]) => (
-        <button
-          key={label}
-          type="button"
-          onClick={() =>
-            setActiveFilter(label as FilterType)
-          }
-          className="flex h-10 w-full cursor-pointer items-center justify-between rounded-md px-2.5 text-[12px] text-[var(--text)] hover:bg-[var(--hover)]"
-        >
-          <span className="flex items-center gap-2.5">
-            <FilterIcon
-              type={
-                icon as
-                  "status" | "priority" | "members" | "date" | "labels"
-              }
-            />
-            {label}
-          </span>
-          <span className="text-[var(--muted)]">›</span>
-        </button>
-      ))}
+                  {[
+                    ["Status", "status"],
+                    ["Priority", "priority"],
+                    ["Members", "members"],
+                    ["Due Date", "date"],
+                    ["Labels", "labels"],
+                  ].map(([label, icon]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() =>
+                        setActiveFilter(label as FilterType)
+                      }
+                      className="flex h-10 w-full cursor-pointer items-center justify-between rounded-md px-2.5 text-[12px] text-[var(--text)] hover:bg-[var(--hover)]"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <FilterIcon
+                          type={
+                            icon as
+                              "status" | "priority" | "members" | "date" | "labels"
+                          }
+                        />
+                        {label}
+                      </span>
+                      <span className="text-[var(--muted)]">›</span>
+                    </button>
+                  ))}
 
-      <div className="mt-2 border-t border-[var(--border)] pt-2">
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="h-9 w-full rounded-md px-2.5 text-left text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
-        >
-          Clear Filters
-        </button>
-      </div>
-    </div>
+                  <div className="mt-2 border-t border-[var(--border)] pt-2">
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="h-9 w-full rounded-md px-2.5 text-left text-[12px] font-medium text-[var(--text)] hover:bg-[var(--hover)]"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
 
-    {activeFilter && (
-      <div className="fixed left-1/2 top-1/2 z-50 w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl sm:absolute sm:left-auto sm:top-[42px] sm:right-[228px] sm:translate-x-0 sm:translate-y-0">
-        <div className="mb-1 flex items-center gap-1 border-b border-[var(--border)] pb-2">
-          <button
-            type="button"
-            onClick={() => setActiveFilter(null)}
-            className="h-7 w-7 rounded-md text-[var(--muted)] hover:bg-[var(--hover)]"
-          >
-            ‹
-          </button>
-          <span className="text-[13px] font-semibold text-[var(--text)]">
-            {activeFilter}
-          </span>
-        </div>
+                {activeFilter && (
+                  <div className="fixed left-1/2 top-1/2 z-50 w-[220px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2 shadow-xl sm:absolute sm:left-auto sm:top-[42px] sm:right-[228px] sm:translate-x-0 sm:translate-y-0">
+                    <div className="mb-1 flex items-center gap-1 border-b border-[var(--border)] pb-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveFilter(null)}
+                        className="h-7 w-7 rounded-md text-[var(--muted)] hover:bg-[var(--hover)]"
+                      >
+                        ‹
+                      </button>
+                      <span className="text-[13px] font-semibold text-[var(--text)]">
+                        {activeFilter}
+                      </span>
+                    </div>
 
-        {activeFilter === "Status" && (
-          <div>
-            {["All", ...statuses].map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() =>
-                  setFilterStatus(
-                    value as TaskStatus | "All",
-                  )
-                }
-                className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
-              >
-                {value}
-                {filterStatus === value && "✓"}
-              </button>
-            ))}
-          </div>
-        )}
+                    {activeFilter === "Status" && (
+                      <div>
+                        {["All", ...statuses].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() =>
+                              setFilterStatus(
+                                value as TaskStatus | "All",
+                              )
+                            }
+                            className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
+                          >
+                            {value}
+                            {filterStatus === value && "✓"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-        {activeFilter === "Priority" && (
-          <div>
-            {[
-              ["All", "No Priority"],
-              ["Urgent", "Urgent"],
-              ["High", "High"],
-              ["Medium", "Medium"],
-              ["Low", "Low"],
-            ].map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFilterPriority(value)}
-                className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
-              >
-                <span className="flex items-center gap-2.5">
-                  {value === "All" ? (
-                    <span className="w-[15px]" />
-                  ) : (
-                    <PriorityBars value={value} />
-                  )}
-                  <span
-                    className={
-                      value === "Urgent"
-                        ? "text-red-500"
-                        : value === "High"
-                          ? "text-orange-500"
-                          : value === "Medium"
-                            ? "text-yellow-500"
-                            : value === "Low"
-                              ? "text-gray-400"
-                              : ""
-                    }
-                  >
-                    {label}
-                  </span>
-                </span>
-                {filterPriority === value && "✓"}
-              </button>
-            ))}
-          </div>
-        )}
+                    {activeFilter === "Priority" && (
+                      <div>
+                        {[
+                          ["All", "No Priority"],
+                          ["Urgent", "Urgent"],
+                          ["High", "High"],
+                          ["Medium", "Medium"],
+                          ["Low", "Low"],
+                        ].map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setFilterPriority(value)}
+                            className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
+                          >
+                            <span className="flex items-center gap-2.5">
+                              {value === "All" ? (
+                                <span className="w-[15px]" />
+                              ) : (
+                                <PriorityBars value={value} />
+                              )}
+                              <span
+                                className={
+                                  value === "Urgent"
+                                    ? "text-red-500"
+                                    : value === "High"
+                                      ? "text-orange-500"
+                                      : value === "Medium"
+                                        ? "text-yellow-500"
+                                        : value === "Low"
+                                          ? "text-gray-400"
+                                          : ""
+                                }
+                              >
+                                {label}
+                              </span>
+                            </span>
+                            {filterPriority === value && "✓"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-        {activeFilter === "Members" && (
-          <div className="max-h-[250px] overflow-y-auto">
-            {["All", ...memberOptions].map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFilterMember(value)}
-                className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
-              >
-                <span className="truncate">{value}</span>
-                {filterMember === value && "✓"}
-              </button>
-            ))}
-          </div>
-        )}
+                    {activeFilter === "Members" && (
+                      <div className="max-h-[250px] overflow-y-auto">
+                        {["All", ...memberOptions].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setFilterMember(value)}
+                            className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
+                          >
+                            <span className="truncate">{value}</span>
+                            {filterMember === value && "✓"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
-        {activeFilter === "Due Date" && (
-          <div className="space-y-2 p-1">
-            <button
-              type="button"
-              onClick={() => setFilterDueDate("")}
-              className="flex min-h-9 w-full items-center justify-between rounded-md px-2 text-left text-[12px] hover:bg-[var(--hover)]"
-            >
-              Any date
-              {!filterDueDate && "✓"}
-            </button>
+                    {activeFilter === "Due Date" && (
+                      <div className="space-y-2 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setFilterDueDate("")}
+                          className="flex min-h-9 w-full items-center justify-between rounded-md px-2 text-left text-[12px] hover:bg-[var(--hover)]"
+                        >
+                          Any date
+                          {!filterDueDate && "✓"}
+                        </button>
 
-            <input
-              type="date"
-              value={filterDueDate}
-              onChange={(event) =>
-                setFilterDueDate(event.target.value)
-              }
-              className="h-9 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
-            />
-          </div>
-        )}
+                        <input
+                          type="date"
+                          value={filterDueDate}
+                          onChange={(event) =>
+                            setFilterDueDate(event.target.value)
+                          }
+                          className="h-9 w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 text-[12px]"
+                        />
+                      </div>
+                    )}
 
-        {activeFilter === "Labels" && (
-          <div className="max-h-[250px] overflow-y-auto">
-            {["All", ...labelOptions].map((value) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFilterLabel(value)}
-                className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
-              >
-                <span className="truncate">{value}</span>
-                {filterLabel === value && "✓"}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )}
-  </>
-)}
-          </div>
+                    {activeFilter === "Labels" && (
+                      <div className="max-h-[250px] overflow-y-auto">
+                        {["All", ...labelOptions].map((value) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setFilterLabel(value)}
+                            className="flex min-h-9 w-full items-center justify-between rounded-md px-2.5 text-left text-[12px] hover:bg-[var(--hover)]"
+                          >
+                            <span className="truncate">{value}</span>
+                            {filterLabel === value && "✓"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+                      </div>
 
           <button
             type="button"

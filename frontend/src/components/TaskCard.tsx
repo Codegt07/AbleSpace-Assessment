@@ -13,6 +13,10 @@ type TaskCardProps = {
   onDelete: () => void;
   priority: string;
  visibleFields: string[];
+ createdBy?: string;
+  members: { userId: string }[];
+  currentUserId: string | null;
+  onLeave: () => void;
 };
 
 
@@ -27,11 +31,30 @@ export default function TaskCard({
   onOpen,
   onEdit,
   onDelete,
+  createdBy,
+  members,
+  currentUserId,
+  onLeave,
 }: TaskCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const normalizeId = (value: unknown) =>
+  value ? String(value) : "";
+
+  const isCreator = Boolean(
+    currentUserId &&
+      normalizeId(createdBy) === currentUserId,
+  );
+
+  const isTaskMember = Boolean(
+    currentUserId &&
+      members.some(
+        (member) =>
+          normalizeId(member.userId) === currentUserId,
+      ),
+  );
 
   return (
-          <div
+       <div
         draggable
         onDragStart={(event) => {
           event.dataTransfer.setData("taskId", taskId);
@@ -47,7 +70,7 @@ export default function TaskCard({
         <div
           className="relative"
           onClick={(event) => event.stopPropagation()}
-        >
+         >
           <button
             type="button"
             className="cursor-pointer text-[var(--muted)]"
@@ -58,16 +81,32 @@ export default function TaskCard({
 
           <TaskActionMenu
             open={menuOpen}
-            onEdit={() => {
-              setMenuOpen(false);
-              onEdit();
-            }}
-            onDelete={() => {
-              setMenuOpen(false);
-              onDelete();
-            }}
+            onEdit={
+              isCreator
+                ? () => {
+                    setMenuOpen(false);
+                    onEdit();
+                  }
+                : undefined
+            }
+            onDelete={
+              isCreator
+                ? () => {
+                    setMenuOpen(false);
+                    onDelete();
+                  }
+                : undefined
+            }
+            onLeave={
+              !isCreator && isTaskMember
+                ? () => {
+                    setMenuOpen(false);
+                    onLeave();
+                  }
+                : undefined
+            }
           />
-</div>
+       </div>
       </div>
 
       {(visibleFields.includes("Members") ||

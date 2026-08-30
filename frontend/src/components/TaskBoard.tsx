@@ -79,6 +79,7 @@ export default function TaskBoard() {
         openEditTask={board.openEditTask}
         handleDeleteTask={board.handleDeleteTask}
         handleDropTask={board.handleDropTask}
+        handleLeaveTask={board.handleLeaveTask}
       />
 
       <TaskFormModal
