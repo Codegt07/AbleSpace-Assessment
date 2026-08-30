@@ -372,6 +372,7 @@ const handleEditTask = () => {
               getUser={getUser}
               userInitial={userInitial}
               formatUserName={formatUserName}
+              isCreator={isCreator}
               
             />
           </section>

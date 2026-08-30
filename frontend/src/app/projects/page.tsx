@@ -19,7 +19,17 @@ type WorkspaceUser = {
 
 
 
-type ProjectItem = Project & { labels?: string[]; status: Task["status"] };
+type ProjectItem = {
+  _id: string;
+  title: string;
+  priority?: string;
+  dueDate?: string;
+  leadName: string;
+  leadAvatar?: string;
+  viewOnly: boolean;
+  labels?: string[];
+  status: Task["status"];
+};
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -62,13 +72,19 @@ export default function ProjectsPage() {
       const merged = [...assigned.map((task) => ({ ...task, viewOnly: true })), ...ownTasks.map((task) => ({ ...task, viewOnly: false }))];
 
       setProjects(merged.map((task) => {
-        const lead = nextUserMap.get(task.createdBy);
+        const lead = task.createdBy
+          ? nextUserMap.get(task.createdBy)
+          : undefined;
         return {
           _id: task._id,
           title: task.title,
           priority: task.priority,
           dueDate: task.dueDate,
-          leadName: lead?.name || lead?.username || task.createdBy,
+          leadName:
+            lead?.name ||
+            lead?.username ||
+            task.createdBy ||
+            "Unknown",
           leadAvatar: lead?.avatar,
           viewOnly: task.viewOnly,
           labels: task.labels || [],
@@ -106,9 +122,13 @@ export default function ProjectsPage() {
     return projects.filter((project) => ids.has(project._id));
   }, [filters.filteredTasks, projects]);
 
-  const handleOpenProject = (project: ProjectItem) => {
-    router.push(project.viewOnly ? `/tasks/${project._id}?mode=view` : `/tasks/${project._id}`);
-  };
+  const handleOpenProject = (project: Project) => {
+  router.push(
+    project.viewOnly
+      ? `/tasks/${project._id}?mode=view`
+      : `/tasks/${project._id}`
+  );
+};
 
   const handleCreateProject = async () => {
     const created = await board.handleAddTask();
