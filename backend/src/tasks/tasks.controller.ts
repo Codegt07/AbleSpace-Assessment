@@ -335,4 +335,18 @@ addComment(
     parentCommentId,
   );
 }
+@Delete(':id/comments/:commentId')
+deleteComment(
+  @Param('id') id: string,
+  @Param('commentId') commentId: string,
+  @Query('workspaceId') workspaceId: string,
+  @Query('userId') userId: string,
+) {
+  return this.tasksService.deleteComment(
+    id,
+    commentId,
+    workspaceId,
+    userId,
+  );
+}
 }

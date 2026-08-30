@@ -99,7 +99,7 @@ export default function useTaskBoard({
   const [selectedStatus, setSelectedStatus] =
     useState<TaskStatus>("To Do");
 
-  const [priority, setPriority] = useState("Medium");
+  const [priority, setPriority] = useState("No Priority");
   const [dueDate, setDueDate] = useState("");
   const [labels, setLabels] = useState("");
 
@@ -137,7 +137,7 @@ export default function useTaskBoard({
     setTitle("");
     setDescription("");
     setSelectedStatus("To Do");
-    setPriority("Medium");
+    setPriority("No Priority");
     setDueDate("");
     setLabels("");
     setEditingTaskId(null);
@@ -188,7 +188,7 @@ export default function useTaskBoard({
       setTitle("");
       setDescription("");
       setSelectedStatus(status);
-      setPriority("Medium");
+      setPriority("No Priority");
       setDueDate("");
       setLabels("");
       setShowTaskModal(true);
@@ -210,9 +210,7 @@ export default function useTaskBoard({
       setTitle(task.title);
       setDescription(task.description || "");
       setSelectedStatus(task.status);
-      setPriority(
-        task.priority || "Medium",
-      );
+      setPriority(task.priority || "No Priority");
 
       setDueDate(
         task.dueDate

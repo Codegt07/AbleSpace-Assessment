@@ -132,6 +132,7 @@ const {
   handleDueDateChange,
   handleLeaveTask,
   handleSaveTaskSettings,
+  handleDeleteComment
 } = useTaskMutations({
   taskId,
   task,
@@ -364,12 +365,14 @@ const handleEditTask = () => {
               replyingTo={replyingTo}
               setReplyText={setReplyText}
               handleAddComment={handleAddComment}
+              handleDeleteComment={handleDeleteComment}
               addingComment={addingComment}
               commentText={commentText}
               setCommentText={setCommentText}
               getUser={getUser}
               userInitial={userInitial}
               formatUserName={formatUserName}
+              
             />
           </section>
 

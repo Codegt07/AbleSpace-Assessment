@@ -76,11 +76,11 @@ export class Task {
   })
   status: string;
 
-  @Prop({
-    enum: ['Urgent', 'High', 'Medium', 'Low'],
-    default: 'Medium',
-  })
-  priority?: string;
+@Prop({
+  enum: ['No Priority', 'Urgent', 'High', 'Medium', 'Low'],
+  default: 'No Priority',
+})
+priority?: string;
 
   @Prop({
     type: [

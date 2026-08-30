@@ -1,8 +1,10 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 
+import TaskActionMenu from "../TaskActionMenu";
 import { TaskComment } from "./types";
+
 
 type TaskCommentsProps = {
   comments: TaskComment[];
@@ -27,6 +29,10 @@ type TaskCommentsProps = {
   getUser: (userId: string) => { name?: string; avatar?: string } | undefined;
   userInitial: (userId: string) => string;
   formatUserName: (userId: string) => string;
+  isCreator: boolean;
+  handleDeleteComment: (
+    commentId: string,
+  ) => void | Promise<void>;
 };
 
 export default function TaskComments({
@@ -52,8 +58,13 @@ export default function TaskComments({
   getUser,
   userInitial,
   formatUserName,
+  isCreator,
+  handleDeleteComment,
 }: TaskCommentsProps) {
-  return (
+  const [openActionMenu, setOpenActionMenu] = useState<string | null>(
+  null,
+);
+     return (
             <div className="order-8 mt-8 sm:mt-9 lg:order-none">
               <div className="mb-3.5 flex items-center justify-between gap-2">
                 <h2 className="text-[14px] font-semibold text-[var(--accent)]">
@@ -69,12 +80,12 @@ export default function TaskComments({
                   </button>
                 )}
               </div>
-{visibleComments.map((comment) => {
-  const replies = comments.filter(
-    (reply) => reply.parentCommentId === comment._id,
-  );
+            {visibleComments.map((comment) => {
+              const replies = comments.filter(
+                (reply) => reply.parentCommentId === comment._id,
+              );
 
-  const repliesOpen = expandedReplies.has(comment._id);
+             const repliesOpen = expandedReplies.has(comment._id);
 
   return (
     <div
@@ -139,12 +150,29 @@ export default function TaskComments({
           </div>
 
           {/* Comment action */}
+          {(comment.userId === currentUserId || isCreator) && (
+        <div className="relative shrink-0">
           <button
             type="button"
-            className="shrink-0 rounded-md px-1.5 cursor-pointer py-1 text-[13px] text-[var(--muted)] hover:bg-[var(--hover)]"
+            onClick={() =>
+              setOpenActionMenu((previous) =>
+                previous === comment._id ? null : comment._id,
+              )
+            }
+            className="rounded-md px-1.5 py-1 text-[13px] cursor-pointer text-[var(--muted)] hover:bg-[var(--hover)]"
           >
             ···
           </button>
+
+          <TaskActionMenu
+            open={openActionMenu === comment._id}
+            onDelete={() => {
+              setOpenActionMenu(null);
+              handleDeleteComment(comment._id);
+            }}
+          />
+        </div>
+      )}
         </div>
       </div>
 
@@ -153,9 +181,10 @@ export default function TaskComments({
         <div className="border-t border-[var(--border)] px-4 py-2.5">
           <div className="ml-[40px] border-l border-[var(--border)] pl-3.5">
             {replies.map((reply) => (
+              
               <div
                 key={reply._id}
-                className="flex gap-2.5 py-2"
+                className="flex items-start gap-2.5 py-2"
               >
                 {/* Reply avatar */}
                 <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-strong)] text-[7px] text-white">
@@ -170,7 +199,7 @@ export default function TaskComments({
                   )}
                 </div>
 
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                     <span className="text-[10px] font-semibold text-[var(--text)]">
                       {formatUserName(reply.userId)}
@@ -187,6 +216,29 @@ export default function TaskComments({
                         },
                       )}
                     </span>
+                    {(reply.userId === currentUserId || isCreator) && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenActionMenu(
+                            openActionMenu === reply._id ? null : reply._id,
+                          )
+                        }
+                        className="cursor-pointer px-1 text-[11px] text-[var(--muted)] hover:text-[var(--text)]"
+                      >
+                        ···
+                      </button>
+
+                      <TaskActionMenu
+                        open={openActionMenu === reply._id}
+                        onDelete={() => {
+                          setOpenActionMenu(null);
+                          handleDeleteComment(reply._id);
+                        }}
+                      />
+                    </div>
+                )}
                   </div>
 
                   <p className="mt-0.5 text-[11px] leading-4 text-[var(--muted)]">

@@ -1402,4 +1402,57 @@ async addComment(
     parentCommentId: validParentCommentId,
   });
 }
+
+async deleteComment(
+  taskId: string,
+  commentId: string,
+  workspaceId: string,
+  userId: string,
+) {
+  // Check whether the user has access to this task
+  const task = await this.taskModel.findOne({
+    _id: taskId,
+    workspaceId,
+    $or: [
+      { createdBy: userId },
+      { 'members.userId': userId },
+    ],
+  });
+
+  if (!task) {
+    throw new NotFoundException('Task not found');
+  }
+
+  // Find the comment and ensure it belongs to this task
+  const comment = await this.taskCommentModel.findOne({
+    _id: commentId,
+    taskId,
+  });
+
+  if (!comment) {
+    throw new NotFoundException('Comment not found');
+  }
+
+  const isCommentOwner = comment.userId === userId;
+  const isTaskCreator = task.createdBy === userId;
+
+  if (!isCommentOwner && !isTaskCreator) {
+    throw new ForbiddenException(
+      'You are not allowed to delete this comment',
+    );
+  }
+
+  await this.taskCommentModel.deleteMany({
+  taskId,
+  $or: [
+    { _id: commentId },
+    { parentCommentId: commentId },
+  ],
+});
+
+  return {
+    message: 'Comment deleted successfully',
+  };
+}
+
 }

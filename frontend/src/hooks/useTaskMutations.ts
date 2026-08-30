@@ -93,6 +93,7 @@ type UseTaskMutationsResult = {
   handleDueDateChange: (nextDate: string) => Promise<void>;
   handleLeaveTask: () => Promise<void>;
   handleSaveTaskSettings: () => Promise<void>;
+  handleDeleteComment: (commentId: string) => Promise<void>;
 };
 
 const getGuest = () => {
@@ -441,6 +442,45 @@ export default function useTaskMutations({
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+  try {
+    const guest = getGuest();
+
+    if (!guest || !guest.workspaceId || !guest.guestId || !taskId) {
+      return;
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/comments/${commentId}?workspaceId=${guest.workspaceId}&userId=${guest.guestId}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      console.error(
+        "DELETE COMMENT ERROR:",
+        response.status,
+        errorText,
+      );
+
+      throw new Error("Failed to delete comment");
+    }
+
+    setComments((previous) =>
+      previous.filter(
+        (comment) =>
+          comment._id !== commentId &&
+          comment.parentCommentId !== commentId,
+      ),
+    );
+  } catch (error) {
+    console.error("Delete Comment Error:", error);
+  }
+};
+
   const handlePriorityChange = async (nextPriority: string) => {
     setShowPriorityMenu(false);
 
@@ -459,9 +499,8 @@ export default function useTaskMutations({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            priority:
-              nextPriority === "No Priority" ? undefined : nextPriority,
-          }),
+          priority: nextPriority,
+        }),
         },
       );
 
@@ -604,5 +643,6 @@ export default function useTaskMutations({
     handleDueDateChange,
     handleLeaveTask,
     handleSaveTaskSettings,
+    handleDeleteComment
   };
 }

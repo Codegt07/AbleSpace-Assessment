@@ -77,14 +77,21 @@ export default function TaskFormModal({
           <div>
             <label className="text-[13px] font-medium text-[var(--text)]">Status</label>
             <select value={selectedStatus} onChange={(event) => setSelectedStatus(event.target.value as TaskStatus)} className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none">
-              <option value="To Do">To Do</option><option value="Doing">Doing</option><option value="Completed">Completed</option><option value="On Hold">On Hold</option>
+              <option value="To Do">To Do</option>
+              <option value="Doing">Doing</option>
+              <option value="Completed">Completed</option>
+              <option value="On Hold">On Hold</option>
             </select>
           </div>
 
           <div>
             <label className="text-[13px] font-medium text-[var(--text)]">Priority</label>
             <select value={priority} onChange={(event) => setPriority(event.target.value)} className="mt-1 h-10 w-full cursor-pointer rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-[14px] outline-none">
-              <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Urgent">Urgent</option>
+              <option value="No Priority">No Priority</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Urgent">Urgent</option>
             </select>
           </div>
 

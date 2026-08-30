@@ -21,9 +21,9 @@ export class UpdateTaskDto {
   @IsOptional()
   status?: string;
 
- @IsIn(['Urgent', 'High', 'Medium', 'Low'])
- @IsOptional()
- priority?: string;
+  @IsIn(['No Priority', 'Urgent', 'High', 'Medium', 'Low'])
+  @IsOptional()
+  priority?: string;
 
   @IsArray()
   @IsString({ each: true })
