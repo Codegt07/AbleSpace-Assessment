@@ -68,3 +68,16 @@ body {
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+}

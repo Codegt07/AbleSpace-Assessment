@@ -21,6 +21,7 @@ import {
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { Guest, GuestSchema } from '../auth/schemas/guest.schema';
+import { TasksGateway } from './tasks.gateway';
 
 @Module({
   imports: [
@@ -51,7 +52,10 @@ import { Guest, GuestSchema } from '../auth/schemas/guest.schema';
     CloudinaryModule,
   ],
   controllers: [TasksController],
-  providers: [TasksService]
+  providers: [
+  TasksService,
+  TasksGateway,
+],
   
 })
 export class TasksModule {}

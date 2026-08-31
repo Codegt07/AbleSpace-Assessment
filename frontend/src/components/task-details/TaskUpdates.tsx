@@ -19,11 +19,23 @@ export default function TaskUpdates({
 }: TaskUpdatesProps) {
   return (
             <div className="mt-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-              <div className="flex items-center gap-2">
+             <div className="flex w-full items-center">
                 <span className="text-[11px]">▾</span>
-                <h2 className="text-[14px] font-semibold text-[var(--accent)]">
+
+                <h2 className="ml-2 text-[14px] font-semibold text-[var(--accent)]">
                   Updates
                 </h2>
+
+                <span
+                  className="ml-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]"
+                  style={{
+                    animation: "livePulse 1.5s ease-in-out infinite",
+                  }}
+                />
+
+                <span className="ml-auto text-[12px] font-semibold uppercase tracking-[0.1em] text-[var(--accent)]">
+                  LIVE
+                </span>
               </div>
 
               <div className="mt-4 space-y-3.5">

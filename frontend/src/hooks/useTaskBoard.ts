@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { toast } from "react-hot-toast";
+import { io, type Socket } from "socket.io-client";
 
 export type TaskStatus =
   | "To Do"
@@ -145,8 +146,11 @@ export default function useTaskBoard({
     setShowTaskModal(false);
   }, []);
 
-  const fetchTasks = useCallback(async () => {
-    try {
+  const fetchTasks = useCallback(async (showLoader = false) => {
+  try {
+    if (showLoader) {
+      setLoading(true);
+    }
       const guest = getGuest();
 
       if (!guest) {
@@ -175,13 +179,52 @@ export default function useTaskBoard({
         error,
       );
     } finally {
-      setLoading(false);
-    }
+  if (showLoader) {
+    setLoading(false);
+  }
+}
   }, [getGuest]);
 
+ useEffect(() => {
+  void fetchTasks(true);
+}, [fetchTasks]);
+
   useEffect(() => {
-    void fetchTasks();
-  }, [fetchTasks]);
+  const guest = getGuest();
+
+  if (!guest?.workspaceId) {
+    return;
+  }
+
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiBase) {
+    console.error("NEXT_PUBLIC_API_URL is not configured");
+    return;
+  }
+
+  const socketUrl = apiBase.replace(/\/api\/?$/, "");
+
+  const socket: Socket = io(socketUrl, {
+    transports: ["websocket"],
+  });
+
+  socket.emit(
+    "join-workspace",
+    guest.workspaceId,
+  );
+
+  socket.on(
+    "workspace-task-updated",
+    () => {
+      void fetchTasks(false);
+    },
+  );
+  return () => {
+    socket.off("workspace-task-updated");
+    socket.disconnect();
+  };
+}, [fetchTasks, getGuest]);
 
   const openAddTask = useCallback(
     (status: TaskStatus) => {

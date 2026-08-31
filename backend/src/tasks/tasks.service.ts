@@ -36,6 +36,7 @@ import {
   Guest,
   GuestDocument,
 } from '../auth/schemas/guest.schema';
+import { TasksGateway } from './tasks.gateway';
 
 
 @Injectable()
@@ -57,7 +58,8 @@ export class TasksService {
 
     private readonly workspaceMembersService: WorkspaceMembersService,
     private readonly notificationsService: NotificationsService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly tasksGateway: TasksGateway
     
     
     
@@ -170,8 +172,23 @@ async create(createTaskDto: CreateTaskDto) {
 
  await task.save();
 
-return this.enrichTask(task);
-}
+  this.tasksGateway.emitTaskUpdated(
+    task._id.toString(),
+  );
+
+  await task.save();
+
+  this.tasksGateway.emitTaskUpdated(
+    task._id.toString(),
+  );
+
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+    createTaskDto.workspaceId,
+    task._id.toString(),
+  );
+
+  return this.enrichTask(task);
+  }
 
   async createSubtask(
   parentTaskId: string,
@@ -250,8 +267,12 @@ return this.enrichTask(task);
       subtaskId: subtask._id,
     },
   );
+  this.tasksGateway.emitTaskUpdated(parentTaskId);
 
-  return subtask;
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+    workspaceId,
+    parentTaskId,
+  );
 }
 
 
@@ -805,6 +826,11 @@ if (!savedTask) {
     },
   );
 }
+  this.tasksGateway.emitTaskUpdated(id);
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+    workspaceId,
+    id,
+  );
 
   return savedTask;
 }
@@ -844,7 +870,15 @@ async updateMemberStatus(
     `Changed status to ${status}`,
   );
 
-  return task.save();
+  const savedTask = await task.save();
+
+  this.tasksGateway.emitTaskUpdated(id);
+
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+    workspaceId,
+    id,
+);
+  return savedTask;
 }
 
  async addMember(
@@ -931,8 +965,15 @@ await this.notificationsService.create(
   `You were added to task "${task.title}"`,
   id,
 );
+  const savedTask = await task.save();
 
-  return task.save();
+  this.tasksGateway.emitTaskUpdated(id);
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+  workspaceId,
+  id,
+);
+
+  return savedTask;
 }
 
 async uploadTaskResource(
@@ -989,12 +1030,20 @@ async uploadTaskResource(
   });
 
   await this.createUpdate(
-    taskId,
-    userId,
-    `Added resource "${file.originalname}"`,
-  );
+  taskId,
+  userId,
+  `Added resource "${file.originalname}"`,
+);
 
-  return task.save();
+  const savedTask = await task.save();
+
+  this.tasksGateway.emitTaskUpdated(taskId);
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+  workspaceId,
+  taskId,
+);
+
+  return savedTask;
 }
 
 async removeTaskResource(
@@ -1054,8 +1103,16 @@ async removeTaskResource(
     `Removed resource "${resource.name}"`,
   );
 
-  return task.save();
-}
+  const savedTask = await task.save();
+
+  this.tasksGateway.emitTaskUpdated(taskId);
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+  workspaceId,
+  taskId,
+);
+
+  return savedTask;
+  }
 
 async addTaskResourceLink(
   taskId: string,
@@ -1126,7 +1183,15 @@ async addTaskResourceLink(
     `Added resource link "${name.trim()}"`,
   );
 
-  return task.save();
+  const savedTask = await task.save();
+
+  this.tasksGateway.emitTaskUpdated(taskId);
+  this.tasksGateway.emitWorkspaceTaskUpdated(
+  workspaceId,
+  taskId,
+);
+
+  return savedTask;
 }
 
   async updateTaskSettings(
@@ -1196,7 +1261,16 @@ async addTaskResourceLink(
       );
     }
 
-    return task.save();
+    const savedTask = await task.save();
+
+    this.tasksGateway.emitTaskUpdated(id);
+
+    this.tasksGateway.emitWorkspaceTaskUpdated(
+      workspaceId,
+      id,
+    );
+
+    return savedTask;
   }
 
   async removeMember(
@@ -1260,7 +1334,16 @@ async addTaskResourceLink(
   { memberId },
 );
 
-    return task.save();
+    const savedTask = await task.save();
+
+    this.tasksGateway.emitTaskUpdated(id);
+
+    this.tasksGateway.emitWorkspaceTaskUpdated(
+      workspaceId,
+      id,
+    );
+
+    return savedTask;
   }
 
   async leaveTask(
@@ -1304,7 +1387,16 @@ async addTaskResourceLink(
   'Declined to work on this task',
 );
 
-    return task.save();
+    const savedTask = await task.save();
+
+   this.tasksGateway.emitTaskUpdated(id);
+
+    this.tasksGateway.emitWorkspaceTaskUpdated(
+      workspaceId,
+      id,
+    );
+
+    return savedTask;
   }
 
   async remove(
@@ -1328,6 +1420,12 @@ async addTaskResourceLink(
     }
 
     await task.deleteOne();
+      this.tasksGateway.emitWorkspaceTaskUpdated(
+    workspaceId,
+    id,
+  );
+
+    this.tasksGateway.emitTaskUpdated(id);
 
     return {
       message: 'Task deleted successfully',
@@ -1430,12 +1528,16 @@ async addComment(
     validParentCommentId = parentComment._id.toString();
   }
 
-  return this.taskCommentModel.create({
-    taskId,
-    userId,
-    message: message.trim(),
-    parentCommentId: validParentCommentId,
-  });
+  const comment = await this.taskCommentModel.create({
+  taskId,
+  userId,
+  message: message.trim(),
+  parentCommentId: validParentCommentId,
+});
+
+  this.tasksGateway.emitTaskUpdated(taskId);
+
+  return comment;
 }
 
 async deleteComment(
@@ -1484,6 +1586,8 @@ async deleteComment(
     { parentCommentId: commentId },
   ],
 });
+
+ this.tasksGateway.emitTaskUpdated(taskId);
 
   return {
     message: 'Comment deleted successfully',
