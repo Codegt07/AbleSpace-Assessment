@@ -39,6 +39,7 @@ export default function Sidebar() {
 
   const [workspaceOpen, setWorkspaceOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userAvatar, setUserAvatar] = useState("");
 
   const [themeInitialized, setThemeInitialized] =
     useState(false);
@@ -49,29 +50,46 @@ export default function Sidebar() {
   const isProfileActive =
     pathname.startsWith("/profile");
 
+const loadUserProfile = () => {
+  const storedGuest = localStorage.getItem("guest");
+
+  if (!storedGuest) {
+    return;
+  }
+
+  try {
+    const guest = JSON.parse(storedGuest);
+
+    setUserName(guest.name || "Guest");
+    setUserAvatar(guest.avatar || "");
+  } catch (error) {
+    console.error(
+      "Failed to read guest profile:",
+      error
+    );
+  }
+};
+
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
   // Load saved profile name
-  useEffect(() => {
-    const storedGuest =
-      localStorage.getItem("guest");
+useEffect(() => {
+  loadUserProfile();
 
-    if (!storedGuest) {
-      return;
-    }
+  window.addEventListener(
+    "profileUpdated",
+    loadUserProfile,
+  );
 
-    try {
-      const guest = JSON.parse(storedGuest);
-      setUserName(guest.name || "Guest");
-    } catch (error) {
-      console.error(
-        "Failed to read guest profile:",
-        error
-      );
-    }
-  }, []);
+  return () => {
+    window.removeEventListener(
+      "profileUpdated",
+      loadUserProfile,
+    );
+  };
+}, []);
 
   useEffect(() => {
     const savedTheme =
@@ -172,8 +190,16 @@ export default function Sidebar() {
         className="flex cursor-pointer items-center rounded-[8px] px-[8px] py-[4px] hover:bg-[var(--hover)]"
       >
         <div className="flex items-center gap-[8px]">
-          <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[11px] font-semibold text-[var(--accent-foreground)]">
-            {avatarLetter}
+          <div className="flex h-[28px] w-[28px] items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-[11px] font-semibold text-[var(--accent-foreground)]">
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              avatarLetter
+            )}
           </div>
 
           <span className="text-[14px] font-semibold text-[var(--text)]">

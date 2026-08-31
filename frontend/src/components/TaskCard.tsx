@@ -6,14 +6,15 @@ type TaskCardProps = {
   taskId: string;
   title: string;
   assignee: string;
+  avatar?: string;
   dueDate: string;
   labels: string[];
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
   priority: string;
- visibleFields: string[];
- createdBy?: string;
+  visibleFields: string[];
+  createdBy?: string;
   members: { userId: string }[];
   currentUserId: string | null;
   onLeave: () => void;
@@ -24,6 +25,7 @@ export default function TaskCard({
   taskId,
   title,
   assignee,
+  avatar,
   dueDate,
   labels,
   priority,
@@ -114,8 +116,16 @@ export default function TaskCard({
       <div className="mt-3 flex items-center justify-between">
        {visibleFields.includes("Members") && (
        <div className="flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--hover)] text-[10px] text-[var(--text)]">
-          {assignee.charAt(0)}
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--hover)] text-[10px] text-[var(--text)]">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={assignee}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            assignee.charAt(0).toUpperCase()
+          )}
         </div>
 
         <span className="text-[12px] text-[var(--text)]">

@@ -1,18 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { Task, TaskStatus } from "@/hooks/useTaskBoard";
 
-type TaskStatus = "To Do" | "Doing" | "Completed" | "On Hold";
 
-type Task = {
-  _id: string;
-  title: string;
-  priority?: string;
-  assignee?: string;
-  dueDate?: string;
-  labels?: string[];
-  status?: TaskStatus;
-};
 
 type TaskListProps = {
   tasks: Task[];

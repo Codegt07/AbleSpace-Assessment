@@ -9,6 +9,7 @@ import { WorkspacesModule } from '../workspaces/workspaces.module';
 import { WorkspaceMembersModule } from '../workspace-members/workspace-members.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Task, TaskSchema } from '../tasks/schemas/task.schema';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { Task, TaskSchema } from '../tasks/schemas/task.schema';
 
     WorkspacesModule,
     WorkspaceMembersModule,
-    NotificationsModule
+    NotificationsModule,
+    CloudinaryModule
   ],
   controllers: [AuthController],
   providers: [AuthService],

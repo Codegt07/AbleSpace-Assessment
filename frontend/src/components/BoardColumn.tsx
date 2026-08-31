@@ -10,6 +10,7 @@ type Task = {
   _id: string;
   title: string;
   assignee: string;
+  avatar?: string; // add this
   dueDate: string;
   labels: string[];
   priority: string;
@@ -103,6 +104,7 @@ export default function BoardColumn({
             members={task.members || []}
             currentUserId={task.currentUserId}
             onLeave={() => onLeaveTask(task._id)}
+            avatar={task.avatar}
             />
         ))}
       </div>

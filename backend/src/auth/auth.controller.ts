@@ -6,8 +6,11 @@ import {
   Query,
   Headers,
   UnauthorizedException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -51,6 +54,18 @@ export class AuthController {
     return this.authService.updateProfile(
       guestId,
       body,
+    );
+  }
+
+    @Patch('profile/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  updateProfileAvatar(
+    @Query('guestId') guestId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.authService.updateProfileAvatar(
+      guestId,
+      file,
     );
   }
 }

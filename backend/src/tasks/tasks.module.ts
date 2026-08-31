@@ -20,6 +20,7 @@ import {
 } from './schemas/task-view.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { Guest, GuestSchema } from '../auth/schemas/guest.schema';
 
 @Module({
   imports: [
@@ -39,6 +40,10 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 {
   name: TaskView.name,
   schema: TaskViewSchema,
+},
+{
+  name: Guest.name,
+  schema: GuestSchema,
 }
 ]),
     WorkspaceMembersModule,

@@ -7,6 +7,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { Multer } from 'multer';
+
 
 import {
   Guest,
@@ -22,6 +25,7 @@ import {
 import {
   NotificationsService,
 } from '../notifications/notifications.service';
+
 
 import {
   Task,
@@ -50,6 +54,8 @@ export class AuthService {
 
   private readonly notificationsService:
     NotificationsService,
+
+    private readonly cloudinaryService: CloudinaryService,
 ) {}
   
 
@@ -297,4 +303,36 @@ if (welcomeTask) {
 
     return guest;
   }
+
+  async updateProfileAvatar(
+  guestId: string,
+  file: Express.Multer.File,
+) {
+  if (!file) {
+    throw new Error('Profile image is required');
+  }
+
+  const uploaded =
+    await this.cloudinaryService.uploadFile(file);
+
+  const guest =
+    await this.guestModel.findOneAndUpdate(
+      { guestId },
+      {
+        $set: {
+          avatar: uploaded.url,
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+  if (!guest) {
+    throw new Error('Guest not found');
+  }
+
+  return guest;
+}
 }

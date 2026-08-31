@@ -21,6 +21,7 @@ export type Task = {
   status: TaskStatus;
   priority?: string;
   assignee?: string;
+  avatar?: string; // add this
   dueDate?: string;
   labels?: string[];
 

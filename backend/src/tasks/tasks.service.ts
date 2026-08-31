@@ -32,6 +32,10 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 type TaskStatus = 'To Do' | 'Doing' | 'Completed' | 'On Hold';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import {
+  Guest,
+  GuestDocument,
+} from '../auth/schemas/guest.schema';
 
 
 @Injectable()
@@ -48,10 +52,13 @@ export class TasksService {
 
     @InjectModel(TaskComment.name)
     private readonly taskCommentModel: Model<TaskCommentDocument>,
+    @InjectModel(Guest.name)  
+    private readonly guestModel: Model<GuestDocument>,
 
     private readonly workspaceMembersService: WorkspaceMembersService,
     private readonly notificationsService: NotificationsService,
     private readonly cloudinaryService: CloudinaryService
+    
     
     
 
@@ -78,6 +85,27 @@ export class TasksService {
       rank[current] < rank[worst] ? current : worst,
     );
   }
+
+  private async enrichTask(task: TaskDocument | any) {
+  const createdBy = task.createdBy?.toString();
+
+  const user = createdBy
+    ? await this.guestModel
+        .findOne({ guestId: createdBy })
+        .select('guestId name username avatar')
+        .lean()
+        .exec()
+    : null;
+
+  return {
+    ...task.toObject ? task.toObject() : task,
+    assignee:
+      user?.name ||
+      user?.username ||
+      'Guest',
+    avatar: user?.avatar || '',
+  };
+}
 
   private updateOverallStatus(task: TaskDocument) {
     task.status = this.calculateOverallStatus(
@@ -140,9 +168,9 @@ async create(createTaskDto: CreateTaskDto) {
 
   this.updateOverallStatus(task);
 
-  await task.save();
+ await task.save();
 
-  return task;
+return this.enrichTask(task);
 }
 
   async createSubtask(
@@ -325,18 +353,25 @@ async getProjects(
     .exec();
 }
 
-  async findAll(workspaceId: string, userId: string) {
-    return this.taskModel
-      .find({
-        workspaceId,
-        $or: [
-          { createdBy: userId },
-          { 'members.userId': userId },
-        ],
-      })
-      .sort({ createdAt: -1 })
-      .exec();
-  }
+async findAll(
+  workspaceId: string,
+  userId: string,
+) {
+  const tasks = await this.taskModel
+    .find({
+      workspaceId,
+      $or: [
+        { createdBy: userId },
+        { 'members.userId': userId },
+      ],
+    })
+    .sort({ createdAt: -1 })
+    .exec();
+
+  return Promise.all(
+    tasks.map((task) => this.enrichTask(task)),
+  );
+}
 
   private async hasViewAccess(
   taskId: string,

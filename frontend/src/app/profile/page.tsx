@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type ChangeEvent,
+} from "react";
 import Sidebar from "@/components/Sidebar";
 
 export default function ProfilePage() {
@@ -12,6 +16,8 @@ const [saving, setSaving] = useState(false);
 const [message, setMessage] = useState("");
 const [showLeaveModal, setShowLeaveModal] = useState(false);
 const [leavingWorkspace, setLeavingWorkspace] = useState(false);
+const [avatar, setAvatar] = useState("");
+const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     const storedGuest = localStorage.getItem("guest");
@@ -22,6 +28,7 @@ const [leavingWorkspace, setLeavingWorkspace] = useState(false);
 
 
     const guest = JSON.parse(storedGuest);
+    setAvatar(guest.avatar || "");
 
 
 
@@ -34,6 +41,62 @@ const [leavingWorkspace, setLeavingWorkspace] = useState(false);
     setTitle(guest.title || "");
     setUsername(guest.username || "");
   }, []);
+
+  const handleAvatarUpload = async (
+    event: ChangeEvent<HTMLInputElement>,
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  try {
+    const storedGuest = localStorage.getItem("guest");
+
+    if (!storedGuest) return;
+
+    const guest = JSON.parse(storedGuest);
+
+    setUploadingAvatar(true);
+    setMessage("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/profile/avatar?guestId=${guest.guestId}`,
+      {
+        method: "PATCH",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload profile picture");
+    }
+
+    const updatedGuest = await response.json();
+
+    setAvatar(updatedGuest.avatar);
+
+    localStorage.setItem(
+      "guest",
+      JSON.stringify({
+        ...guest,
+        ...updatedGuest,
+      }),
+      
+    );
+    window.dispatchEvent(
+  new Event("profileUpdated"),
+);
+    setMessage("Profile picture updated");
+  } catch (error) {
+    console.error("Avatar Upload Error:", error);
+    setMessage("Failed to upload profile picture");
+  } finally {
+    setUploadingAvatar(false);
+  }
+};
 
   const handleSaveChanges = async () => {
     try {
@@ -140,15 +203,38 @@ const handleLeaveWorkspace = async () => {
           {/* Profile card */}
           <div className="mt-7 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-5">
             {/* Profile picture */}
-            <div className="flex min-h-[62px] items-center justify-between border-b border-[var(--border)]">
-              <span className="text-[12px] font-medium text-[var(--text)]">
-                Profile picture
-              </span>
+            {/* Profile picture */}
+              <div className="flex min-h-[70px] items-center justify-between border-b border-[var(--border)]">
+                <span className="text-[12px] font-medium text-[var(--text)]">
+                  Profile picture
+                </span>
 
-              <div className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-[10px] font-medium ">
-                {name?.charAt(0)?.toUpperCase() || "G"}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-[12px] font-medium text-[var(--accent-foreground)]">
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      name?.charAt(0)?.toUpperCase() || "G"
+                    )}
+                  </div>
+
+                  <label className="flex h-8 cursor-pointer items-center rounded-md border border-[var(--border)] px-3 text-[11px] font-medium text-[var(--text)] transition-colors hover:bg-[var(--hover)]">
+                    {uploadingAvatar ? "Uploading..." : "Change"}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      disabled={uploadingAvatar}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
-            </div>
 
             {/* Email */}
             <div className="flex min-h-[58px] items-center justify-between border-b border-[var(--border)]">

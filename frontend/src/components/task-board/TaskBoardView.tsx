@@ -86,21 +86,22 @@ export default function TaskBoardView({
               key={status}
               title={status}
               tasks={columnTasks.map((task) => ({
-                _id: task._id,
-                title: task.title,
-                assignee: task.assignee || "Guest",
-                dueDate: task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                    })
-                  : "No date",
-                labels: task.labels || [],
-                priority: task.priority || "Medium",
-                createdBy: task.createdBy,
-                members: task.members || [],
-                currentUserId,
-              }))}
+                  _id: task._id,
+                  title: task.title,
+                  assignee: task.assignee || "Guest",
+                  avatar: task.avatar || "",
+                  dueDate: task.dueDate
+                    ? new Date(task.dueDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                      })
+                    : "No date",
+                  labels: task.labels || [],
+                  priority: task.priority || "Medium",
+                  createdBy: task.createdBy,
+                  members: task.members || [],
+                  currentUserId,
+                }))}
               onAddTask={() => openAddTask(status)}
               onOpenTask={openTask}
               onEditTask={openEditTask}

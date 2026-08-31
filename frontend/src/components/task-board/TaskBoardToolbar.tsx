@@ -230,7 +230,6 @@ export default function TaskBoardToolbar({
                 <path d="m20 20-3.5-3.5" />
               </svg>
               <input
-                autoFocus
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder={searchPlaceholder}
